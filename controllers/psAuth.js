@@ -529,9 +529,8 @@ exports.filter = async (req, res) => {
     const { email, organization, status, startDate, endDate } = req.query;
     const client = await pool.connect();
     const params = [];
-    let query = 'SELECT * FROM users';
-
-    if (email) {
+    let query = 'SELECT *, TO_CHAR(created_at::date, \'YYYY-MM-DD\') as created_at FROM users';
+      if (email) {
       params.push(email);
       query += ' WHERE email = $1';
     }
@@ -598,4 +597,38 @@ exports.filter = async (req, res) => {
   }
 };
 
+
+exports.adminVerify = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const check = 'SELECT * FROM users WHERE email=$1';
+    const client = await pool.connect();
+    const result = await client.query(check, [email]);
+    if (result.rowCount === 0) {
+      res.send({ message: 'User not exists.' });
+    }
+    const user = result.rows[0];
+
+        const verify = 'UPDATE users SET admin_verified=$1 WHERE email=$2';
+        const data = [true, email];
+        const data2=[false,email]
+        if (user.admin_verified) {
+          await client.query('BEGIN');
+          await client.query(verify, data2);
+          await client.query('COMMIT');
+          res.send({ message: 'Successfully unverified.' });
+        }
+        else{
+          await client.query('BEGIN');
+          await client.query(verify, data);
+          await client.query('COMMIT');
+          res.send({ message: 'Successfully verified.' });
+        }
+   
+    await client.release();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error.' });
+  }
+};
 

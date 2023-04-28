@@ -6,33 +6,30 @@ const createTables = async () =>
 
   try 
     {
-
-    
-      // await client.query
-      // (`
-      //   CREATE TABLE IF NOT EXISTS course_category 
-      //     (
-      //       id serial PRIMARY KEY,
-      //       course_category_name varchar(50) NOT NULL UNIQUE,
-      //       category_id varchar(20) NOT NULL UNIQUE,
-      //       title varchar(100) NOT NULL,
-      //       description text NOT NULL
-      //     )
-      // `)
-
-
-      //WITHOUT TITLE AND course_category_name LENGTH 50 AND category_id LENGTH 20
-      // await client.query
-      // (`
-      //   CREATE TABLE IF NOT EXISTS course_category 
-      //     (
-      //       id serial PRIMARY KEY,
-      //       course_category_name varchar(50) NOT NULL UNIQUE,
-      //       category_id varchar(20) NOT NULL UNIQUE,
-      //       title varchar(100) NOT NULL,
-      //       description text NOT NULL
-      //     )
-      // `)
+      await client.query
+      (`
+        CREATE TABLE IF NOT EXISTS faculty_name
+        (
+          id SERIAL PRIMARY KEY,
+          name varchar(255) NOT NULL UNIQUE,
+          f_id varchar(255) NOT NULL UNIQUE,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `)
+      await client.query(`
+CREATE TABLE IF NOT EXISTS admin (
+  id SERIAL PRIMARY KEY,
+  username varchar(255) NOT NULL UNIQUE,
+  phone varchar(20),
+  email varchar(255) NOT NULL UNIQUE,
+  password varchar(255) NOT NULL,
+  admin_id varchar(255) NOT NULL UNIQUE,
+  role varchar(255)NOT NULL ,
+  faculty varchar(255) NOT NULL UNIQUE REFERENCES faculty_name(name),
+  reset_token varchar(255),
+  create_at TIMESTAMP DEFAULT NOW(),
+  update_at TIMESTAMP DEFAULT NOW()
+)`)
   
       await client.query
       (`
@@ -44,6 +41,16 @@ const createTables = async () =>
             title varchar(100) NOT NULL,
             description text NOT NULL
           )
+      `)
+      await client.query
+      (`
+        CREATE TABLE IF NOT EXISTS faculty_position
+        (
+          id SERIAL PRIMARY KEY,
+          faculty_pos varchar(255) NOT NULL UNIQUE,
+          position_id varchar(255) NOT NULL UNIQUE,
+          description text
+        )
       `)
 
       await client.query
@@ -58,31 +65,19 @@ const createTables = async () =>
           phone VARCHAR(20) NOT NULL,
           gender VARCHAR(255) NOT NULL,
           email VARCHAR(255) NOT NULL UNIQUE,
-          admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
           education varchar(255) NOT NULL,
           designation varchar(255) NOT NULL DEFAULT 'faculty',
-          faculty_pos varchar(255) NOT NULL REFERENCES faculty_position(faculty_pos),
           faculty_id VARCHAR(20) NOT NULL UNIQUE,
-          unique_id VARCHAR(255) NOT NULL UNIQUE,
-          role VARCHAR(255) NOT NULL DEFAULT 'faculty',
+          faculty varchar(255) NOT NULL REFERENCES faculty_name(name),
           photo_path varchar(255),
           profile VARCHAR(255) ,
+          status BOOLEAN NOT NULL DEFAULT TRUE,
+          admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
           created_on_date_time TIMESTAMP DEFAULT NOW(),
           updated_at TIMESTAMP DEFAULT NOW()
         )
       `);
-
-      await client.query
-      (`
-        CREATE TABLE IF NOT EXISTS faculty_position
-        (
-          id SERIAL PRIMARY KEY,
-          faculty_pos varchar(255) NOT NULL UNIQUE,
-          position_id varchar(255) NOT NULL UNIQUE,
-          description text
-        )
-      `)
-
+     
       await client.query
       (`
         CREATE TABLE IF NOT EXISTS faculty_passwords 
@@ -91,26 +86,23 @@ const createTables = async () =>
         faculty_email VARCHAR(255) NOT NULL REFERENCES faculty(email),
         password VARCHAR(255) NOT NULL,
         reset_token VARCHAR(255),
-        unique_id VARCHAR(255) NOT NULL REFERENCES faculty(unique_id),
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
         )
       `);
 
+      await client.query(`
+      CREATE TABLE IF NOT EXISTS faculty_position_assi(
+        id SERIAL PRIMARY KEY,
+        faculty_id varchar(255) NOT NULL REFERENCES faculty(faculty_id),
+        faculty_pos varchar(255) NOT NULL REFERENCES faculty_position(faculty_pos),
+        faculty_admin varchar(255) NOT NULL REFERENCES admin(faculty),
+        position_assi_id integer NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+      `)
 
-    // await client.query(`
-    // CREATE TABLE IF NOT EXISTS organizations (
-    //   id SERIAL PRIMARY KEY,
-    //   organization varchar(255) NOT NULL UNIQUE,
-    //   type varchar(255)NOT NULL,
-    //   category varchar(255)NOT NULL,
-    //   ministry varchar(255),
-    //   department varchar(255),
-    //   email varchar(255) NOT NULL UNIQUE,
-    //   phone VARCHAR(255) UNIQUE
-    //   )`)
 
-    //ORGANIZATIONS WHERE EMAIL AND PHONE ARE NOT UNIQUE
 
       await client.query
       (`
@@ -127,57 +119,7 @@ const createTables = async () =>
         )
       `)
      
-      // await client.query
-      // (`
-      //   CREATE TABLE IF NOT EXISTS users 
-      //   (
-      //     id SERIAL PRIMARY KEY,
-      //     first_name VARCHAR(255) NOT NULL,
-      //     middle_name VARCHAR(255),
-      //     last_name VARCHAR(255) NOT NULL,
-      //     dob DATE NOT NULL,
-      //     phone VARCHAR(20) NOT NULL UNIQUE,
-      //     gender VARCHAR(255) NOT NULL DEFAULT 'DISCLOSED',
-      //     email VARCHAR(255) NOT NULL UNIQUE,
-      //     organization varchar(255) REFERENCES organizations(organization),
-      //     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-      //     mobile_verified BOOLEAN NOT NULL DEFAULT FALSE,
-      //     admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
-      //     student_id VARCHAR(30) NOT NULL UNIQUE, 
-      //     user_status varchar(30) DEFAULT 'ACTIVE',
-      //     reg_device_v1 varchar(255),
-      //     created_at TIMESTAMP DEFAULT NOW(),
-      //     updated_at TIMESTAMP DEFAULT NOW()
-      //   )
-      // `)
-
-  
-//     await client.query(`
-//   CREATE TABLE IF NOT EXISTS users
-// (
-// id SERIAL PRIMARY KEY,
-// first_name VARCHAR(255) NOT NULL,
-// middle_name VARCHAR(255),
-// last_name VARCHAR(255) NOT NULL,
-// dob DATE NOT NULL,
-// phone VARCHAR(20) NOT NULL UNIQUE,
-// gender VARCHAR(255) NOT NULL DEFAULT 'DISCLOSED',
-// email VARCHAR(255) NOT NULL UNIQUE,
-// department varchar(255),
-// email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-// mobile_verified BOOLEAN NOT NULL DEFAULT FALSE,
-// admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
-// faculty VARCHAR(255) NOT NULL,
-// student_id VARCHAR(30) NOT NULL UNIQUE, 
-// user_status varchar(30) DEFAULT 'ACTIVE',
-// created_at TIMESTAMP DEFAULT NOW(),
-// updated_at TIMESTAMP DEFAULT NOW(),
-// CONSTRAINT fk_deparment FOREIGN KEY(department)REFERENCES department(department)
-// )
-//   `)
-
-// WITH INDIAN TIME ZONE //
-
+     
 await client.query(`
   CREATE TABLE IF NOT EXISTS users 
   (
@@ -221,45 +163,48 @@ await client.query(`
 
       await client.query
       (`
-        CREATE TABLE IF NOT EXISTS courses 
-        (
-          id SERIAL PRIMARY KEY,
-          course_category varchar(50) NOT NULL REFERENCES course_category(course_category_name),
-          name VARCHAR(255) NOT NULL UNIQUE,
-          description text,
-          course_code VARCHAR(50) NOT NULL,
-          course_no INTEGER NOT NULL,
-          course_mode varchar(30) NOT NULL, 
-          course_id VARCHAR(255) NOT NULL UNIQUE,
-          duration VARCHAR(255) NOT NULL,
-          course_duration_weeks varchar(20) NOT NULL,
-          course_duration_days varchar(10) NOT NULL,
-          eligibility TEXT,
-          course_paid varchar(255) NOT NULL,
-          course_director varchar(20) NOT NULL REFERENCES admin(admin_id),
-          course_officer varchar(20) NOT NULL REFERENCES faculty(faculty_id),
-          faculty varchar(255) NOT NULL REFERENCES admin(admin_id), 
-          created_at  DATE DEFAULT NOW()
-        )
+      CREATE TABLE IF NOT EXISTS courses 
+      (
+        id SERIAL PRIMARY KEY,
+        course_category varchar(50) NOT NULL,
+        course_code VARCHAR(50) NOT NULL,
+        course_no INTEGER NOT NULL,
+        title VARCHAR(255) NOT NULL UNIQUE,
+        description text,
+        course_mode varchar(30) NOT NULL, 
+        course_id VARCHAR(255) NOT NULL UNIQUE,
+        course_duration_weeks varchar(20) NOT NULL,
+        course_duration_days varchar(10) NOT NULL,
+        eligibility TEXT,
+        course_type varchar(255) NOT NULL,
+        course_director varchar(255) NOT NULL,
+        course_officer varchar(20) NOT NULL REFERENCES faculty(faculty_id),
+        faculty varchar(255) NOT NULL,
+        created_at DATE DEFAULT NOW(),
+        CONSTRAINT unique_course_combination UNIQUE (course_category, course_code, course_no)
+      )
+      
       `)
     
-      await  client.query
-      (`
-        CREATE TABLE IF NOT EXISTS course_scheduler
-        (
-          id SERIAL primary key,
-          name varchar(255) NOT NULL REFERENCES courses(name),
-          course_capacity varchar(255) NOT NULL,
-          date_comencement DATE NOT NULL,
-          date_completion DATE NOT NULL,
-          currency varchar(255) NOT NULL DEFAULT 'INR',
-          fee VARCHAR(255),
-          batch_no VARCHAR(255) NOT NULL UNIQUE,
-          course_status VARCHAR(255) NOT NULL DEFAULT 'Created',
-          running_date date,
-          course_scheduler_id varchar(255) NOT NULL UNIQUE
-        )
-      `)
+      await client.query(`
+      CREATE TABLE IF NOT EXISTS course_scheduler (
+        id SERIAL primary key,
+        name varchar(255) NOT NULL REFERENCES courses(title),
+        course_id VARCHAR(255) NOT NULL REFERENCES courses(course_id),
+        course_capacity varchar(255) NOT NULL,
+        date_comencement DATE NOT NULL,
+        date_completion DATE NOT NULL,
+        currency varchar(255) NOT NULL DEFAULT 'INR',
+        fee VARCHAR(255),
+        batch_no VARCHAR(255) NOT NULL,
+        course_status VARCHAR(255) NOT NULL DEFAULT 'created',
+        running_date date,
+        course_scheduler_id varchar(255) NOT NULL UNIQUE,
+        scheduled_at DATE DEFAULT NOW(),
+        CONSTRAINT unique_course_batch UNIQUE (course_id, batch_no)
+      )
+    `);
+    
   
 
 
@@ -373,19 +318,7 @@ await client.query(`
   )
 `);
  
-await client.query(`
-CREATE TABLE IF NOT EXISTS admin (
-  id SERIAL PRIMARY KEY,
-  username varchar(255) NOT NULL UNIQUE,
-  phone varchar(20) NOT NULL UNIQUE,
-  email varchar(255) NOT NULL UNIQUE,
-  password varchar(255) NOT NULL,
-  admin_id varchar(255) NOT NULL UNIQUE,
-  role varchar(255)NOT NULL UNIQUE,
-  reset_token varchar(255),
-  create_at TIMESTAMP DEFAULT NOW(),
-  update_at TIMESTAMP DEFAULT NOW()
-)`)
+
 
 await client.query(`
 CREATE TABLE IF NOT EXISTS album_category (
@@ -452,15 +385,7 @@ CREATE TABLE IF NOT EXISTS album (
 
  )
  `)
-  await client.query(`
-  CREATE TABLE IF NOT EXISTS faculty_position_assi(
-    id SERIAL PRIMARY KEY,
-    faculty_id varchar(255) NOT NULL REFERENCES faculty(faculty_id),
-    faculty_pos varchar(255) NOT NULL REFERENCES faculty_position(faculty_pos),
-    faculty_admin varchar(255) NOT NULL REFERENCES admin(role),
-    position_assi_id integer NOT NULL 
-  )
-  `)
+ 
  
   await client.query(`
   CREATE TABLE IF NOT EXISTS tender(
@@ -470,9 +395,7 @@ CREATE TABLE IF NOT EXISTS album (
     start_date date NOT NULL,
     end_date date NOT NULL,
     attachment varchar(255) NOT NULL,
-    attachment1 varchar(255),
-    tender_ref_no varchar(255) NOT NULL UNIQUE,
-    corrigendum varchar(255)
+    tender_ref_no varchar(255) NOT NULL UNIQUE
     )`)
 
     await client.query(`
@@ -483,10 +406,32 @@ CREATE TABLE IF NOT EXISTS album (
     start_date date NOT NULL,
     end_date date NOT NULL,
     attachment varchar(255) NOT NULL,
-    tender_ref_no varchar(255) NOT NULL,
-    corrigendum varchar(255)
+    tender_ref_no varchar(255) NOT NULL
     )`)
 
+    await client.query(`
+    CREATE TABLE IF NOT EXISTS corrigendum_tender(
+      id SERIAL PRIMARY KEY,
+      corrigendum text,
+      attachment varchar(255) ,
+      tender_ref_no varchar(255) NOT NULL,
+      corri_id varchar(255) NOT NULL UNIQUE,
+      created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (tender_ref_no) REFERENCES tender(tender_ref_no)
+      )`);
+      await client.query(
+        `
+        CREATE TABLE IF NOT EXISTS archive_corrigendum(
+          id SERIAL PRIMARY KEY,
+          corrigendum text,
+          attachment varchar(255),
+          tender_ref_no varchar(255),
+          corri_id varchar(255) UNIQUE,
+          created_at TIMESTAMP,
+          archived_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+      )
+  
     await client.query(`
   CREATE TABLE IF NOT EXISTS org_assi(
     id SERIAL PRIMARY KEY,
