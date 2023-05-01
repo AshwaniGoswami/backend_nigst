@@ -83,7 +83,7 @@ exports.updateFacultyDetails = async (req, res) => {
     if (req.file && req.file.path) {
 
       // add new photo if it does not exist
-      const existingPhotoPath = checkResult.rows[0]?.photo_path
+      const existingPhotoPath = checkResult.rows[0].photo_path
 
       if (existingPhotoPath) {
 

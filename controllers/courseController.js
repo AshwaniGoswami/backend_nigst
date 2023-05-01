@@ -274,7 +274,7 @@ exports.course_scheduling = async (req, res) => {
 
 exports.viewScheduledCourses = async (req, res) => {
   try {
-    const check = `SELECT name as title, course_capacity as coursecapacity,to_char(date_comencement,'YYYY/MM/DD') as datecomencement, to_char(date_completion,'YYYY/MM/DD') as datecompletion,currency,fee, batch_no as batch, course_status as status, to_char(running_date,'YYYY/MM/DD') as runningdate,to_char(scheduled_at, 'YYYY/MM/DD') as schedulingdate,course_scheduler_id as scheduling_id FROM course_scheduler ORDER BY name ASC, batch_no ASC`;
+    const check = `SELECT name as title, course_capacity as coursecapacity,to_char(date_comencement,'YYYY/MM/DD') as datecomencement, to_char(date_completion,'YYYY/MM/DD') as datecompletion,currency,fee, batch_no as batch, course_status as status, to_char(running_date,'YYYY/MM/DD') as runningdate,to_char(scheduled_at, 'YYYY/MM/DD') as schedulingdate,course_scheduler_id as scheduling_id,course_id as courseid FROM course_scheduler ORDER BY name ASC, batch_no ASC`;
     const client = await pool.connect();
     const result = await client.query(check);
     if (result.rowCount === 0) {
