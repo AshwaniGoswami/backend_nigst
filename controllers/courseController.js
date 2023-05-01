@@ -737,10 +737,10 @@ exports.sendCourseCodeNo = async (req, res) => {
 
 exports.takeCodeNo=async(req,res)=>{
   try {
-    const {code,no}=req.params
-    const data=[code,no]
+    const {code,no,type}=req.params
+    const data=[code,no,type]
     const connection=await pool.connect()
-    const check='SELECT course_id as courseid,title as coursename,description,course_category as category from courses WHERE course_code=$1 AND course_no=$2'
+    const check='SELECT course_id as courseid,title as coursename,description from courses WHERE course_code=$1 AND course_no=$2 AND course_category=$3 '
     const result=await connection.query(check,data)
     if (result.rowCount===0) {
       return res.status(404).send({message:'No Course Found!.'})
@@ -756,23 +756,21 @@ exports.takeCodeNo=async(req,res)=>{
 }
 
 
-exports.sendBatchAndInfo=async(req,res)=>{
+exports.sendBatchAndInfo = async (req, res) => {
   try {
-    const {courseID}=req.params
-    const connection=await pool.connect()
-    const check='SELECT course_scheduler_id as schedulingid,batch_no as batch,date_comencement as commencementdate, date_completion as completiondate from course_scheduler WHERE course_id=$1'
-    const data=[courseID]
-    const result=await connection.query(check,data)
-    if (result.rowCount===0) {
-      return res.status(404).send({message:'No Course Found!.'})
-
+    const { courseID } = req.params;
+    const connection = await pool.connect();
+    const check = 'SELECT course_scheduler_id as schedulingid, batch_no as batch, date_comencement as commencementdate, date_completion as completiondate FROM course_scheduler WHERE course_id=$1 AND course_status IN ($2, $3)';
+    const data = [courseID, "created", "scheduled"];
+    const result = await connection.query(check, data);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'No Course Found!' });
+    } else {
+      return res.status(200).send({ course: result.rows });
     }
-    else{
-      return res.status(200).send({course:result.rows})
-    }
-    await connection.release()
+    await connection.release();
   } catch (error) {
-    console.error(error)
-    res.status(500).send({message:'Internal Server Error!.'})
+    console.error(error);
+    res.status(500).send({ message: 'Internal Server Error!.' });
   }
-}
+};

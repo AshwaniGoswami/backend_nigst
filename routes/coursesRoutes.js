@@ -13,7 +13,7 @@ router.put('/status',changeCourseStatus)
 router.post('/scheduler',course_scheduling)
 router.get('/view_scheduled',viewScheduledCourses)
 router.get('/view_code_no',sendCourseCodeNo)
-router.get('/send_course/:code/:no',takeCodeNo)
+router.get('/send_course/:code/:no/:type',takeCodeNo)
 router.get('/send_batch_info/:courseID',sendBatchAndInfo)
 
 module.exports=router

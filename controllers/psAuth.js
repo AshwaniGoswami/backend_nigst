@@ -22,10 +22,12 @@ exports.login = async (req, res) => {
     } else {
       const user = userResult.rows[0]
       if (!user.hasOwnProperty('email_verified') || user.email_verified === false) {
-        res.json({ message: 'User not verified' })
-      }
-
-      else {
+        res.json({ message: 'Email not verified' })
+      } else if (!user.hasOwnProperty('mobile_verified') || user.mobile_verified === false) {
+        res.json({ message: 'Mobile not verified' })
+      } else if (!user.hasOwnProperty('admin_verified') || user.admin_verified === false) {
+        res.json({ message: 'Admin not verified' })
+      } else {
         const passwordQuery = `SELECT * FROM password WHERE email = '${userResult.rows[0].email}'`
         const passwordResult = await client.query(passwordQuery)
 
