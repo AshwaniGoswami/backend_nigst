@@ -28,6 +28,25 @@ exports.sendsms = async (req, res) => {
   }
 };
 
+
+//resuable sms verify
+const sendVerifySms = async (phoneNumber, message) => {
+  try {
+    // Save the message to the database
+    await pool.query('INSERT INTO sms_messages (phone_number, message_text) VALUES ($1, $2)', [phoneNumber, message]);
+    // Send the message using Twilio API
+    await twilioClient.messages.create({
+      body: message,
+      from: '+15747667875',
+      to: phoneNumber
+    });
+    console.log('Message sent successfully');
+  } catch (error) {
+    console.error(error);
+    throw new Error('Error sending message');
+  }
+};
+
 // exports.sendOTP = async (req, res) => {
 //   const id = req.params.id; // ID of the message in the sms table
 //   const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
@@ -129,7 +148,6 @@ exports.sendOTP = async (req, res) => {
   }
 };
 
-
 exports.resendOTP = async (req, res) => {
   const email = req.body.email; 
   
@@ -172,7 +190,6 @@ exports.resendOTP = async (req, res) => {
   res.status(500).json({ message: 'Error resending OTP.' });
   }
   };
-
 
 //API TO VERIFY OTP
 

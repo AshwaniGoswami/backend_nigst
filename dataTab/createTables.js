@@ -103,6 +103,19 @@ CREATE TABLE IF NOT EXISTS admin (
       `)
 
 
+    // await client.query(`
+    // CREATE TABLE IF NOT EXISTS organizations (
+    //   id SERIAL PRIMARY KEY,
+    //   organization varchar(255) NOT NULL UNIQUE,
+    //   type varchar(255)NOT NULL,
+    //   category varchar(255)NOT NULL,
+    //   ministry varchar(255),
+    //   department varchar(255),
+    //   email varchar(255) NOT NULL UNIQUE,
+    //   phone VARCHAR(255) UNIQUE
+    //   )`)
+
+    //ORGANIZATIONS WHERE EMAIL AND PHONE ARE NOT UNIQUE
 
       await client.query
       (`
@@ -119,7 +132,57 @@ CREATE TABLE IF NOT EXISTS admin (
         )
       `)
      
-     
+      // await client.query
+      // (`
+      //   CREATE TABLE IF NOT EXISTS users 
+      //   (
+      //     id SERIAL PRIMARY KEY,
+      //     first_name VARCHAR(255) NOT NULL,
+      //     middle_name VARCHAR(255),
+      //     last_name VARCHAR(255) NOT NULL,
+      //     dob DATE NOT NULL,
+      //     phone VARCHAR(20) NOT NULL UNIQUE,
+      //     gender VARCHAR(255) NOT NULL DEFAULT 'DISCLOSED',
+      //     email VARCHAR(255) NOT NULL UNIQUE,
+      //     organization varchar(255) REFERENCES organizations(organization),
+      //     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      //     mobile_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      //     admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      //     student_id VARCHAR(30) NOT NULL UNIQUE, 
+      //     user_status varchar(30) DEFAULT 'ACTIVE',
+      //     reg_device_v1 varchar(255),
+      //     created_at TIMESTAMP DEFAULT NOW(),
+      //     updated_at TIMESTAMP DEFAULT NOW()
+      //   )
+      // `)
+
+  
+//     await client.query(`
+//   CREATE TABLE IF NOT EXISTS users
+// (
+// id SERIAL PRIMARY KEY,
+// first_name VARCHAR(255) NOT NULL,
+// middle_name VARCHAR(255),
+// last_name VARCHAR(255) NOT NULL,
+// dob DATE NOT NULL,
+// phone VARCHAR(20) NOT NULL UNIQUE,
+// gender VARCHAR(255) NOT NULL DEFAULT 'DISCLOSED',
+// email VARCHAR(255) NOT NULL UNIQUE,
+// department varchar(255),
+// email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+// mobile_verified BOOLEAN NOT NULL DEFAULT FALSE,
+// admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
+// faculty VARCHAR(255) NOT NULL,
+// student_id VARCHAR(30) NOT NULL UNIQUE, 
+// user_status varchar(30) DEFAULT 'ACTIVE',
+// created_at TIMESTAMP DEFAULT NOW(),
+// updated_at TIMESTAMP DEFAULT NOW(),
+// CONSTRAINT fk_deparment FOREIGN KEY(department)REFERENCES department(department)
+// )
+//   `)
+
+// WITH INDIAN TIME ZONE //
+
 await client.query(`
   CREATE TABLE IF NOT EXISTS users 
   (
@@ -137,7 +200,6 @@ await client.query(`
     admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
     student_id VARCHAR(30) NOT NULL UNIQUE, 
     user_status varchar(30) DEFAULT 'ACTIVE',
-    reg_device_v1 varchar(255),
     created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'IST'),
     updated_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'IST')
   )
@@ -154,7 +216,6 @@ await client.query(`
           email VARCHAR(255) NOT NULL  REFERENCES users(email),
           reset_token VARCHAR(255),
           password VARCHAR(255) NOT NULL,
-          reg_device_v1 varchar(255),
           created_at TIMESTAMP DEFAULT NOW(),
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -372,7 +433,13 @@ CREATE TABLE IF NOT EXISTS album (
   organization_name varchar(255) NOT NULL REFERENCES organizations(organization),
   course_id varchar(255) NOT NULL REFERENCES courses(course_id),
   organization_course_id varchar(255) NOT NULL,
-  description text
+  code varchar(255) NOT NULL,
+  course_no varchar(255) NOT NULL,
+  batch_no integer NOT NULL,
+  scheduling_id varchar(255) NOT NULL REFERENCES course_scheduler(course_scheduler_id),
+  date_commencement DATE NOT NULL,
+  date_completion DATE NOT NULL,
+  date_assigned DATE DEFAULT NOW()
  )
  `)
  await client.query(`

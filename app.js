@@ -83,9 +83,7 @@ app.use('/sms',smsv)
 app.use('/pdf',pdfup)
 app.use('/tender',tender)
 app.use('/fold',fol)
-app.get('/',(req,res)=>{
-  res.send('Node is running')
-})
+
 
 // image upload route
 

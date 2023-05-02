@@ -7,6 +7,62 @@ const pool = require("../config/pool");
 const generateNumericValue = require("../generator/NumericId");
 const pg = require('pg');
 
+// exports.login = async (req, res) => {
+//   try {
+//     const client = await pool.connect();
+
+//     const email = req.body.email;
+//     const password = req.body.password;
+
+//     const userQuery = `SELECT * FROM users WHERE email = $1`;
+
+//     const userResult = await client.query(userQuery, [email]);
+//     if (userResult.rows.length === 0) {
+//       res.status(401).json({ error: 'Invalid email or password' });
+//     } else {
+//       const user = userResult.rows[0];
+//       if (!user.hasOwnProperty('email_verified') || user.email_verified === false || !user.hasOwnProperty('mobile_verified') || user.mobile_verified === false || !user.hasOwnProperty('admin_verified') || user.admin_verified === false) {
+//         res.json({ message: 'User not verified' });
+//       } else {
+//         const passwordQuery = `SELECT * FROM password WHERE email = '${userResult.rows[0].email}'`;
+//         const passwordResult = await client.query(passwordQuery);
+
+//         if (passwordResult.rows.length === 0) {
+//           res.json({ error: 'Invalid email or password' });
+//         } else {
+//           const userRole = user.role;
+
+//           const match = await bcrypt.compare(password, passwordResult.rows[0].password);
+
+//           if (match) {
+//             const updateQuery = `
+//               UPDATE users
+//               SET updated_at = NOW()
+//               WHERE email = '${email}'
+//             `;
+//             await client.query(updateQuery);
+
+//             const data = {
+//               id: passwordResult.rows[0].student_id,
+//             };
+
+//             const veri = userResult.rows[0].email_verified;
+
+//             const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+//             res.status(200).json({ token, verification: veri, type: userRole });
+//           } else {
+//             res.status(401).json({ error: 'Invalid email or password' });
+//           }
+//         }
+//       }
+//     }
+//     await client.release();
+//   } catch (error) {
+//     res.status(500).json({ error: 'Error connecting to the server' });
+//   }
+// };
+
 exports.login = async (req, res) => {
   try {
     const client = await pool.connect()
@@ -34,7 +90,6 @@ exports.login = async (req, res) => {
         if (passwordResult.rows.length === 0) {
           res.json({ error: 'Invalid email or password' })
         } else {
-          const userRole = user.role
 
           const match = await bcrypt.compare(password, passwordResult.rows[0].password)
 
@@ -54,7 +109,7 @@ exports.login = async (req, res) => {
 
             const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' })
 
-            res.status(200).json({ token, verification: veri, type: userRole })
+            res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id })
           } else {
             res.status(401).json({ error: 'Invalid email or password' })
           }
@@ -69,11 +124,8 @@ exports.login = async (req, res) => {
 
 
 
-
-
 exports.signUp = async (req, res) => {
-  const regNum = uuidv4();
-  const studentId = 'S-NIGST' + generateNumericValue(8);
+  let studentId = 'S-NIGST' + generateNumericValue(8);
   try {
     const client = await pool.connect();
 
@@ -84,48 +136,38 @@ exports.signUp = async (req, res) => {
       return;
     }
 
-    const checkQuery = 'SELECT * FROM users WHERE email = $1';
-    const result = await client.query(checkQuery, [email]);
+    const checkQuery = 'SELECT * FROM users WHERE email = $1'
+    const result = await client.query(checkQuery, [email])
 
     if (result.rowCount > 0) {
-      res.send({ message: 'User already exists' });
+      res.send({ message: 'User already exists' })
       await client.release();
       return;
     }
 
-    const checkRegNum =
-      'SELECT * FROM users JOIN password ON users.reg_device_v1 = password.reg_device_v1 WHERE users.reg_device_v1 = $1';
-    const regNumValue = [regNum];
-    const regRes = await client.query(checkRegNum, regNumValue);
-
-    if (regRes.rowCount > 0) {
-      res.send({ message: 'Reg number already exists.' });
-      await client.release();
-      return;
-    } else {
-      const query2 = "SELECT * FROM users WHERE student_id = $1";
-      let result2 = await client.query(query2, [studentId]);
+      const query2 = "SELECT * FROM users WHERE student_id = $1"
+      let result2 = await client.query(query2, [studentId])
       while (result2.rows.length !== 0) {
-        studentId = 'S-NIGST' + generateNumericValue(8);
-        result2 = await client.query(query2, [studentId]);
+        studentId = 'S-NIGST' + generateNumericValue(8)
+        result2 = await client.query(query2, [studentId])
       }
-      const salt = await bcrypt.genSalt(16);
-      const hashedPass = await bcrypt.hash(password, salt);
+      const salt = await bcrypt.genSalt(16)
+      const hashedPass = await bcrypt.hash(password, salt)
 
-      const data = [fname, mname, lname, dob, phone, gender, email,organization, regNum];
+      const data = [fname, mname, lname, dob, phone, gender, email,organization]
       const insertQuery =
-        'INSERT INTO users (first_name, middle_name, last_name, dob, phone, gender, email,organization, reg_device_v1,student_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
-      await client.query(insertQuery, [...data, studentId]);
+        'INSERT INTO users (first_name, middle_name, last_name, dob, phone, gender, email,organization,student_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
+      await client.query(insertQuery, [...data, studentId])
 
       const token = jwt.sign({ email }, process.env.JWT_SECRET, {
         expiresIn: '30m',
       });
 
-      const url = `${process.env.URL}/secure/${token}/${regNum}`;
+      const url = `${process.env.URL}/secure/${token}`
 
-      const data2 = [email, hashedPass, regNum];
+      const data2 = [email, hashedPass]
       const passQuery =
-        'INSERT INTO password (email, password, reg_device_v1) VALUES ($1, $2, $3)';
+        'INSERT INTO password (email, password) VALUES ($1, $2)'
       await client.query(passQuery, data2);
 
       sendMail(
@@ -135,17 +177,82 @@ exports.signUp = async (req, res) => {
       );
       res
         .status(200)
-        .send({ message: 'Verification email sent. Please check your email to verify.' });
+        .send({ message: 'Verification email sent. Please check your email to verify.' })
 
-      await client.release();
-    }
+      await client.release()
+
   } catch (error) {
     console.log(error)
-      res.status(500).send({ message: 'Something went wrong' });
+      res.status(500).send({ message: 'Something went wrong' })
     }
   }
 
 
+// exports.signUp = async (req, res) => {
+//   const studentId = 'S-NIGST' + generateNumericValue(8);
+//   try {
+//     const client = await pool.connect();
+
+//     const { fname, mname, lname, dob, phone, gender, email, password, organization } = req.body;
+//     if (!password || password === "") {
+//       res.send({ message: 'Please provide a password' });
+//       await client.release();
+//       return;
+//     }
+
+//     const checkQuery = 'SELECT * FROM users WHERE email = $1';
+//     const result = await client.query(checkQuery, [email]);
+
+//     if (result.rowCount > 0) {
+//       res.send({ message: 'User already exists' });
+//       await client.release();
+//       return;
+//     }
+
+//     const query2 = "SELECT * FROM users WHERE student_id = $1";
+//     let result2 = await client.query(query2, [studentId]);
+//     while (result2.rows.length !== 0) {
+//       studentId = 'S-NIGST' + generateNumericValue(8);
+//       result2 = await client.query(query2, [studentId]);
+//     }
+//     const salt = await bcrypt.genSalt(16);
+//     const hashedPass = await bcrypt.hash(password, salt);
+
+//     const data = [fname, mname, lname, dob, phone, gender, email, organization, regNum];
+//     const insertQuery =
+//       'INSERT INTO users (first_name, middle_name, last_name, dob, phone, gender, email,organization, reg_device_v1,student_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
+//     await client.query(insertQuery, [...data, studentId]);
+
+//     const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+//       expiresIn: '30m',
+//     });
+
+//     const url = `${process.env.URL}/secure/${token}/${regNum}`;
+
+//     const data2 = [email, hashedPass];
+//     const passQuery =
+//       'INSERT INTO password (email, password) VALUES ($1, $2)';
+//     await client.query(passQuery, data2);
+
+//    await sendMail(
+//       `${req.body.email}`,
+//       'Please verify your email.',
+//       `<p>Hello ${req.body.fname} ${req.body.lname}, Thanks for registering with us. Please click below to verify your email.</p><br><a href=${url}><button style="color:white;background-color:#4CFA50;border-radius:8px;border:none;padding:auto;">Click Here to Verify Your Email</button></a>`
+//     );
+//     res
+//       .status(200)
+//       .send({ message: 'Verification email sent. Please check your email to verify.' });
+//     await sendVerifySMS(phone, `Welcome to our service! Your account has been created successfully.`);
+
+//     res.status(200).send({ message: 'Verification email and SMS sent. Please check your email and phone to verify.' });
+
+//     await client.release();
+
+//   } catch (error) {
+//     console.log(error)
+//     res.status(500).send({ message: 'Something went wrong' });
+//   }
+// };
 
 
 exports.ForgotPassword = async (req, res) => {
@@ -227,7 +334,6 @@ exports.passwordReset = async (req, res) => {
 
 
 exports.verifyEmail = async (req, res) => {
-  const regNum = req.params.regNum;
   const token = req.params.token;
 
   try {
@@ -235,8 +341,8 @@ exports.verifyEmail = async (req, res) => {
     const email = decoded.email;
 
     const client = await pool.connect();
-    const queryText = 'SELECT id, email_verified FROM users WHERE email = $1 AND reg_device_v1 = $2';
-    const queryParams = [email, regNum];
+    const queryText = 'SELECT id, email_verified FROM users WHERE email = $1 ';
+    const queryParams = [email];
     const result = await client.query(queryText, queryParams);
 
     if (result.rows.length === 0) {
@@ -247,7 +353,7 @@ exports.verifyEmail = async (req, res) => {
       throw new Error('Email already verified');
     }
 
-    const updateQuery = 'UPDATE users SET email_verified = true WHERE email = $1 AND reg_device_v1 = $2';
+    const updateQuery = 'UPDATE users SET email_verified = true WHERE email = $1 ';
     const updateResult = await client.query(updateQuery, queryParams);
 
     if (updateResult.rowCount > 0) {
@@ -375,7 +481,7 @@ exports.sendVeriMailAgain = async (req, res) => {
 //     if (adminVef === "true" || adminVef === "false") {
 //       query += ` AND admin_verified = ${adminVef === "true"}`;
 //     } 
-    
+
 //     if (start_date && end_date) {
 //       query += ` AND created_at BETWEEN '${start_date}' AND '${end_date}'`;
 //     } else {
@@ -509,8 +615,8 @@ exports.sendVeriMailAgain = async (req, res) => {
 //       user.updated_date = new Date(user.updated_date).toISOString();
 //       return user;
 //     });
-    
-    
+
+
 //     // const formattedResult = result.rows.map((user) => {
 //     //   user.created_date = new Date(user.created_date).toLocaleDateString('en-IN');
 //     //   user.updated_date = new Date(user.updated_date).toLocaleDateString('en-IN');
@@ -532,7 +638,7 @@ exports.filter = async (req, res) => {
     const client = await pool.connect();
     const params = [];
     let query = 'SELECT *, TO_CHAR(created_at::date, \'YYYY-MM-DD\') as created_at FROM users';
-      if (email) {
+    if (email) {
       params.push(email);
       query += ' WHERE email = $1';
     }
@@ -556,7 +662,7 @@ exports.filter = async (req, res) => {
       params.push(status === 'true');
       query += ' admin_verified = $' + (params.length);
     }
-    
+
 
     if (startDate && endDate) {
       if (params.length === 0) {
@@ -587,7 +693,7 @@ exports.filter = async (req, res) => {
     }
 
     const result = await client.query(query, params);
-    if (result.rowCount===0) {
+    if (result.rowCount === 0) {
       res.status(404).send({ message: 'No matching records found.' })
       return
     }
@@ -611,22 +717,22 @@ exports.adminVerify = async (req, res) => {
     }
     const user = result.rows[0];
 
-        const verify = 'UPDATE users SET admin_verified=$1 WHERE email=$2';
-        const data = [true, email];
-        const data2=[false,email]
-        if (user.admin_verified) {
-          await client.query('BEGIN');
-          await client.query(verify, data2);
-          await client.query('COMMIT');
-          res.send({ message: 'Successfully unverified.' });
-        }
-        else{
-          await client.query('BEGIN');
-          await client.query(verify, data);
-          await client.query('COMMIT');
-          res.send({ message: 'Successfully verified.' });
-        }
-   
+    const verify = 'UPDATE users SET admin_verified=$1 WHERE email=$2';
+    const data = [true, email];
+    const data2 = [false, email]
+    if (user.admin_verified) {
+      await client.query('BEGIN');
+      await client.query(verify, data2);
+      await client.query('COMMIT');
+      res.send({ message: 'Successfully unverified.' });
+    }
+    else {
+      await client.query('BEGIN');
+      await client.query(verify, data);
+      await client.query('COMMIT');
+      res.send({ message: 'Successfully verified.' });
+    }
+
     await client.release();
   } catch (error) {
     console.error(error);
