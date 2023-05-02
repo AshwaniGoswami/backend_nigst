@@ -278,25 +278,25 @@ exports.sendVeriMailAgain = async (req, res) => {
 
 
   try {
-    const email = req.body.email
+    const email = req.body
 
     const connection = await pool.connect()
 
-    const query = 'SELECT first_name, last_name, reg_device_v1 FROM users WHERE email = $1'
+    const query = 'SELECT first_name, last_name, FROM users WHERE email = $1'
 
 
     const result = await connection.query(query, [email])
 
     if (result.rows.length === 0) {
 
-      res.status(404).send({ error: 'User not found' })
+      res.status(404).send({ error: 'User not found!.' })
       return
     }
     else {
-      const { first_name, last_name, reg_device_v1 } = result.rows[0]
+      const { first_name, last_name } = result.rows[0]
       const newToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' })
 
-      const url = `${process.env.URL}/secure/${newToken}/${reg_device_v1}`
+      const url = `${process.env.URL}/secure/${newToken}}`
 
 
       sendMail(email, 'Please verify your email', `
@@ -306,14 +306,14 @@ exports.sendVeriMailAgain = async (req, res) => {
   `)
 
 
-      res.status(200).send({ message: 'Verification email sent' })
+      res.status(200).send({ message: 'Verification email sent.' })
 
     }
     await connection.release()
   }
   catch (err) {
 
-    res.status(500).send({ error: 'Something went wrong' })
+    res.status(500).send({ error: 'Internal Server Error!.' })
 
   }
 }
