@@ -129,6 +129,51 @@ exports.sendOTP = async (req, res) => {
   }
 };
 
+
+exports.resendOTP = async (req, res) => {
+  const email = req.body.email; 
+  
+  try {
+  const result = await pool.query('SELECT phone FROM users WHERE email = $1', [email]);
+  const phoneNumber = result.rows[0].phone;
+  
+  javascript
+  
+  const existingOtpResult = await pool.query('SELECT id, otp FROM otps WHERE phone_number = $1 AND verified = false ORDER BY created_at DESC LIMIT 1', [phoneNumber]);
+  if (existingOtpResult.rows.length > 0) {
+    const existingOtpId = existingOtpResult.rows[0].id;
+    const otp = Math.floor(100000 + Math.random() * 900000);
+  
+    await pool.query('UPDATE otps SET otp = $1 WHERE id = $2', [otp, existingOtpId]);
+  
+    await twilioClient.messages.create({
+      body: `Your NIGST Phone Pumber registration OTP is ${otp}`,
+      from: '+15747667875',
+      to: phoneNumber
+    });
+  
+    res.status(200).json({ message: 'OTP replaced and sent successfully.' });
+  } else {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+  
+    await pool.query('INSERT INTO otps (phone_number, otp, verified) VALUES ($1, $2, false)', [phoneNumber, otp]);
+  
+    await twilioClient.messages.create({
+      body: `Your NIGST Phone Pumber registration OTP is ${otp}`,
+      from: '+15747667875',
+      to: phoneNumber
+    });
+  
+    res.status(200).json({ message: 'New OTP sent successfully.' });
+  }
+  
+  } catch (error) {
+  console.error(error);
+  res.status(500).json({ message: 'Error resending OTP.' });
+  }
+  };
+
+
 //API TO VERIFY OTP
 
 exports.verifyOTP = async (req, res) => {
