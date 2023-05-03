@@ -157,7 +157,7 @@ exports.GetEnrolledCourses = async (req, res) => {
     const schedulingIds = enrolledSchedulingIds.rows.map(row => row.scheduling_id);
 
     const courseDetails = `
-    SELECT cs.name as course_name , cs.running_date as runningDate, cs.date_completion as completitionDate, cs.fee, e.enrolment_status as enrollStatus, e.enrolment_date as dateEnrollment
+    SELECT cs.name as course_name , cs.running_date as runningDate, cs.date_completion as completionDate, cs.fee, e.enrolment_status as enrollStatus, e.enrolment_date as dateEnrollment
     FROM course_scheduler cs
     JOIN enrolment e ON e.scheduling_id = cs.course_scheduler_id
     WHERE e.student_id = $1 AND cs.course_scheduler_id = ANY($2);
