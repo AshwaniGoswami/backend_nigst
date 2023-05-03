@@ -156,8 +156,10 @@ exports.signUp = async (req, res) => {
 
       const data = [fname, mname, lname, dob, phone, gender, email,organization]
       const insertQuery =
-        'INSERT INTO users (first_name, middle_name, last_name, dob, phone, gender, email,organization,student_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
-      await client.query(insertQuery, [...data, studentId])
+      'INSERT INTO users (first_name, middle_name, last_name, dob, phone, gender, email, organization, student_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
+    const now = new Date();
+    await client.query(insertQuery, [...data, studentId, now]);
+    
 
       const token = jwt.sign({ email }, process.env.JWT_SECRET, {
         expiresIn: '30m',
@@ -421,6 +423,23 @@ exports.sendVeriMailAgain = async (req, res) => {
 
     res.status(500).send({ error: 'Internal Server Error!.' })
 
+  }
+}
+
+exports.viewVeriStatus=async(req,res)=>{
+  try {
+    const {email}=req.query
+    const client=await pool.connect()
+    const check='SELECT email_verified,mobile_verified,admin_verified FROM users WHERE email=$1'
+    const result=await client.query(check,[email])
+    if (result.rowCount===0) {
+      return res.status(404).send({message:'User Not Found'})
+    }
+    res.status(200).send({data:result.rows})
+    await client.release()
+  } catch (error) {
+    console.error(error)
+    res.status(500).send({message:'Internal Server Error!.'})
   }
 }
 

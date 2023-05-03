@@ -1,5 +1,5 @@
 const express= require('express')
-const { signUp, login, ForgotPassword, passwordReset, verifyEmail, sendVeriMailAgain, viewUsers, filter, adminVerify} = require('../controllers/psAuth')
+const { signUp, login, ForgotPassword, passwordReset, verifyEmail, sendVeriMailAgain, viewUsers, filter, adminVerify, viewVeriStatus} = require('../controllers/psAuth')
 const router=express.Router()
 
 router.post('/signup', signUp)
@@ -12,4 +12,5 @@ router.patch('/resend',sendVeriMailAgain)
 // router.get('/viewu',viewUsers)
 router.get('/filter',filter)
 router.patch('/verify',adminVerify)
+router.get('/view_veri_status/',viewVeriStatus)
 module.exports=router

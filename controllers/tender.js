@@ -3,10 +3,37 @@ const fs = require('fs');
 const generateNumericValue = require("../generator/NumericId");
 
 
+// exports.tenderCreation = async (req, res) => {
+//   const { title, description, startDate, endDate, tenderRefNo } = req.body;
+//   const file = req.files.pdf;
+// console.log(file)
+//   try {
+//     const client = await pool.connect();
+
+//     const checkTenderResult = await client.query('SELECT * FROM tender WHERE tender_ref_no = $1', [tenderRefNo]);
+//     const checkarchive = await client.query('SELECT * FROM archive_tender WHERE tender_ref_no=$1', [tenderRefNo])
+//     if (checkTenderResult.rows.length > 0 || checkarchive.rowCount > 0) {
+//       return res.status(400).send({ message: 'Tender reference number already exists.' });
+//     }
+
+//     const query = 'INSERT INTO tender (title, description, start_date, end_date, attachment, tender_ref_no) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
+//     const values = [title, description, startDate, endDate, file[0].path, tenderRefNo];
+//     const result = await client.query(query, values);
+
+//     res.status(201).send({ message: 'Tender created successfully' });
+
+//     await client.release();
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send({ error: 'Something went wrong' });
+//   }
+// }
+
+///s3 code
 exports.tenderCreation = async (req, res) => {
   const { title, description, startDate, endDate, tenderRefNo } = req.body;
   const file = req.files.pdf;
-
+console.log(file)
   try {
     const client = await pool.connect();
 
@@ -17,7 +44,7 @@ exports.tenderCreation = async (req, res) => {
     }
 
     const query = 'INSERT INTO tender (title, description, start_date, end_date, attachment, tender_ref_no) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
-    const values = [title, description, startDate, endDate, file[0].path, tenderRefNo];
+    const values = [title, description, startDate, endDate, file[0].location, tenderRefNo];
     const result = await client.query(query, values);
 
     res.status(201).send({ message: 'Tender created successfully' });
@@ -28,8 +55,6 @@ exports.tenderCreation = async (req, res) => {
     res.status(500).send({ error: 'Something went wrong' });
   }
 }
-
-
 exports.addCorrigendum = async (req, res) => {
   try {
     const { corrigendum, tender_number } = req.body;
@@ -332,6 +357,34 @@ await client.release()
 //
 
 
+// exports.viewPdf = async (req, res) => {
+//   const { tender_number } = req.params;
+
+//   try {
+//     const client = await pool.connect();
+//     const query = 'SELECT attachment FROM tender WHERE tender_ref_no = $1';
+//     const result = await client.query(query, [tender_number]);
+
+//     if (result.rowCount === 0) {
+//       return res.status(404).send({ error: `Tender not found.` });
+//     }
+
+//     const filePath = result.rows[0].attachment;
+//     const fileStream = fs.createReadStream(filePath);
+//     const stat = fs.statSync(filePath);
+
+//     res.setHeader('Content-Type', 'application/pdf');
+//     res.setHeader('Content-Length', stat.size);
+//     res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+
+//     fileStream.pipe(res);
+
+//     client.release();
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send({ error: 'Something went wrong.' });
+//   }
+// };
 exports.viewPdf = async (req, res) => {
   const { tender_number } = req.params;
 
@@ -344,13 +397,11 @@ exports.viewPdf = async (req, res) => {
       return res.status(404).send({ error: `Tender not found.` });
     }
 
-    const filePath = result.rows[0].attachment;
-    const fileStream = fs.createReadStream(filePath);
-    const stat = fs.statSync(filePath);
+    const fileUrl = result.rows[0].attachment;
+    const fileStream = request.get(fileUrl);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', stat.size);
-    res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+    res.setHeader('Content-Disposition', `inline; filename=tender.pdf`);
 
     fileStream.pipe(res);
 

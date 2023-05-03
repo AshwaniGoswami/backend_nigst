@@ -1,8 +1,8 @@
 const express= require('express')
-const { Enrol, GetEnroledCourses } = require('../controllers/Enrollment')
+const { Enrol, GetEnrolledCourses } = require('../controllers/Enrollment')
 const router =express.Router()
 
 router.post('/enrol',Enrol)
-router.get('/studentId',GetEnroledCourses)
+router.get('/view_enroll/:studentId',GetEnrolledCourses)
 
 module.exports=router

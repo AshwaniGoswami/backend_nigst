@@ -200,7 +200,7 @@ await client.query(`
     admin_verified BOOLEAN NOT NULL DEFAULT FALSE,
     student_id VARCHAR(30) NOT NULL UNIQUE, 
     user_status varchar(30) DEFAULT 'ACTIVE',
-    created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'IST'),
+    created_at TIMESTAMP,
     updated_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'IST')
   )
 `);
@@ -445,10 +445,14 @@ CREATE TABLE IF NOT EXISTS album (
  await client.query(`
  CREATE TABLE IF NOT EXISTS enrolment(
   id SERIAL PRIMARY KEY,
-  course_id varchar(255) NOT NULL REFERENCES courses(course_id),
+  scheduling_id varchar(255) NOT NULL REFERENCES course_scheduler(course_scheduler_id),
   student_id varchar(255) NOT NULL REFERENCES users(student_id),
-  course_paid_status varchar(255) NOT NULL DEFAULT 'Unpaid',
-  enrolment_status varchar(255) NOT NULL 
+  course_paid_status BOOLEAN NOT NULL DEFAULT false,
+  enrolment_status varchar(255) NOT NULL DEFAULT 'request',
+  nigst_approval BOOLEAN NOT NULL DEFAULT false,
+  enrolment_date DATE DEFAULT NOW(),
+  enrolment_id varchar(255) NOT NULL
+ 
 
  )
  `)
