@@ -381,50 +381,33 @@ exports.verifyEmail = async (req, res) => {
 
 
 
-
 exports.sendVeriMailAgain = async (req, res) => {
-
-
   try {
-    const email = req.body
-
-    const connection = await pool.connect()
-
-    const query = 'SELECT first_name, last_name, FROM users WHERE email = $1'
-
-
-    const result = await connection.query(query, [email])
-
+    const email = req.body.email;
+    const connection = await pool.connect();
+    const query = 'SELECT first_name, last_name FROM users WHERE email = $1';
+    const result = await connection.query(query, [email]);
     if (result.rows.length === 0) {
-
-      res.status(404).send({ error: 'User not found!.' })
-      return
-    }
-    else {
-      const { first_name, last_name } = result.rows[0]
-      const newToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' })
-
-      const url = `${process.env.URL}/secure/${newToken}}`
-
-
+      res.status(404).send({ error: 'User not found!.' });
+      return;
+    } else {
+      const { first_name, last_name } = result.rows[0];
+      const newToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' });
+      const url = `${process.env.URL}/secure/${newToken}`;
       sendMail(email, 'Please verify your email', `
-    <p>Hello ${first_name} ${last_name},</p>
-    <p>Thanks for registering with us. Please click the link below to verify your email:</p>
-    <a href="${url}">Verify Email</a>
-  `)
-
-
-      res.status(200).send({ message: 'Verification email sent.' })
-
+        <p>Hello ${first_name} ${last_name},</p>
+        <p>Thanks for registering with us. Please click the link below to verify your email:</p>
+        <a href="${url}">Verify Email</a>
+      `);
+      res.status(200).send({ message: 'Verification email sent.' });
     }
-    await connection.release()
-  }
-  catch (err) {
-
-    res.status(500).send({ error: 'Internal Server Error!.' })
-
+    await connection.release();
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: 'Internal Server Error!.' });
   }
 }
+
 
 exports.viewVeriStatus=async(req,res)=>{
   try {

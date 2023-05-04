@@ -1,8 +1,8 @@
 const app = require("./app")
-const { connect } = require("./config/postgreconfig")
+// const { connect } = require("./config/postgreconfig")
 const { createTables } = require("./dataTab/createTables")
 
-connect()
+// connect()
 createTables()
 
 PORT=process.env.PORT || 4000
