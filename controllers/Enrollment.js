@@ -186,7 +186,7 @@ exports.Enrol = async (req, res) => {
 
     await client.query('COMMIT')
 
-    res.status(201).send({ message: 'Student enrolled in the course' })
+   return res.status(201).send({ message: 'Student enrolled in the course' })
 
   } 
   catch (error) {
@@ -195,12 +195,12 @@ exports.Enrol = async (req, res) => {
 
     await client.query('ROLLBACK')
 
-    res.status(500).send({ message: 'Internal Server Error!' })
+  return res.status(500).send({ message: 'Internal Server Error!' })
 
   } 
   finally {
 
-    client.release()
+   await client.release()
 
   }
 };
@@ -248,7 +248,7 @@ exports.GetEnrolledCourses = async (req, res) => {
 
     const enrolledCourses = await enrol.query(courseDetails, [studentId, schedulingIds])
 
-    res.status(200).send({ courses: enrolledCourses.rows })
+   return res.status(200).send({ courses: enrolledCourses.rows })
 
     await enrol.release()
 
@@ -258,7 +258,7 @@ exports.GetEnrolledCourses = async (req, res) => {
 
     console.error(error)
 
-    res.status(500).send({ error: 'Something went wrong!' })
+  return  res.status(500).send({ error: 'Something went wrong!' })
 
   }
   
@@ -343,7 +343,7 @@ const check='SELECT course_status,running_date,date_completion from course_sched
       await client.query('COMMIT')
 
   
-      res.status(200).send({ message: 'Enrollment cancelled successfully' })
+    return  res.status(200).send({ message: 'Enrollment cancelled successfully' })
 
     }
    
@@ -355,26 +355,33 @@ const check='SELECT course_status,running_date,date_completion from course_sched
 
     await client.query('ROLLBACK')
 
-    res.status(500).send({ message: 'Internal Server Error!' })
+  return res.status(500).send({ message: 'Internal Server Error!' })
 
   }
   finally {
 
-    client.release()
+   await client.release()
 
   }
 }
 
 exports.reEnroll = async (req, res) => {
   let connection
+
   try {
+
     const { enrollmentID } = req.params
+
     const check = 'SELECT * FROM archive_enroll WHERE enrolment_id=$1'
 
     connection = await pool.connect()
+
     const result = await connection.query(check, [enrollmentID])
+
     if (result.rowCount === 0) {
-      return res.status(404).send({ message: 'Not Found!' })
+
+      return res.status(404).send({ error: 'Not Found!' })
+
     }
 
     const newId = result.rows[0].student_id
@@ -387,8 +394,11 @@ exports.reEnroll = async (req, res) => {
     const studentExists = await connection.query(checkStu, [newId])
 
     if (studentExists.rowCount === 0) {
+
       await connection.query('ROLLBACK')
+
       return res.status(404).send({ error: 'Student does not exist' })
+
     }
 
     const checkCourse = 'SELECT * FROM course_scheduler WHERE course_scheduler_id=$1 AND course_status = $2'
@@ -396,8 +406,11 @@ exports.reEnroll = async (req, res) => {
     const courseExists = await connection.query(checkCourse, [newScheId, 'scheduled'])
 
     if (courseExists.rowCount === 0) {
+
       await connection.query('ROLLBACK')
+
       return res.status(400).send({ error: 'Course does not exist or is not currently active' })
+
     }
 
     let enrollId = 'E-' + generateNumericValue(8)
@@ -407,8 +420,11 @@ exports.reEnroll = async (req, res) => {
     let result1 = await connection.query(checkEnrollment, [enrollId])
 
     while (result1.rowCount > 0) {
+
       enrollId = 'E-' + generateNumericValue(8)
+
       result1 = await connection.query(checkEnrollment, [enrollId])
+
     }
 
     const checkEnrollmentExists = 'SELECT * FROM enrolment WHERE student_id=$1 AND scheduling_id=$2'
@@ -416,8 +432,11 @@ exports.reEnroll = async (req, res) => {
     const enrolmentExists = await connection.query(checkEnrollmentExists, [newId, newScheId])
 
     if (enrolmentExists.rowCount !== 0) {
+
       await connection.query('ROLLBACK')
+
       return res.status(400).send({ error: 'Student is already enrolled in this course' })
+
     }
 
     const checkFee = 'SELECT fee,course_capacity FROM course_scheduler WHERE course_scheduler_id=$1'
@@ -427,7 +446,9 @@ exports.reEnroll = async (req, res) => {
     let feePaid = false
 
     if (feeResult.rows[0].fee === '0') {
+
       feePaid = true
+
     }
 
     const countQuery = 'SELECT COUNT(*) AS count FROM enrolment WHERE scheduling_id=$1'
@@ -437,9 +458,14 @@ exports.reEnroll = async (req, res) => {
     let EnrollStatus
 
     if (countResult.rows[0].count >= feeResult.rows[0].course_capacity) {
+
       EnrollStatus = 'waiting'
-    } else {
+
+    } 
+    else {
+
       EnrollStatus = 'requested'
+
     }
 
     const populateEnrollment = 'INSERT INTO enrolment (student_id, scheduling_id, enrolment_status, course_paid_status, enrolment_id) VALUES ($1, $2, $3, $4, $5)'
@@ -447,16 +473,24 @@ exports.reEnroll = async (req, res) => {
     await connection.query(populateEnrollment, [newId, newScheId, EnrollStatus, feePaid, enrollId])
     
     const cancelEnrollment = 'DELETE FROM archive_enroll WHERE enrolment_id=$1'
+
       await connection.query(cancelEnrollment, [enrollmentID])
 
     await connection.query('COMMIT')
 
-   return res.status(201).send({ message: 'Student enrolled in the course' })
-  } catch (error) {
+   return res.status(201).send({ message: 'Student ReEnrolled in the course' })
+
+  } 
+  catch (error) {
+
     console.error(error)
+
     return res.status(500).send({})
+
   } 
   finally{
+
     await connection.release()
+
   }
 }
