@@ -85,7 +85,7 @@ const sendMail = require("../mailing_Service/mailconfig")
 // } 
 
 exports.Enrol = async (req, res) => {
-  var client 
+  let client 
   try {
     client = await pool.connect()
 
@@ -267,7 +267,7 @@ exports.GetEnrolledCourses = async (req, res) => {
 
 exports.CancelEnrollment = async (req, res) => {
 
-  var client
+  let client
 
   try {
 
