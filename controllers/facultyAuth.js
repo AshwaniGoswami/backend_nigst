@@ -340,8 +340,9 @@ exports.facultyPosition = async (req, res) => {
     const data = [faculty_pos, positionId, description]
     const create = 'INSERT INTO faculty_position(faculty_pos, position_id, description) VALUES ($1,$2,$3) RETURNING*'
     const result = await pool.query(create, data);
-    res.send({ message: "Successfully Created" });
-    await client.release();
+await client.release();
+
+return res.send({ message: "Successfully Created" });
   } catch (error) {
     console.error(error)
     return res.status(500).send({ message: 'Internal server error!' });
