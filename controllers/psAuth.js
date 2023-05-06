@@ -109,7 +109,7 @@ exports.login = async (req, res) => {
 
             const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' })
 
-            res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id })
+            res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id,email: userResult.rows[0].email })
           } else {
             res.status(401).json({ error: 'Invalid email or password' })
           }
@@ -336,9 +336,10 @@ exports.passwordReset = async (req, res) => {
 
 
 exports.verifyEmail = async (req, res) => {
-  const token = req.params.token;
 
   try {
+    const {token} = req.params;
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const email = decoded.email;
 
@@ -359,7 +360,7 @@ exports.verifyEmail = async (req, res) => {
     const updateResult = await client.query(updateQuery, queryParams);
 
     if (updateResult.rowCount > 0) {
-      res.status(200).send('Email verified successfully');
+     return res.status(200).send('Email verified successfully');
     } else {
       throw new Error('User not found');
     }
@@ -393,7 +394,7 @@ exports.sendVeriMailAgain = async (req, res) => {
     } else {
       const { first_name, last_name } = result.rows[0];
       const newToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' });
-      const url = `${process.env.URL}/secure/${newToken}`;
+      const url = `${process.env.URL}secure/${newToken}`;
       sendMail(email, 'Please verify your email', `
         <p>Hello ${first_name} ${last_name},</p>
         <p>Thanks for registering with us. Please click the link below to verify your email:</p>
@@ -411,7 +412,7 @@ exports.sendVeriMailAgain = async (req, res) => {
 
 exports.viewVeriStatus=async(req,res)=>{
   try {
-    const {email}=req.query
+    const {email}=req.params
     const client=await pool.connect()
     const check='SELECT email_verified,mobile_verified,admin_verified FROM users WHERE email=$1'
     const result=await client.query(check,[email])

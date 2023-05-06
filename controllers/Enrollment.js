@@ -365,3 +365,98 @@ const check='SELECT course_status,running_date,date_completion from course_sched
   }
 }
 
+exports.reEnroll = async (req, res) => {
+  let connection
+  try {
+    const { enrollmentID } = req.params
+    const check = 'SELECT * FROM archive_enroll WHERE enrolment_id=$1'
+
+    connection = await pool.connect()
+    const result = await connection.query(check, [enrollmentID])
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'Not Found!' })
+    }
+
+    const newId = result.rows[0].student_id
+    const newScheId = result.rows[0].scheduling_id
+
+    await connection.query('BEGIN')
+
+    const checkStu = 'SELECT * FROM users WHERE student_id=$1'
+
+    const studentExists = await connection.query(checkStu, [newId])
+
+    if (studentExists.rowCount === 0) {
+      await connection.query('ROLLBACK')
+      return res.status(404).send({ error: 'Student does not exist' })
+    }
+
+    const checkCourse = 'SELECT * FROM course_scheduler WHERE course_scheduler_id=$1 AND course_status = $2'
+
+    const courseExists = await connection.query(checkCourse, [newScheId, 'scheduled'])
+
+    if (courseExists.rowCount === 0) {
+      await connection.query('ROLLBACK')
+      return res.status(400).send({ error: 'Course does not exist or is not currently active' })
+    }
+
+    let enrollId = 'E-' + generateNumericValue(8)
+
+    const checkEnrollment = 'SELECT * FROM enrolment WHERE enrolment_id=$1'
+
+    let result1 = await connection.query(checkEnrollment, [enrollId])
+
+    while (result1.rowCount > 0) {
+      enrollId = 'E-' + generateNumericValue(8)
+      result1 = await connection.query(checkEnrollment, [enrollId])
+    }
+
+    const checkEnrollmentExists = 'SELECT * FROM enrolment WHERE student_id=$1 AND scheduling_id=$2'
+
+    const enrolmentExists = await connection.query(checkEnrollmentExists, [newId, newScheId])
+
+    if (enrolmentExists.rowCount !== 0) {
+      await connection.query('ROLLBACK')
+      return res.status(400).send({ error: 'Student is already enrolled in this course' })
+    }
+
+    const checkFee = 'SELECT fee,course_capacity FROM course_scheduler WHERE course_scheduler_id=$1'
+
+    const feeResult = await connection.query(checkFee, [newScheId])
+
+    let feePaid = false
+
+    if (feeResult.rows[0].fee === '0') {
+      feePaid = true
+    }
+
+    const countQuery = 'SELECT COUNT(*) AS count FROM enrolment WHERE scheduling_id=$1'
+
+    const countResult = await connection.query(countQuery, [newScheId])
+
+    let EnrollStatus
+
+    if (countResult.rows[0].count >= feeResult.rows[0].course_capacity) {
+      EnrollStatus = 'waiting'
+    } else {
+      EnrollStatus = 'requested'
+    }
+
+    const populateEnrollment = 'INSERT INTO enrolment (student_id, scheduling_id, enrolment_status, course_paid_status, enrolment_id) VALUES ($1, $2, $3, $4, $5)'
+
+    await connection.query(populateEnrollment, [newId, newScheId, EnrollStatus, feePaid, enrollId])
+    
+    const cancelEnrollment = 'DELETE FROM archive_enroll WHERE enrolment_id=$1'
+      await connection.query(cancelEnrollment, [enrollmentID])
+
+    await connection.query('COMMIT')
+
+   return res.status(201).send({ message: 'Student enrolled in the course' })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).send({})
+  } 
+  finally{
+    await connection.release()
+  }
+}
