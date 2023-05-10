@@ -494,3 +494,79 @@ exports.reEnroll = async (req, res) => {
 
   }
 }
+
+
+exports.viewEnrollmentOfStudent=async(req,res)=>{
+
+  try {
+    
+    const {studentID}=req.params
+
+    const connection=await pool.connect()
+
+    const check = `
+    SELECT e.course_paid_status, e.enrolment_status, to_char(e.enrolment_date, 'YYYY/MM/DD') AS completion, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee  FROM enrolment e  LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id  WHERE e.student_id = $1; `
+  
+   
+     const result=await connection.query(check,[studentID])
+
+     if (result.rowCount===0) {
+
+      return res.status(404).send({message:'No Records Found!.'})
+
+     }
+     else{
+
+      return res.status(200).send({data:result.rows})
+
+     }
+
+     await connection.release()
+
+  } 
+
+  catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+}
+
+
+exports.viewCanceledEnrollmentOfStudent=async(req,res)=>{
+  
+  try {
+    
+    const {studentID}=req.params
+
+    const connection=await pool.connect()
+
+    const check=`SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee,e.cancel_date as cancelled_date FROM archive_enroll e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id WHERE e.student_id = $1;`
+   
+     const result=await connection.query(check,[studentID])
+
+     if (result.rowCount===0) {
+
+      return res.status(404).send({message:'No Records Found!.'})
+
+     }
+     else{
+
+      return res.status(200).send({data:result.rows})
+
+     }
+
+     await connection.release()
+
+  } 
+
+  catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+}

@@ -47,14 +47,15 @@ console.log(file)
     const values = [title, description, startDate, endDate, file[0].location, tenderRefNo];
     const result = await client.query(query, values);
 
-    res.status(201).send({ message: 'Tender created successfully' });
+   return res.status(201).send({ message: 'Tender created successfully' });
 
     await client.release();
   } catch (error) {
     console.error(error);
-    res.status(500).send({ error: 'Something went wrong' });
+    return res.status(500).send({ error: 'Something went wrong' });
   }
 }
+
 exports.addCorrigendum = async (req, res) => {
   try {
     const { corrigendum, tender_number } = req.body;
@@ -78,12 +79,12 @@ exports.addCorrigendum = async (req, res) => {
     if (file) data.push(file[0].path);
 
     await client.query(feed, data);
-    res.status(201).send({ message: 'Corrigendum successfully created' });
+ return    res.status(201).send({ message: 'Corrigendum successfully created' });
 
     await client.release();
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error.' });
+   return res.status(500).send({ message: 'Internal Server Error.' });
   }
 }
 
@@ -111,16 +112,16 @@ exports.viewCorriPdf = async (req, res) => {
     const fileStream = fs.createReadStream(filePath);
     const stat = fs.statSync(filePath);
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', stat.size);
-    res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+  return  res.setHeader('Content-Type', 'application/pdf');
+  return  res.setHeader('Content-Length', stat.size);
+   return res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
 
     fileStream.pipe(res);
 
     await client.release();
   } catch (error) {
     console.error(error);
-    res.status(500).send({ error: 'Something went wrong.' });
+   return res.status(500).send({ error: 'Something went wrong.' });
   }
 };
 
@@ -191,9 +192,10 @@ exports.archiveTender = async (req, res) => {
 
 
 
-exports.retrieveTender = async (req, res) => {
-  const client = await pool.connect();
+exports.retrieveTender = async (req, res) => { 
+  let client
   try {
+     client = await pool.connect();
     await client.query('BEGIN');
     const { id } = req.body;
     const retrieve = `
@@ -205,14 +207,14 @@ exports.retrieveTender = async (req, res) => {
     const deleteData = "DELETE FROM archive_tender WHERE id=$1";
     await client.query(deleteData, [id]);
     await client.query('COMMIT');
-    res.send({ message: "Successfully restored" });
+  return  res.send({ message: "Successfully restored" });
     await client.release();
   } catch (error) {
     await client.query('ROLLBACK');
     console.error(error);
-    res.send({ message: "Something went wrong!" });
+   return res.send({ message: "Something went wrong!" });
   } finally {
-    client.release();
+   await client.release();
   }
 };
 
@@ -243,13 +245,13 @@ exports.viewTender = async (req, res) => {
       `;
     const result = await client.query(query);
     if (result.rowCount === 0) {
-      res.status(404).send({ messgage: 'Nothing to show.' })
+     return res.status(404).send({ messgage: 'Nothing to show.' })
     }
-    res.status(200).send({ tender: result.rows });
+   return res.status(200).send({ tender: result.rows });
     await client.release();
   } catch (error) {
     console.log(error);
-    res.status(500).send({ error: "Something went wrong." });
+   return res.status(500).send({ error: "Something went wrong." });
   }
 };
 
@@ -269,13 +271,13 @@ exports.corrigendumTender = async (req, res) => {
 
     const insert = `INSERT INTO tender(attachment1, corrigendum) VALUES($1,$2)`
     const data = [file[0].path, corrigendum]
-    res.status(201).send(
+   return res.status(201).send(
       { message: "Successfully Corrigendum created" }
     )
     await client.release();
   } catch (error) {
     console.log(error);
-    res.status(500).send({ error: "Something went wrong." });
+    return res.status(500).send({ error: "Something went wrong." });
   }
 }
 
@@ -285,13 +287,13 @@ exports.getTenderNo = async (req, res) => {
     const query = `SELECT tender_ref_no FROM tender`
     const result = await client.query(query);
     if (result.rows.length === 0) { res.send({ message: "Nothing To Show" }) }
-    res.status(200).send({ tender: result.rows });
+  return  res.status(200).send({ tender: result.rows });
     await client.release();
 
 
   } catch (error) {
     console.log(error);
-    res.status(500).send({ error: "Something went wrong." });
+  return  res.status(500).send({ error: "Something went wrong." });
   }
 }
 
@@ -311,15 +313,15 @@ exports.viewArchiveTender=async (req,res)=>{
     const client=await pool.connect()
     const result=await client.query(check)
 if (result.rowCount===0) {
-  res.status(200).send({message:'Nothing to show!.'})
+ return res.status(200).send({message:'Nothing to show!.'})
 }
 else{
-  res.status(200).send({data:result.rows})
+  return res.status(200).send({data:result.rows})
 }
 await client.release()
   } catch (error) {
     console.error(error)
-    res.status(500).send({message:'Internal Server Error!.'})
+   return res.status(500).send({message:'Internal Server Error!.'})
   }
 }
 
@@ -400,15 +402,15 @@ exports.viewPdf = async (req, res) => {
     const fileUrl = result.rows[0].attachment;
     const fileStream = request.get(fileUrl);
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=tender.pdf`);
+   return res.setHeader('Content-Type', 'application/pdf');
+   return res.setHeader('Content-Disposition', `inline; filename=tender.pdf`);
 
     fileStream.pipe(res);
 
-    client.release();
+  await  client.release();
   } catch (error) {
     console.error(error);
-    res.status(500).send({ error: 'Something went wrong.' });
+  return  res.status(500).send({ error: 'Something went wrong.' });
   }
 };
 
@@ -449,7 +451,7 @@ exports.downloadPdf = async (req, res) => {
     }
     const filePath = result.rows[0].attachment;
     const stat = await fs.statSync(filePath);
-    res.writeHead(200, {
+   return res.writeHead(200, {
       'Content-Type': 'application/pdf',
       'Content-Length': stat.size,
       'Content-Disposition': `attachment; filename=${id}.pdf`,
@@ -459,7 +461,7 @@ exports.downloadPdf = async (req, res) => {
     await client.release();
   } catch (error) {
     console.log(error);
-    res.status(500).send({ error: "Something went wrong." });
+   return res.status(500).send({ error: "Something went wrong." });
   }
 };
 

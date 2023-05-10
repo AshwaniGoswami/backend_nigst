@@ -36,7 +36,7 @@ exports.viewFaculty = async (req, res) => {
     }))
 
 
-    res.status(200).send(facultyWithPhotos)
+   return res.status(200).send(facultyWithPhotos)
 
     await client.release()
 
@@ -47,12 +47,12 @@ exports.viewFaculty = async (req, res) => {
 
     if (error instanceof pg.errors.DBError) {
 
-      res.status(500).send({ message: 'Error connecting to the database' })
+     return res.status(500).send({ message: 'Error connecting to the database' })
 
     }
     else {
 
-      res.status(500).send({ message: 'Something went wrong' })
+    return  res.status(500).send({ message: 'Something went wrong' })
 
     }
   }
@@ -75,14 +75,14 @@ exports.viewStudents = async (req, res) => {
 
     if (result.rows.length === 0) {
 
-      res.status(404).send({ message: 'Nothing to show.' })
+    return  res.status(404).send({ message: 'Nothing to show.' })
 
       client.release()
 
     }
     else {
 
-      res.status(200).send({ students: result.rows })
+    return  res.status(200).send({ students: result.rows })
 
       await client.release()
 
@@ -93,7 +93,7 @@ exports.viewStudents = async (req, res) => {
 
     console.error(error)
 
-    res.status(500).send({ message: 'Something went wrong!.' })
+  return  res.status(500).send({ message: 'Something went wrong!.' })
 
   }
 }
@@ -111,11 +111,11 @@ exports.viewAllStudents = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-      res.send({ message: 'Nothing to show!.' })
+    return  res.send({ message: 'Nothing to show!.' })
 
     }
 
-    res.status(200).send({ students: result.rows })
+   return res.status(200).send({ students: result.rows })
 
     await client.release()
 
@@ -124,7 +124,7 @@ exports.viewAllStudents = async (req, res) => {
 
     console.log(error)
 
-    res.status(500).send({ message: 'Something went wrong!.' })
+  return  res.status(500).send({ message: 'Something went wrong!.' })
 
 
   }
@@ -176,12 +176,12 @@ exports.organizationFilter = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-      res.status(404).send({ message: 'No matching records found.' })
+     return res.status(404).send({ message: 'No matching records found.' })
 
       return
 
     }
-    res.status(200).send(result.rows)
+   return res.status(200).send(result.rows)
 
     await client.release()
 
@@ -190,7 +190,7 @@ exports.organizationFilter = async (req, res) => {
 
     console.error(error)
 
-    res.status(500).send({ message: 'Internal server error.' })
+   return res.status(500).send({ message: 'Internal server error.' })
 
   }
 };
@@ -209,12 +209,12 @@ exports.viewAllCourses = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-      res.send({ message: 'Nothing to Show!.' })
+    return  res.send({ message: 'Nothing to Show!.' })
 
 
     }
 
-    res.status(200).send({ courses: result.rows })
+   return res.status(200).send({ courses: result.rows })
 
     await client.release()
 
@@ -223,7 +223,7 @@ exports.viewAllCourses = async (req, res) => {
 
     console.error(error)
 
-    res.status(500).send({ message: 'Something went wrong!.' })
+   return res.status(500).send({ message: 'Something went wrong!.' })
 
   }
 }
@@ -240,7 +240,7 @@ exports.viewAnnouncement = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-      res.status(404).send({
+     return res.status(404).send({
         message: "Nothing to show"
       })
 
@@ -258,7 +258,7 @@ exports.viewAnnouncement = async (req, res) => {
 
     console.error(error)
 
-    res.status(500).send({
+    return res.status(500).send({
       message: "something went wrong."
     })
 
@@ -282,14 +282,14 @@ exports.allFacultyDetail = async (req, res) => {
 
     const result = await client.query(query1)
 
-    res.status(200).send({ data: result.rows })
+   return res.status(200).send({ data: result.rows })
 
   }
   catch (error) {
 
     console.error(error)
 
-    res.status(500).json({ message: 'Something went wrong.' })
+   return res.status(500).json({ message: 'Something went wrong.' })
 
   }
 }
@@ -299,7 +299,7 @@ exports.viewFacultyName = async (req, res) => {
 
   try {
 
-    const check = `SELECT id,name FROM faculty_name  WHERE name <> 'All'`
+    const check = `SELECT id,name FROM faculty_name  WHERE name <> 'NIGST'`
 
     const client = await pool.connect()
 
@@ -307,11 +307,11 @@ exports.viewFacultyName = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-      res.send({ message: 'Something went wrong.' })
+     return res.send({ message: 'Something went wrong.' })
 
     }
 
-    res.status(200).send(result.rows)
+  return  res.status(200).send(result.rows)
 
     await client.release()
 
@@ -320,7 +320,7 @@ exports.viewFacultyName = async (req, res) => {
 
     console.error(error)
 
-    res.status(400).send({ message: 'Something went wrong.' })
+   return res.status(400).send({ message: 'Something went wrong.' })
 
   }
 }
@@ -339,13 +339,13 @@ exports.viewFacultyWithAccess = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-      res.status(404).send({ message: 'Nothing to Show!.' })
+     return res.status(404).send({ message: 'Nothing to Show!.' })
 
     }
 
     else {
 
-      res.status(200).send({ data: result.rows })
+     return res.status(200).send({ data: result.rows })
 
     }
 
@@ -356,7 +356,7 @@ exports.viewFacultyWithAccess = async (req, res) => {
 
     console.error(error)
 
-    res.status(500).send({ message: 'Internal Serve Error!.' })
+   return res.status(500).send({ message: 'Internal Serve Error!.' })
 
   }
 }
@@ -376,12 +376,12 @@ exports.viewFacultyMembersWithFaculty = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-      res.status(404).send({ message: 'Nothing to Show!.' })
+     return res.status(404).send({ message: 'Nothing to Show!.' })
 
     }
     else {
 
-      res.status(200).send({ data: result.rows })
+     return res.status(200).send({ data: result.rows })
 
     }
 
@@ -392,7 +392,7 @@ exports.viewFacultyMembersWithFaculty = async (req, res) => {
 
     console.error(error)
 
-    res.status(500).send({ message: 'Internal Server Error!.' })
+   return res.status(500).send({ message: 'Internal Server Error!.' })
 
   }
 }
@@ -416,7 +416,7 @@ if (result.rowCount===0) {
 
 else{
 
-  res.status(200).send({course:result.rows})
+ return res.status(200).send({course:result.rows})
 
 }
 
@@ -426,7 +426,44 @@ await client.release()
 
     console.error(error)
 
-    res.status(500).send({message:'Internal Server Error!.'})
+   return res.status(500).send({message:'Internal Server Error!.'})
     
+  }
+}
+
+
+exports.viewAllEnrollment=async(req,res)=>{
+  try {
+    const client= await pool.connect()
+    const check=`SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee,e.nigst_approval as nigstapproval FROM enrolment e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id ;`
+    const result=await client.query(check)
+    if (result.rowCount===0) {
+     return res.status(404).send({message:'No record Found!.'})
+    }
+    else{
+      return res.status(200).send({data: result.rows})
+    }
+    await client.release()
+  } catch (error) {
+    console.error(error)
+   return res.status(500).send({message:'Internal Server Error!.'})
+  }
+}
+
+exports.viewAllCancelEnrollment=async(req,res)=>{
+  try {
+    const client= await pool.connect()
+    const check=`SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee,e.nigst_approval as nigstapproval ,e.cancel_date as cancelDate FROM archive_enroll e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id ;`
+    const result=await client.query(check)
+    if (result.rowCount===0) {
+     return res.status(404).send({message:'No record Found!.'})
+    }
+    else{
+      return res.status(200).send({data: result.rows})
+    }
+    await client.release()
+  } catch (error) {
+    console.error(error)
+    return res.status(500).send({message:'Internal Server Error!.'})
   }
 }
