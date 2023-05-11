@@ -456,8 +456,20 @@ CREATE TABLE IF NOT EXISTS album (
 
  )
  `)
+ await client.query(`
  
- 
+ CREATE TABLE IF NOT EXISTS archive_enroll(
+  id SERIAL PRIMARY KEY,
+  scheduling_id varchar(255) NOT NULL REFERENCES course_scheduler(course_scheduler_id),
+  student_id varchar(255) NOT NULL REFERENCES users(student_id),
+  course_paid_status BOOLEAN NOT NULL DEFAULT false,
+  enrolment_status varchar(255) NOT NULL DEFAULT 'request',
+  nigst_approval BOOLEAN NOT NULL DEFAULT false,
+  enrolment_date DATE DEFAULT NOW(),
+  enrolment_id varchar(255) NOT NULL,
+  cancel_date DATE DEFAULT NOW()
+ )`)
+
   await client.query(`
   CREATE TABLE IF NOT EXISTS tender(
     id SERIAL PRIMARY KEY,
