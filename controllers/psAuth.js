@@ -109,7 +109,7 @@ exports.login = async (req, res) => {
 
             const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' })
 
-          return  res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id,email: userResult.rows[0].email })
+          return  res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id,email: userResult.rows[0].email,org:userResult.rows[0].organization })
           } else {
            return res.status(401).json({ error: 'Invalid email or password' })
           }
