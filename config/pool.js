@@ -21,6 +21,18 @@ const pool = new Pool({
   password,
   port,
 })
+// const host = 'nigst-database.ct7tofa2ajsn.ap-south-1.rds.amazonaws.com'
+// const database = 'nigst'
+// const username = 'kspl'
+// const password = 'KSPL123#'
+// const port = 5432; 
+// const pool = new Pool({
+//   host,
+//   database,
+//   user: username,
+//   password,
+//   port,
+// })
 
 module.exports = pool;
 

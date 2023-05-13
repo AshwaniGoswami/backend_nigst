@@ -521,7 +521,7 @@ exports.positionSend = async (req, res) => {
 
     const Query = `SELECT * FROM faculty_position`
 
-    const Query1 = 'SELECT first_name, middle_name, last_name FROM faculty'
+    const Query1 = 'SELECT first_name, middle_name, last_name,designation FROM faculty'
 
     const result1 = await client.query(Query1)
 
