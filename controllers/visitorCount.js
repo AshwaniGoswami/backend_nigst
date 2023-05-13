@@ -67,6 +67,6 @@ exports.visitorCounter = async (req, res) => {
     const uniqueVisitors = uniqueRows[0].count;
   
     // Send the visitor count as a response
-    res.json({total:totalVisitors ,unique:uniqueVisitors });
+   return res.json({total:totalVisitors ,unique:uniqueVisitors });
   };
   

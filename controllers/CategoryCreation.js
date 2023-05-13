@@ -237,12 +237,12 @@ exports.courseCategoryCreation = async (req, res) => {
     const result = await client.query(query, values);
     const createdCoursCat = result.rows[0];
 
-    res.status(201).json({ data: createdCoursCat });
+   return res.status(201).json({ data: createdCoursCat });
 
-    client.release();
+   await client.release();
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+   return res.status(500).json({ error: "Internal server error" });
   }
 }
 
@@ -257,18 +257,18 @@ exports.EditCategory = async (req, res) => {
     const query1 = "SELECT * FROM course_category WHERE category_id = $1";
     const result = await client.query(query1, [category_id]);
     if (result.rows.length === 0) {
-      res.status(400).send({ error: "This category doesn't exist." });
+     return res.status(400).send({ error: "This category doesn't exist." });
     } else {
       const data = [course_category, title, description, category_id];
       const query2 =
         "UPDATE course_category SET course_category_name = $1, title = $2, description = $3 WHERE category_id = $4";
       await client.query(query2, data);
-      res.send({ message: "Category successfully edited." });
-      client.release();
+    return  res.send({ message: "Category successfully edited." });
+   await   client.release();
     }
   } catch (error) {
     console.log(error);
-    res.status(500).send({ error: "Something went wrong." });
+   return res.status(500).send({ error: "Something went wrong." });
   }
 };
 /////////////////////////////////view table//////////////////////////////////////////////
@@ -280,15 +280,15 @@ exports.ViewCourseCategory = async (req, res) => {
     if (result.rows.length === 0) {
       throw new Error("No categories found.");
     } else {
-      res.send({ categories: result.rows });
+     return res.send({ categories: result.rows });
     }
-    client.release();
+   await client.release();
   } catch (error) {
     if (error.message === "No categories found.") {
-      res.status(400).send({ error: error.message });
+     return res.status(400).send({ error: error.message });
     } else {
       console.log(error);
-      res.status(500).send({ error: "Something went wrong." });
+     return res.status(500).send({ error: "Something went wrong." });
     }
   }
 };
@@ -308,15 +308,15 @@ exports.viewCoursesByCategory = async (req, res) => {
     if (result.rows.length === 0) {
       throw new Error("No courses found for this category.");
     } else {
-      res.send(result.rows);
-      client.release();
+     return res.send(result.rows);
+      await client.release();
     }
   } catch (error) {
     if (error.message === "No courses found for this category.") {
-      res.status(404).send({ error: error.message });
+     return res.status(404).send({ error: error.message });
     } else {
       console.log(error);
-      res.status(500).send({ error: "Something went wrong." });
+     return res.status(500).send({ error: "Something went wrong." });
     }
   }
 };
@@ -326,10 +326,10 @@ exports.getCategoryNames = async (req, res) => {
     const client = await pool.connect();
     const query = "SELECT course_category_name FROM course_category";
     const result = await client.query(query);
-    res.send(result.rows);
-    client.release();
+   return res.send(result.rows);
+   await client.release();
   } catch (error) {
     console.log(error);
-    res.status(500).send({ error: "Something went wrong." });
+  return  res.status(500).send({ error: "Something went wrong." });
   }
 };

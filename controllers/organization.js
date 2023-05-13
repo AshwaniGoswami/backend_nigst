@@ -98,7 +98,7 @@ exports.departments = async (req, res) => {
     );
 
     console.log(req.body);
-    res.send({
+   return res.send({
       message: "Successfully created"
     });
 
@@ -115,11 +115,11 @@ exports.viewAllOrganizations = async (req, res) => {
   try {
     const connection = await pool.connect();
     const result = await connection.query('SELECT * FROM organizations');
-    res.send(result.rows);
+   return res.send(result.rows);
     await connection.release();
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Something went wrong!' });
+  return  res.status(500).send({ message: 'Something went wrong!' });
   }
 };
 
@@ -141,11 +141,11 @@ exports.viewOrganizations = async (req, res) => {
   try {
     const connection = await pool.connect();
     const result = await connection.query('SELECT organization FROM organizations');
-    res.send(result.rows);
+   return res.send(result.rows);
     await connection.release();
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Something went wrong!' });
+   return res.status(500).send({ message: 'Something went wrong!' });
   }
 };
 
@@ -176,12 +176,12 @@ exports.organizationCourseAssi = async (req,res) =>{
     const values =[organization, courseid, code,batch,courseNo,schedulingID,commencement,completition,organization_course_id]
   
     await connection.query(insertQuery, values)
-    res.status(201).send('Organization Courses Creation Successfully')
+   return res.status(201).send('Organization Courses Creation Successfully')
   }
     await connection.release();
   }catch (err){
     console.error(err)
-    res.status(500).json({message:'Error creating organization '})
+   return res.status(500).json({message:'Error creating organization '})
   }
 }
 exports.otherCategory = async (req,res) =>{
@@ -190,11 +190,11 @@ exports.otherCategory = async (req,res) =>{
     const query=`SELECT category FROM organizations WHERE type=$1`
     const result = await client.query(query,['Other']);
     if(result.rows.length===0){res.send({message:"Nothing To Show"})}
-    res.send( { organizations: result.rows });
+   return res.send( { organizations: result.rows });
     await client.release();
   }catch (err){
     console.error(err)
-    res.status(500).json({message:'Error creating organization '})
+  return  res.status(500).json({message:'Error creating organization '})
   }
 }
 
@@ -204,11 +204,11 @@ exports.courseAssi = async(req,res)=>{
     const query =`SELECT organization FROM organizations`
     const result = await client(query);
     if(result.rows.length===0){res.send({message:"Nothing TO Show"})}
-    res.send({organization:result.rows});
+   return res.send({organization:result.rows});
     await client.release(); 
   }catch (err){
     console.error(err)
-    res.status(500).json({message:'Error creating organization '})
+   return res.status(500).json({message:'Error creating organization '})
   }
 }
 
@@ -218,12 +218,12 @@ exports.idAssi =async(req,res)=>{
     const query= `SELECT course_id FROM courses`
     const result = await client(query);
     if(result.rows.length===0){res.send({message:"Nothing TO Show"})}
-    res.send({courses:result.rows});
+   return res.send({courses:result.rows});
     await client.release();
 
   }catch (err){
     console.error(err)
-    res.status(500).json({message:'Error creating organization '})
+   return res.status(500).json({message:'Error creating organization '})
   }
 }
 // exports.departAssi = async(req,res)=>{
@@ -250,11 +250,11 @@ exports.departAssi = async (req, res) => {
     const values = [org_name, courseId, des];
     const client = await pool.connect();
     await client.query(query, values);
-    res.status(200).json({ message: 'Successfully created' });
-    client.release();
+  return  res.status(200).json({ message: 'Successfully created' });
+   await client.release();
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error creating organization' });
+   return res.status(500).json({ message: 'Error creating organization' });
   }
 };
 
@@ -263,10 +263,10 @@ exports.viewdepartAssi = async (req, res) => {
   try {
     const connection = await pool.connect();
     const result = await connection.query('SELECT * FROM org_assi');
-    res.send(result.rows);
+   return res.send(result.rows);
     await connection.release();
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Something went wrong!' });
+   return res.status(500).send({ message: 'Something went wrong!' });
   }
 };

@@ -38,10 +38,10 @@ exports.postContact = async (req, res) => {
     );
 
     await client.query('COMMIT');
-    res.json({ message: 'Successfully sent feedback' });
+  return  res.json({ message: 'Successfully sent feedback' });
   } catch (error) {
     await client.query('ROLLBACK');
-    res.json(error);
+  return  res.json(error);
   } finally {
     if (client) {
       await client.release();
@@ -53,7 +53,7 @@ exports.viewContact = async(req,res)=>{
     const connection = await pool.connect();
     const query = "SELECT * FROM contact_form";
     const result = await connection.query(query);
-    res.send( { details: result.rows });
+   return res.send( { details: result.rows });
     await connection.release();
   }catch (error) {
     console.error(error)

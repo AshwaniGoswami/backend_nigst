@@ -141,10 +141,10 @@ exports.sendOTP = async (req, res) => {
       to: phoneNumber
     });
 
-    res.status(200).json({ message: 'OTP sent successfully.' });
+   return res.status(200).json({ message: 'OTP sent successfully.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error sending OTP.' });
+   return res.status(500).json({ message: 'Error sending OTP.' });
   }
 };
 
@@ -170,7 +170,7 @@ exports.resendOTP = async (req, res) => {
       to: phoneNumber
     });
   
-    res.status(200).json({ message: 'OTP replaced and sent successfully.' });
+   return res.status(200).json({ message: 'OTP replaced and sent successfully.' });
   } else {
     const otp = Math.floor(100000 + Math.random() * 900000);
   
@@ -182,12 +182,12 @@ exports.resendOTP = async (req, res) => {
       to: phoneNumber
     });
   
-    res.status(200).json({ message: 'New OTP sent successfully.' });
+  return  res.status(200).json({ message: 'New OTP sent successfully.' });
   }
   
   } catch (error) {
   console.error(error);
-  res.status(500).json({ message: 'Error resending OTP.' });
+ return res.status(500).json({ message: 'Error resending OTP.' });
   }
   };
 
@@ -208,10 +208,10 @@ exports.verifyOTP = async (req, res) => {
     await pool.query('UPDATE otps SET verified = true WHERE phone_number = $1', [phoneNumber]);
     await pool.query('UPDATE users SET mobile_verified = true WHERE phone = $1', [phoneNumber]);
 
-    res.status(200).json({ message: 'OTP verified successfully.' });
+   return res.status(200).json({ message: 'OTP verified successfully.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error verifying OTP.' });
+   return res.status(500).json({ message: 'Error verifying OTP.' });
   }
 };
 

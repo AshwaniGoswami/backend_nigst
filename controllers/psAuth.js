@@ -74,21 +74,21 @@ exports.login = async (req, res) => {
 
     const userResult = await client.query(userQuery, [email])
     if (userResult.rows.length === 0) {
-      res.status(401).json({ error: 'Invalid email or password' })
+     return res.status(401).json({ error: 'Invalid email or password' })
     } else {
       const user = userResult.rows[0]
       if (!user.hasOwnProperty('email_verified') || user.email_verified === false) {
-        res.json({ message: 'Email not verified' })
+      return  res.json({ message: 'Email not verified' })
       } else if (!user.hasOwnProperty('mobile_verified') || user.mobile_verified === false) {
-        res.json({ message: 'Mobile not verified' })
+      return  res.json({ message: 'Mobile not verified' })
       } else if (!user.hasOwnProperty('admin_verified') || user.admin_verified === false) {
-        res.json({ message: 'Admin not verified' })
+       return res.json({ message: 'Admin not verified' })
       } else {
         const passwordQuery = `SELECT * FROM password WHERE email = '${userResult.rows[0].email}'`
         const passwordResult = await client.query(passwordQuery)
 
         if (passwordResult.rows.length === 0) {
-          res.json({ error: 'Invalid email or password' })
+        return  res.json({ error: 'Invalid email or password' })
         } else {
 
           const match = await bcrypt.compare(password, passwordResult.rows[0].password)
@@ -109,16 +109,16 @@ exports.login = async (req, res) => {
 
             const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' })
 
-            res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id,email: userResult.rows[0].email })
+          return  res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id,email: userResult.rows[0].email })
           } else {
-            res.status(401).json({ error: 'Invalid email or password' })
+           return res.status(401).json({ error: 'Invalid email or password' })
           }
         }
       }
     }
     await client.release()
   } catch (error) {
-    res.status(500).json({ error: 'Error connecting to the server' })
+   return res.status(500).json({ error: 'Error connecting to the server' })
   }
 };
 
@@ -131,18 +131,18 @@ exports.signUp = async (req, res) => {
 
     const { fname, mname, lname, dob, phone, gender, email, password, organization } = req.body;
     if (!password || password==="") {
-      res.send({ message: 'Please provide a password' });
+     return res.send({ message: 'Please provide a password' });
       await client.release();
-      return;
+      
     }
 
     const checkQuery = 'SELECT * FROM users WHERE email = $1'
     const result = await client.query(checkQuery, [email])
 
     if (result.rowCount > 0) {
-      res.send({ message: 'User already exists' })
+      return  res.send({ message: 'User already exists' })
       await client.release();
-      return;
+      
     }
 
       const query2 = "SELECT * FROM users WHERE student_id = $1"
@@ -177,7 +177,7 @@ exports.signUp = async (req, res) => {
         'Please verify your email.',
         `<p>Hello ${req.body.fname} ${req.body.lname}, Thanks for registering with us. Please click below to verify your email.</p><br><a href=${url}><button style="color:white;background-color:#4CFA50;border-radius:8px;border:none;padding:auto;">Click Here to Verify Your Email</button></a>`
       );
-      res
+     return res
         .status(200)
         .send({ message: 'Verification email sent. Please check your email to verify.' })
 
@@ -185,7 +185,7 @@ exports.signUp = async (req, res) => {
 
   } catch (error) {
     console.log(error)
-      res.status(500).send({ message: 'Something went wrong' })
+    return res.status(500).send({ message: 'Something went wrong' })
     }
   }
 
@@ -280,7 +280,7 @@ exports.ForgotPassword = async (req, res) => {
       return res.status(200).json({ message: 'Reset token sent to email' })
     }
   } catch (error) {
-    res.status(500).json({ message: 'Internal server error' })
+   return res.status(500).json({ message: 'Internal server error' })
   }
 }
 
@@ -322,13 +322,13 @@ exports.passwordReset = async (req, res) => {
     return res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).send('Token expired');
+     return res.status(401).send('Token expired');
     }
     else if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).send('Invalid token');
+     return res.status(401).send('Invalid token');
     }
     else {
-      res.status(500).send({ message: 'Password reset failed' });
+     return res.status(500).send({ message: 'Password reset failed' });
     }
   }
 };
@@ -368,12 +368,12 @@ exports.verifyEmail = async (req, res) => {
     await client.release();
   } catch (err) {
     if (err instanceof jwt.TokenExpiredError) {
-      res.status(401).send('Token expired');
+    return  res.status(401).send('Token expired');
     } else if (err instanceof jwt.JsonWebTokenError) {
-      res.status(401).send('Invalid token');
+     return res.status(401).send('Invalid token');
     } else {
       console.error(err);
-      res.status(401).send('Invalid email or registration number');
+     return res.status(401).send('Invalid email or registration number');
     }
   }
 }
@@ -389,8 +389,8 @@ exports.sendVeriMailAgain = async (req, res) => {
     const query = 'SELECT first_name, last_name FROM users WHERE email = $1';
     const result = await connection.query(query, [email]);
     if (result.rows.length === 0) {
-      res.status(404).send({ error: 'User not found!.' });
-      return;
+     return res.status(404).send({ error: 'User not found!.' });
+      
     } else {
       const { first_name, last_name } = result.rows[0];
       const newToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' });
@@ -400,12 +400,12 @@ exports.sendVeriMailAgain = async (req, res) => {
         <p>Thanks for registering with us. Please click the link below to verify your email:</p>
         <a href="${url}">Verify Email</a>
       `);
-      res.status(200).send({ message: 'Verification email sent.' });
+    return  res.status(200).send({ message: 'Verification email sent.' });
     }
     await connection.release();
   } catch (err) {
     console.error(err);
-    res.status(500).send({ error: 'Internal Server Error!.' });
+   return res.status(500).send({ error: 'Internal Server Error!.' });
   }
 }
 
@@ -419,11 +419,11 @@ exports.viewVeriStatus=async(req,res)=>{
     if (result.rowCount===0) {
       return res.status(404).send({message:'User Not Found'})
     }
-    res.status(200).send({data:result.rows})
+  return  res.status(200).send({data:result.rows})
     await client.release()
   } catch (error) {
     console.error(error)
-    res.status(500).send({message:'Internal Server Error!.'})
+   return res.status(500).send({message:'Internal Server Error!.'})
   }
 }
 
@@ -697,14 +697,14 @@ exports.filter = async (req, res) => {
 
     const result = await client.query(query, params);
     if (result.rowCount === 0) {
-      res.status(404).send({ message: 'No matching records found.' })
+    return  res.status(404).send({ message: 'No matching records found.' })
       return
     }
     res.send(result.rows);
     await client.release()
   } catch (error) {
     console.error(error)
-    res.status(500).send({ message: 'Internal server error.' })
+   return res.status(500).send({ message: 'Internal server error.' })
   }
 };
 
@@ -716,7 +716,7 @@ exports.adminVerify = async (req, res) => {
     const client = await pool.connect();
     const result = await client.query(check, [email]);
     if (result.rowCount === 0) {
-      res.send({ message: 'User not exists.' });
+    return  res.send({ message: 'User not exists.' });
     }
     const user = result.rows[0];
 
@@ -727,19 +727,19 @@ exports.adminVerify = async (req, res) => {
       await client.query('BEGIN');
       await client.query(verify, data2);
       await client.query('COMMIT');
-      res.send({ message: 'Successfully unverified.' });
+    return  res.send({ message: 'Successfully unverified.' });
     }
     else {
       await client.query('BEGIN');
       await client.query(verify, data);
       await client.query('COMMIT');
-      res.send({ message: 'Successfully verified.' });
+     return res.send({ message: 'Successfully verified.' });
     }
 
     await client.release();
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal server error.' });
+   return res.status(500).send({ message: 'Internal server error.' });
   }
 };
 
