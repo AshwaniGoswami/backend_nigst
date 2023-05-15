@@ -174,199 +174,141 @@ const generateNumericValue = require("../generator/NumericId");
 // };
 
 exports.course_scheduling = async (req, res) => {
+  let client;
   try {
+    const { courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate } = req.body;
 
-    const { courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate } = req.body
+    client = await pool.connect();
 
-    const client = await pool.connect()
+    let batch = 1;
 
-    var batch = 1
+    const check = 'SELECT * FROM course_scheduler WHERE course_id=$1 ORDER BY id ASC';
 
-    const check = 'SELECT * FROM course_scheduler WHERE course_id=$1 ORDER BY id ASC'
+    const result = await client.query(check, [courseID]);
 
-    const result = await client.query(check, [courseID])
+    let generateid = generateNumericValue(6);
 
-    var generateid = generateNumericValue(6)
+    const check1 = 'SELECT * FROM course_scheduler WHERE course_scheduler_id=$1';
 
-    const check1 = 'SELECT * FROM course_scheduler WHERE course_scheduler_id=$1'
-
-    var result1 = await client.query(check1, [generateid])
+    let result1 = await client.query(check1, [generateid]);
 
     while (result1.rowCount > 0) {
-
-      var result1 = await client.query(check1, [generateid])
-
+      generateid = generateNumericValue(6);
+      result1 = await client.query(check1, [generateid]);
     }
+
     if (result.rows.length > 0) {
-
-      const lastStatus = result.rows[result.rows.length - 1].course_status
-
-      const lastBatchNumber = result.rows[result.rows.length - 1].batch_no
-
-      const lastRunningDate = result.rows[result.rows.length - 1].running_date
-
-      const lastCommencementDate = result.rows[result.rows.length - 1].date_comencement
-
-      const lastCompletionDate = result.rows[result.rows.length - 1].date_completion
+      const lastStatus = result.rows[result.rows.length - 1].course_status;
+      const lastBatchNumber = result.rows[result.rows.length - 1].batch_no;
+      const lastRunningDate = result.rows[result.rows.length - 1].running_date;
+      const lastCommencementDate = result.rows[result.rows.length - 1].date_comencement;
+      const lastCompletionDate = result.rows[result.rows.length - 1].date_completion;
 
       if (lastStatus === 'completed' || lastStatus === 'running' || lastStatus === 'scheduled') {
-
-        batch = parseInt(lastBatchNumber) + 1
+        batch = parseInt(lastBatchNumber) + 1;
 
         if (runningDate >= dateCommencement && runningDate <= dateCompletion) {
-
-          const data = [courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate, batch, generateid]
-
-          const feed = 'INSERT INTO course_scheduler(name,course_id,course_capacity,date_comencement,date_completion,currency,fee,running_date,batch_no,course_scheduler_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) '
-
-          await client.query(feed, data)
-
-         return res.status(201).send({ message: 'Course Scheduled Successfully.' })
-
+          const data = [courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate, batch, generateid];
+          const feed = 'INSERT INTO course_scheduler(name,course_id,course_capacity,date_comencement,date_completion,currency,fee,running_date,batch_no,course_scheduler_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ';
+          await client.query(feed, data);
+          return res.status(201).send({ message: 'Course Scheduled Successfully.' });
+        } else {
+          return res.send({ message: 'Running date is not between commencement and completion dates.' });
         }
-
-         else {
-
-         return res.send({ message: 'Running date is not between commencement and completion dates.' })
-
-        }
-
+      } else if (lastStatus === 'postponed') {
+        return res.send({ message: 'There is already a postponed course!.' });
+      } else {
+        return res.send({ message: 'You can\'t create a new course when there is a course for scheduling!.' });
       }
-      else if (lastStatus === 'postponed') {
-
-     return   res.send({ message: 'There is already a postponed course!.' })
-
-      } 
-      else {
-
-      return  res.send({ message: 'You cant create new course when there is a course for scheduling!.' })
-
-      }
-    }
-     else {
-
-      const insert = 'INSERT INTO course_scheduler(name,course_id,course_capacity,date_comencement,date_completion,currency,fee,running_date,batch_no,course_scheduler_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)'
-
+    } else {
+      const insert = 'INSERT INTO course_scheduler(name,course_id,course_capacity,date_comencement,date_completion,currency,fee,running_date,batch_no,course_scheduler_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)';
       if (runningDate >= dateCommencement && runningDate <= dateCompletion) {
-
-        await client.query(insert, [courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate, batch, generateid])
-
-       return res.status(200).send({ message: 'New course Scheduled.' })
-
-      } 
-      else {
-
-       return res.send({ message: 'Running date is not between commencement and completion dates.' })
-        
+        await client.query(insert, [courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate, batch, generateid]);
+        return res.status(200).send({ message: 'New course Scheduled.' });
+      } else {
+        return res.send({ message: 'Running date is not between commencement and completion dates.' });
       }
     }
-
-    await client.release()
-
   } catch (error) {
-
-    console.error(error)
-
-  return  res.status(500).send({ message: 'Internal Server Error!.' })
-
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!.' });
   }
-}
+  finally {
+    if (client) {
+      client.release();
+    }
+  }
+};
+
 
 exports.viewScheduledCourses = async (req, res) => {
-
+  let client;
   try {
+    const check = `SELECT name as title, course_capacity as coursecapacity,to_char(date_comencement,'YYYY/MM/DD') as datecomencement, to_char(date_completion,'YYYY/MM/DD') as datecompletion,currency,fee, batch_no as batch, course_status as status, to_char(running_date,'YYYY/MM/DD') as runningdate,to_char(scheduled_at, 'YYYY/MM/DD') as schedulingdate,course_scheduler_id as scheduling_id,course_id as courseid FROM course_scheduler ORDER BY name ASC, batch_no ASC`;
 
-    const check = `SELECT name as title, course_capacity as coursecapacity,to_char(date_comencement,'YYYY/MM/DD') as datecomencement, to_char(date_completion,'YYYY/MM/DD') as datecompletion,currency,fee, batch_no as batch, course_status as status, to_char(running_date,'YYYY/MM/DD') as runningdate,to_char(scheduled_at, 'YYYY/MM/DD') as schedulingdate,course_scheduler_id as scheduling_id,course_id as courseid FROM course_scheduler ORDER BY name ASC, batch_no ASC`
+    client = await pool.connect();
 
-    const client = await pool.connect()
-
-    const result = await client.query(check)
+    const result = await client.query(check);
 
     if (result.rowCount === 0) {
-
-     return res.status(404).send({ message: 'No records found' })
-
+      return res.status(404).send({ message: 'No records found' });
+    } else {
+      return res.status(200).send({ data: result.rows });
     }
-     else {
-
-     return res.status(200).send({ data: result.rows })
-
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!.' });
+  } finally {
+    if (client) {
+      client.release();
     }
-
-    await client.release()
-
   }
-   catch (error) {
+};
 
-    console.error(error)
-
-   return res.status(500).send({ message: 'Internal Server Error!.' })
-
-  }
-}
 
 
 exports.courseCreation = async (req, res) => {
+  let client;
+  try {
+    let { courseCategory, title, courseCode, courseNo, eligibility, courseDirector, courseOfficer, courseDurationInDays, courseDurationInWeeks, faculty, mode, type, description } = req.body;
+    courseDirector = 'Head of Faculty ' + faculty;
 
-  try { 
+    client = await pool.connect();
 
-    var { courseCategory, title, courseCode, courseNo,  eligibility, courseDirector,courseOfficer, courseDurationInDays, courseDurationInWeeks, faculty,mode,type,description } = req.body
+    let course_id = generateNumericValue(6);
 
-courseDirector='Head of Faculty '+faculty
+    const checkCourseIdQuery = 'SELECT * from courses where course_id = $1';
 
-    const client = await pool.connect()
+    let result1 = await client.query(checkCourseIdQuery, [course_id]);
 
-      let course_id = generateNumericValue(6)
+    while (result1.rows.length !== 0) {
+      course_id = generateNumericValue(6);
+      result1 = await client.query(checkCourseIdQuery, [course_id]);
+    }
 
-      const checkCourseIdQuery = 'SELECT * from courses where course_id = $1'
+    const insertQuery = 'INSERT INTO courses (course_category, title, course_code, course_no, course_id, eligibility, course_duration_days, course_duration_weeks, course_director, course_officer, faculty, course_mode, course_type, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)';
+    const values = [courseCategory, title, courseCode, courseNo, course_id, eligibility, courseDurationInDays, courseDurationInWeeks, courseDirector, courseOfficer, faculty, mode, type, description];
 
-      let result1 = await client.query(checkCourseIdQuery, [course_id])
+    await client.query(insertQuery, values);
 
-      while (result1.rows.length !== 0) {
+    res.status(201).send('Course created successfully');
+  } catch (error) {
+    console.error(error);
 
-        course_id = generateNumericValue(6)
-
-        result1 = await client.query(checkCourseIdExistsQuery, [course_id])
-
-      }
- 
-
-        const insertQuery = 'INSERT INTO courses (course_category, title, course_code, course_no, course_id,  eligibility, course_duration_days, course_duration_weeks, course_director, course_officer, faculty,course_mode,course_type,description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,$14)';
-
-        const values = [courseCategory, title, courseCode, courseNo,course_id,  eligibility,courseDurationInDays,courseDurationInWeeks,courseDirector,courseOfficer,faculty,mode,type,description ]
-
-        await client.query(insertQuery, values)
-
-      return  res.status(201).send('Course created successfully')
-  
-
-      await client.release()
-    
-
-  }
-
-  catch (err) {
-
-    console.error(err)
-  
-    if (err.code === '23505') {
-
-     return res.status(409).json({ message: 'This course already exists.' })
-
-    } 
-    else if (err.code === '23502') { 
-      
-    return  res.status(400).json({ message: 'Missing required field.' })
-
-    } 
-    else {
-
-     return res.status(500).json({ message: 'Something went wrong!' })
-
+    if (error.code === '23505') {
+      res.status(409).json({ message: 'This course already exists.' });
+    } else if (error.code === '23502') {
+      res.status(400).json({ message: 'Missing required field.' });
+    } else {
+      res.status(500).json({ message: 'Something went wrong!' });
+    }
+  } finally {
+    if (client) {
+      client.release();
     }
   }
-  
-}
+};
+
 
 
 /////////////////////////////////////////update course/////////////////////////////////////
@@ -424,101 +366,67 @@ exports.updateCourse=async(req,res)=>{
 //////////////////////////////view course table/////////////////////////////////////////////
 
 exports.viewCourses = async (req, res) => {
+  let client;
   try {
-
-    const client = await pool.connect()
-
-    
-    const query = 'SELECT  c.course_category, c.course_code, c.course_no, c.title, c.description, c.course_mode, c.course_duration_weeks, c.course_duration_days, c.eligibility, c.course_type, c.course_director, c.faculty, TO_CHAR(c.created_at::date, \'YYYY-MM-DD\') AS created_at, CONCAT(f.first_name, \' \', COALESCE(f.middle_name, \'\'), \' \', f.last_name) AS courseOfficer FROM courses c JOIN faculty f ON c.course_officer = f.faculty_id'
-
-    const result = await client.query(query)
-
-    if(result.rowCount===0){
-
-     return res.status(404).send({message:'Nothing to display.'})
-
+    client = await pool.connect();
+    const query =
+      'SELECT  c.course_category, c.course_code, c.course_no, c.title, c.description, c.course_mode, c.course_duration_weeks, c.course_duration_days, c.eligibility, c.course_type, c.course_director, c.faculty, TO_CHAR(c.created_at::date, \'YYYY-MM-DD\') AS created_at, CONCAT(f.first_name, \' \', COALESCE(f.middle_name, \'\'), \' \', f.last_name) AS courseOfficer FROM courses c JOIN faculty f ON c.course_officer = f.faculty_id';
+    const result = await client.query(query);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'Nothing to display.' });
     }
-
-   return res.status(200).send({courses:result.rows})
-
-   await client.release()
-
-
-  } 
-  catch (error) 
-  {
-      console.log(error)
-
-    return  res.status(500).send({ error: "Something went wrong." })
-    
+    return res.status(200).send({ courses: result.rows });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ error: 'Something went wrong.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
+
 
 exports.filterCourse = async (req, res) => {
-
+  let client;
   try {
-    
-    const {startDate,endDate,courseCategory,facultyId,eligibility} = req.body
-
-    const client = await pool.connect()
-
+    const { startDate, endDate, courseCategory, facultyId, eligibility } = req.body;
+    client = await pool.connect();
     let query = `
       SELECT *
       FROM courses
       WHERE 1 = 1
-    `
-
+    `;
     if (startDate && endDate) {
-      
       query += `AND date_comencement >= '${startDate}' 
-                 AND date_completion <= '${endDate}'`
+                 AND date_completion <= '${endDate}'`;
     }
-
-  
     if (courseCategory) {
-
-      query += `AND course_category = '${courseCategory}'`
-
+      query += `AND course_category = '${courseCategory}'`;
     }
-
     if (facultyId) {
-
-      query += `AND faculty_id = '${facultyId}'`
-
+      query += `AND faculty_id = '${facultyId}'`;
     }
-
     if (eligibility) {
-
-      query += `AND eligibility = '${eligibility}'`
-
+      query += `AND eligibility = '${eligibility}'`;
     }
-
-    query += 'ORDER BY date_comencement ASC'
-
-    const result = await client.query(query)
-
+    query += 'ORDER BY date_comencement ASC';
+    const result = await client.query(query);
     if (result.rows.length === 0) {
-
-     return res.send({ message: "No courses found" })
-
-    } 
-    else {
-
-     return res.send({ courses: result.rows })
-
+      return res.send({ message: 'No courses found' });
+    } else {
+      return res.send({ courses: result.rows });
     }
-
-   await client.release()
-
-  } 
-  catch (err) {
-
-    console.error(err)
-
-   return res.send({ message: "Something went wrong" })
-
+  } catch (error) {
+    console.error(error);
+    return res.send({ message: 'Something went wrong' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
+
 
 ////////////////////////////update course status//////////////////////////////////
 exports.updateCourseStatus = async (req, res) => {
@@ -802,120 +710,78 @@ exports.changeCourseStatus = async (req, res) => {
 // };
 
 exports.sendCourseCodeNo = async (req, res) => {
-
+  let client;
   try {
-
-    const client = await pool.connect()
-
-    const check = 'SELECT DISTINCT course_code, course_no FROM courses'
-
-    const result = await client.query(check)
-
+    client = await pool.connect();
+    const check = 'SELECT DISTINCT course_code, course_no FROM courses';
+    const result = await client.query(check);
     if (result.rowCount === 0) {
-
-      return res.status(404).send({ message: 'Not Found!' })
-
-    } 
-    else {
-
+      return res.status(404).send({ message: 'Not Found!' });
+    } else {
       const data = result.rows.map(row => {
-
-        return { course_code: row.course_code, course_no: row.course_no }
-
-      })
-
-      return res.status(200).send({ data })
-
+        return { course_code: row.course_code, course_no: row.course_no };
+      });
+      return res.status(200).send({ data });
     }
-
-    await client.release()
-
-  } 
-  catch (error) {
-
-    console.error(error)
-
-   return res.status(500).send({ message: 'Internal Server Error!' })
-
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
 
 
-exports.takeCodeNo=async(req,res)=>{
 
+exports.takeCodeNo = async (req, res) => {
+  let connection;
   try {
-
-    const {code,no,type}=req.params
-
-    const data=[code,no,type]
-
-    const connection=await pool.connect()
-
-    const check='SELECT course_id as courseid,title as coursename,description from courses WHERE course_code=$1 AND course_no=$2 AND course_category=$3 '
-
-    const result=await connection.query(check,data)
-
-    if (result.rowCount===0) {
-
-      return res.status(404).send({message:'No Course Found!.'})
-
+    const { code, no, type } = req.params;
+    const data = [code, no, type];
+    connection = await pool.connect();
+    const check = 'SELECT course_id as courseid, title as coursename, description FROM courses WHERE course_code = $1 AND course_no = $2 AND course_category = $3';
+    const result = await connection.query(check, data);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'No Course Found!' });
+    } else {
+      return res.status(200).send({ course: result.rows });
     }
-
-    else{
-
-      return res.status(200).send({course:result.rows})
-
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (connection) {
+    await  connection.release();
     }
-
-     await connection.release()
-
-  } 
-  catch (error) {
-
-    console.error(error)
-
-   return res.status(500).send({message:'Internal Server Error!.'})
-
   }
-}
+};
 
 
 exports.sendBatchAndInfo = async (req, res) => {
-
+  let connection;
   try {
-
-    const { courseID } = req.params
-
-    const connection = await pool.connect()
-
-    const check = 'SELECT course_scheduler_id as schedulingid, batch_no as batch, date_comencement as commencementdate, date_completion as completiondate FROM course_scheduler WHERE course_id=$1 AND course_status IN ($2, $3)'
-
-    const data = [courseID, "created", "scheduled"]
-
-    const result = await connection.query(check, data)
-
+    const { courseID } = req.params;
+    connection = await pool.connect();
+    const check = 'SELECT course_scheduler_id as schedulingid, batch_no as batch, date_comencement as commencementdate, date_completion as completiondate FROM course_scheduler WHERE course_id=$1 AND course_status IN ($2, $3)';
+    const data = [courseID, 'created', 'scheduled'];
+    const result = await connection.query(check, data);
     if (result.rowCount === 0) {
-
-      return res.status(404).send({ message: 'No Course Found!' })
-
+      return res.status(404).send({ message: 'No Course Found!' });
+    } else {
+      return res.status(200).send({ course: result.rows });
     }
-     else {
-
-      return res.status(200).send({ course: result.rows })
-
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (connection) {
+     await connection.release();
     }
-
-    await connection.release()
-
-  } 
-  catch (error) {
-
-    console.error(error)
-
-   return res.status(500).send({ message: 'Internal Server Error!.' })
-
   }
-}
+};
+
 
 
 

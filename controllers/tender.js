@@ -2,7 +2,13 @@ const pool = require("../config/pool");
 const fs = require('fs');
 const generateNumericValue = require("../generator/NumericId");
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-const s3Client = new S3Client({ region: process.env.BUCKET_REGION });
+const s3Client = new S3Client({
+  region: process.env.BUCKET_REGION,
+  credentials: {
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  },
+});
 
 
 // exports.tenderCreation = async (req, res) => {
@@ -115,21 +121,31 @@ exports.viewCorriPdf = async (req, res) => {
       return res.status(404).send({ error: `PDF not found.` });
     }
 
-    const filePath = result.rows[0].attachment;
+    const fileUrl = result.rows[0].attachment;
+    const corrigendumKey = 'tender/corrigendum/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1); // Include the folder path
 
-    if (!fs.existsSync(filePath)) {
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: corrigendumKey,
+    });
+
+    let response;
+    try {
+      response = await s3Client.send(getObjectCommand);
+    } catch (error) {
       await client.release();
       return res.status(404).send({ error: `Attachment file does not exist.` });
     }
 
-    const fileStream = fs.createReadStream(filePath);
-    const stat = fs.statSync(filePath);
+    if (!response.Body) {
+      await client.release();
+      return res.status(404).send({ error: `Attachment file does not exist.` });
+    }
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', stat.size);
-    res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+    res.setHeader('Content-Disposition', `attachment; filename=${fileUrl}`);
 
-    fileStream.pipe(res);
+    response.Body.pipe(res);
 
     await client.release();
   } catch (error) {
@@ -137,6 +153,8 @@ exports.viewCorriPdf = async (req, res) => {
     res.status(500).send({ error: 'Something went wrong.' });
   }
 };
+
+
 
 
 exports.archiveTender = async (req, res) => {
@@ -304,8 +322,9 @@ exports.getTenderNo = async (req, res) => {
     const query = `SELECT tender_ref_no FROM tender`
     const result = await client.query(query);
     if (result.rows.length === 0) { res.send({ message: "Nothing To Show" }) }
-  return  res.status(200).send({ tender: result.rows });
     await client.release();
+
+  return  res.status(200).send({ tender: result.rows });
 
 
   } catch (error) {
@@ -415,11 +434,15 @@ exports.viewArchiveTender = async (req, res) => {
 //     res.status(500).send({ error: 'Something went wrong.' });
 //   }
 // };
+
+
+
 exports.viewPdf = async (req, res) => {
   const { tender_number } = req.params;
 
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
     const query = "SELECT attachment FROM tender WHERE tender_ref_no = $1";
     const result = await client.query(query, [tender_number]);
 
@@ -428,22 +451,36 @@ exports.viewPdf = async (req, res) => {
     }
 
     const fileUrl = result.rows[0].attachment;
-    const fileStream = s3Client.send(new GetObjectCommand({
+    const key = 'tender/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1); // Include the folder path
+
+    const getObjectCommand = new GetObjectCommand({
       Bucket: process.env.BUCKET_NAME,
-      Key: fileUrl // Assuming fileUrl contains the S3 object key
-    })).createReadStream();
+      Key: key,
+    });
+
+    const response = await s3Client.send(getObjectCommand);
+
+    if (!response.Body) {
+      return res.status(404).send({ error: `File not found.` });
+    }
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "inline; filename=tender.pdf");
 
-    fileStream.pipe(res);
-
-    await client.release();
+    response.Body.pipe(res);
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: "Something went wrong." });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 };
+
+
+
+
 
 
 

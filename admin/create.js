@@ -205,55 +205,37 @@ exports.assignSubjects = async (req, res) => {
 
 
 exports.createFaculty = async (req, res) => {
-
+  let connection;
   try {
-
-    const { name } = req.body
-
-    const connection = await pool.connect()
-
-    const check = 'SELECT * FROM faculty_name WHERE name=$1'
-
-    const result = await connection.query(check, [name])
+    const { name } = req.body;
+    connection = await pool.connect();
+    const check = 'SELECT * FROM faculty_name WHERE name=$1';
+    const result = await connection.query(check, [name]);
 
     if (result.rowCount > 0) {
-
-      res.status(409).send({ message: 'Faculty Already Exists.' })
-
-    }
-    else {
-      const check = 'SELECT * FROM faculty_name WHERE f_id=$1'
-
-      let fID = generateNumericValue(5)
-
-      const result = await connection.query(check, [fID])
+      return res.status(409).send({ message: 'Faculty Already Exists.' });
+    } else {
+      const check = 'SELECT * FROM faculty_name WHERE f_id=$1';
+      let fID = generateNumericValue(5);
+      let result = await connection.query(check, [fID]);
 
       while (result.rows.length !== 0) {
-
-        fID = generateNumericValue(5)
-
-        result = await connection.query(check, [fID])
-
+        fID = generateNumericValue(5);
+        result = await connection.query(check, [fID]);
       }
 
-      const data = [name, fID]
+      const data = [name, fID];
+      const create = 'INSERT INTO faculty_name(name,f_id) VALUES($1,$2)';
+      await connection.query(create, data);
 
-      const create = 'INSERT INTO faculty_name(name,f_id) VALUES($1,$2)'
-
-      await connection.query(create, data)
-
-      res.status(201).send({ message: 'Successfully Created.' })
-
+      return res.status(201).send({ message: 'Successfully Created.' });
     }
-
-    await connection.release()
-
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
-  catch (error) {
-
-    console.error(error)
-
-    res.status(500).send({ message: 'Internal Server Error.' })
-
-  }
-}
+};

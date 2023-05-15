@@ -271,6 +271,7 @@ exports.activeInactive = async (req, res) => {
 
 
 exports.updateScheduling = async (req, res) => {
+  let client;
   try {
 
     const { status, batch, courseID,newStatus,newRunningDate,newComencementDate,newCompletionDate } = req.body
@@ -281,7 +282,7 @@ exports.updateScheduling = async (req, res) => {
 
     const data1=[newStatus,status,batch,courseID]
 
-    const client = await pool.connect()
+     client = await pool.connect()
 
     const result = await client.query(check, data)
 
@@ -438,6 +439,10 @@ exports.updateScheduling = async (req, res) => {
     console.error(error)
 
     res.status(500).send({ message: 'Internal Server Error!.' })
+    
+  }
+  finally {
+    await  client.release();
     
   }
 }
