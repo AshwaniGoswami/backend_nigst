@@ -1,6 +1,8 @@
 const pool = require("../config/pool");
 const fs = require('fs');
 const generateNumericValue = require("../generator/NumericId");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const s3Client = new S3Client({ region: process.env.BUCKET_REGION });
 
 
 // exports.tenderCreation = async (req, res) => {
@@ -40,16 +42,18 @@ console.log(file)
     const checkTenderResult = await client.query('SELECT * FROM tender WHERE tender_ref_no = $1', [tenderRefNo]);
     const checkarchive = await client.query('SELECT * FROM archive_tender WHERE tender_ref_no=$1', [tenderRefNo])
     if (checkTenderResult.rows.length > 0 || checkarchive.rowCount > 0) {
+      await client.release();
+
       return res.status(400).send({ message: 'Tender reference number already exists.' });
     }
 
     const query = 'INSERT INTO tender (title, description, start_date, end_date, attachment, tender_ref_no) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
     const values = [title, description, startDate, endDate, file[0].location, tenderRefNo];
     const result = await client.query(query, values);
+    await client.release();
 
    return res.status(201).send({ message: 'Tender created successfully' });
 
-    await client.release();
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: 'Something went wrong' });
@@ -57,34 +61,43 @@ console.log(file)
 }
 
 exports.addCorrigendum = async (req, res) => {
+  let client; 
+
   try {
     const { corrigendum, tender_number } = req.body;
     const file = req.files.pdf;
-    const client = await pool.connect();
+    client = await pool.connect();
 
     const tenderResult = await client.query('SELECT * FROM tender WHERE tender_ref_no = $1', [tender_number]);
     if (tenderResult.rowCount === 0) {
       await client.release();
       return res.status(400).send({ message: 'Tender not found' });
     }
+
     const check = 'SELECT * FROM corrigendum_tender WHERE corri_id=$1'
     let corrigendumID = 'TENDER-' + generateNumericValue(6)
-    const result = await client.query(check, [corrigendumID])
-    while (result.rows.length !== 0) {
+    let checkResult = await client.query(check, [corrigendumID]);
+    while (checkResult.rows.length !== 0) {
       corrigendumID = 'TENDER-' + generateNumericValue(6);
-      result = await client.query(check, [corrigendumID]);
+      checkResult = await client.query(check, [corrigendumID]);
     }
+
     const feed = 'INSERT INTO corrigendum_tender(corrigendum,tender_ref_no,corri_id' + (file ? ', attachment' : '') + ') VALUES ($1,$2,$3' + (file ? ',$4' : '') + ')'
     const data = [corrigendum, tender_number, corrigendumID];
     if (file) data.push(file[0].path);
 
     await client.query(feed, data);
- return    res.status(201).send({ message: 'Corrigendum successfully created' });
-
     await client.release();
+
+    return res.status(201).send({ message: 'Corrigendum successfully created' });
   } catch (error) {
     console.error(error);
-   return res.status(500).send({ message: 'Internal Server Error.' });
+
+    if (client) {
+      await client.release();
+    }
+
+    return res.status(500).send({ message: 'Internal Server Error.' });
   }
 }
 
@@ -126,12 +139,11 @@ exports.viewCorriPdf = async (req, res) => {
 };
 
 
-
 exports.archiveTender = async (req, res) => {
-  const { tender_number } = req.body;
-  let client; 
- 
+  let client;
+
   try {
+    const { tender_number } = req.body;
     client = await pool.connect();
     await client.query('BEGIN');
 
@@ -143,7 +155,6 @@ exports.archiveTender = async (req, res) => {
     const checkTenderResult = await client.query(checkTenderQuery, [tender_number]);
     if (checkTenderResult.rowCount === 0) {
       await client.query('ROLLBACK');
-      await client.release();
       return res.status(400).json({ message: "Tender does not exist." });
     }
 
@@ -176,26 +187,25 @@ exports.archiveTender = async (req, res) => {
     await client.query(deleteQuery, [tender_number]);
 
     await client.query('COMMIT');
-    await client.release();
 
     return res.status(200).json({
       message: "Tender archived successfully",
     });
-  }catch (error) {
+  } catch (error) {
     console.error(error);
     if (client) {
       await client.query('ROLLBACK');
-      await client.release(); 
     }
     return res.status(500).json({
       error: "Something went wrong. Please try again later.",
     });
   } finally {
     if (client) {
-      await client.release(); 
+      client.release();
     }
   }
 };
+
 
 
 
@@ -304,33 +314,44 @@ exports.getTenderNo = async (req, res) => {
   }
 }
 
-exports.viewArchiveTender=async (req,res)=>{
+exports.viewArchiveTender = async (req, res) => {
+  let client;
   try {
-    const check=`SELECT archive_tender.id, archive_tender.title,archive_tender.description, to_char(archive_tender.start_date,'MM/DD/YYYY') as startDate, to_char(archive_tender.end_date,'MM/DD/YYYY') as endDate, archive_tender.tender_ref_no, array_agg(
-        json_build_object(
-          'corrigendumID', archive_corrigendum.corri_id,
-          'corrigendum', archive_corrigendum.corrigendum,
-          'pdf', archive_corrigendum.attachment,
-          'created_at', to_char(archive_corrigendum.created_at, 'MM/DD/YYYY')
-        )
-      ) AS corrigendum
-    FROM archive_tender
-    LEFT JOIN archive_corrigendum ON archive_tender.tender_ref_no = archive_corrigendum.tender_ref_no
-    GROUP BY archive_tender.id`
-    const client=await pool.connect()
-    const result=await client.query(check)
-if (result.rowCount===0) {
- return res.status(200).send({message:'Nothing to show!.'})
-}
-else{
-  return res.status(200).send({data:result.rows})
-}
-await client.release()
+    const check = `
+      SELECT archive_tender.id, archive_tender.title, archive_tender.description, 
+        to_char(archive_tender.start_date, 'MM/DD/YYYY') as startDate, 
+        to_char(archive_tender.end_date, 'MM/DD/YYYY') as endDate, 
+        archive_tender.tender_ref_no, 
+        array_agg(
+          json_build_object(
+            'corrigendumID', archive_corrigendum.corri_id,
+            'corrigendum', archive_corrigendum.corrigendum,
+            'pdf', archive_corrigendum.attachment,
+            'created_at', to_char(archive_corrigendum.created_at, 'MM/DD/YYYY')
+          )
+        ) AS corrigendum
+      FROM archive_tender
+      LEFT JOIN archive_corrigendum ON archive_tender.tender_ref_no = archive_corrigendum.tender_ref_no
+      GROUP BY archive_tender.id
+    `;
+    client = await pool.connect();
+    const result = await client.query(check);
+
+    if (result.rowCount === 0) {
+      return res.status(200).send({ message: 'Nothing to show!' });
+    } else {
+      return res.status(200).send({ data: result.rows });
+    }
   } catch (error) {
-    console.error(error)
-   return res.status(500).send({message:'Internal Server Error!.'})
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
+
 
 // exports.viewPdf = async (req, res) => {
 //   try {
@@ -399,7 +420,7 @@ exports.viewPdf = async (req, res) => {
 
   try {
     const client = await pool.connect();
-    const query = 'SELECT attachment FROM tender WHERE tender_ref_no = $1';
+    const query = "SELECT attachment FROM tender WHERE tender_ref_no = $1";
     const result = await client.query(query, [tender_number]);
 
     if (result.rowCount === 0) {
@@ -407,17 +428,20 @@ exports.viewPdf = async (req, res) => {
     }
 
     const fileUrl = result.rows[0].attachment;
-    const fileStream = request.get(fileUrl);
+    const fileStream = s3Client.send(new GetObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: fileUrl // Assuming fileUrl contains the S3 object key
+    })).createReadStream();
 
-   return res.setHeader('Content-Type', 'application/pdf');
-   return res.setHeader('Content-Disposition', `inline; filename=tender.pdf`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=tender.pdf");
 
     fileStream.pipe(res);
 
-  await  client.release();
+    await client.release();
   } catch (error) {
     console.error(error);
-  return  res.status(500).send({ error: 'Something went wrong.' });
+    return res.status(500).send({ error: "Something went wrong." });
   }
 };
 
