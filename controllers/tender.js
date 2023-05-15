@@ -112,16 +112,16 @@ exports.viewCorriPdf = async (req, res) => {
     const fileStream = fs.createReadStream(filePath);
     const stat = fs.statSync(filePath);
 
-  return  res.setHeader('Content-Type', 'application/pdf');
-  return  res.setHeader('Content-Length', stat.size);
-   return res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
 
     fileStream.pipe(res);
 
     await client.release();
   } catch (error) {
     console.error(error);
-   return res.status(500).send({ error: 'Something went wrong.' });
+    res.status(500).send({ error: 'Something went wrong.' });
   }
 };
 
@@ -129,9 +129,10 @@ exports.viewCorriPdf = async (req, res) => {
 
 exports.archiveTender = async (req, res) => {
   const { tender_number } = req.body;
-
-  const client = await pool.connect();
+  let client; 
+ 
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     const checkTenderQuery = `
@@ -180,13 +181,19 @@ exports.archiveTender = async (req, res) => {
     return res.status(200).json({
       message: "Tender archived successfully",
     });
-  } catch (error) {
+  }catch (error) {
     console.error(error);
-    await client.query('ROLLBACK');
-    await client.release();
+    if (client) {
+      await client.query('ROLLBACK');
+      await client.release(); 
+    }
     return res.status(500).json({
       error: "Something went wrong. Please try again later.",
     });
+  } finally {
+    if (client) {
+      await client.release(); 
+    }
   }
 };
 
@@ -224,36 +231,36 @@ exports.viewTender = async (req, res) => {
     const client = await pool.connect();
     const query = `
       SELECT 
-      tender.id, 
-      tender.title, 
-      tender.description, 
-      to_char(tender.start_date, 'MM/DD/YYYY') AS start_date, 
-      to_char(tender.end_date, 'MM/DD/YYYY') AS end_date,
-      tender.tender_ref_no, 
-      array_agg(
-        json_build_object(
-          'corrigendumID', corrigendum_tender.corri_id,
-          'corrigendum', corrigendum_tender.corrigendum,
-          'pdf', corrigendum_tender.attachment,
-          'created_at', to_char(corrigendum_tender.created_at, 'MM/DD/YYYY')
-        )
-      ) AS corrigenda
-    FROM tender
-    LEFT JOIN corrigendum_tender ON tender.tender_ref_no = corrigendum_tender.tender_ref_no
-    GROUP BY tender.id
-    
-      `;
+        tender.id, 
+        tender.title, 
+        tender.description, 
+        to_char(tender.start_date, 'MM/DD/YYYY') AS start_date, 
+        to_char(tender.end_date, 'MM/DD/YYYY') AS end_date,
+        tender.tender_ref_no, 
+        array_agg(
+          json_build_object(
+            'corrigendumID', corrigendum_tender.corri_id,
+            'corrigendum', corrigendum_tender.corrigendum,
+            'pdf', corrigendum_tender.attachment,
+            'created_at', to_char(corrigendum_tender.created_at, 'MM/DD/YYYY')
+          )
+        ) AS corrigenda
+      FROM tender
+      LEFT JOIN corrigendum_tender ON tender.tender_ref_no = corrigendum_tender.tender_ref_no
+      GROUP BY tender.id
+    `;
     const result = await client.query(query);
     if (result.rowCount === 0) {
-     return res.status(404).send({ messgage: 'Nothing to show.' })
+      return res.status(404).send({ message: 'Nothing to show.' });
     }
-   return res.status(200).send({ tender: result.rows });
     await client.release();
+    return res.status(200).send({ tender: result.rows });
   } catch (error) {
     console.log(error);
-   return res.status(500).send({ error: "Something went wrong." });
+    return res.status(500).send({ error: "Something went wrong." });
   }
 };
+
 
 
 

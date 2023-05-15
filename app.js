@@ -10,6 +10,9 @@ const app = express()
 
 app.use(helmet())
 app.disable('x-powered-by')
+
+
+
 // app.use(bodyParser.json({ limit: '10mb', extended: true }));
 // app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 const coursec = require('./routes/coursesRoutes')
