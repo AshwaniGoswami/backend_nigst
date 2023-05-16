@@ -76,15 +76,19 @@ exports.login = async (req, res) => {
     const userResult = await client.query(userQuery, [email]);
     if (userResult.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid email or password' });
-    } else {
+    } 
+    else {
       const user = userResult.rows[0];
       if (!user.hasOwnProperty('email_verified') || user.email_verified === false) {
         return res.json({ message: 'Email not verified' });
-      } else if (!user.hasOwnProperty('mobile_verified') || user.mobile_verified === false) {
+      }
+       else if (!user.hasOwnProperty('mobile_verified') || user.mobile_verified === false) {
         return res.json({ message: 'Mobile not verified' });
-      } else if (!user.hasOwnProperty('admin_verified') || user.admin_verified === false) {
+      }
+       else if (!user.hasOwnProperty('admin_verified') || user.admin_verified === false) {
         return res.json({ message: 'Admin not verified' });
-      } else {
+      }
+       else {
         const passwordQuery = `SELECT * FROM password WHERE email = '${userResult.rows[0].email}'`;
         const passwordResult = await client.query(passwordQuery);
 
@@ -119,7 +123,8 @@ exports.login = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Error connecting to the server' });
-  } finally {
+  }
+   finally {
     if (client) {
       client.release();
     }

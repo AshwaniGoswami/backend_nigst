@@ -1,6 +1,7 @@
 const { Client } = require("pg");
 const pool = require("../config/pool");
 const generateNumericValue = require("../generator/NumericId");
+
 // exports.departments = async (req, res) => {
 //     try {
 //       // Extract the required data from the request body
@@ -147,6 +148,7 @@ exports.viewAllOrganizations = async (req, res) => {
 //   }
 // };
 
+
 exports.viewOrganizations = async (req, res) => {
   try {
     const connection = await pool.connect();
@@ -277,13 +279,19 @@ exports.departAssi = async (req, res) => {
 
 
 exports.viewdepartAssi = async (req, res) => {
+  let connection
   try {
-    const connection = await pool.connect();
+     connection = await pool.connect();
     const result = await connection.query('SELECT * FROM org_assi');
    return res.send(result.rows);
     await connection.release();
   } catch (error) {
     console.error(error);
    return res.status(500).send({ message: 'Something went wrong!' });
+  }
+  finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
