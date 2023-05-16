@@ -151,12 +151,13 @@ exports.viewOrganizations = async (req, res) => {
 
 
 exports.organizationCourseAssi = async (req,res) =>{
+  let connection
   try{
-    const connection = await pool.connect();
+     connection = await pool.connect();
     const {organization, courseid, code,courseNo,batch,schedulingID,commencement,completition}=req.body;
-    const checkFacultyExistsQuery = 'SELECT * from organization_course_assi WHERE course_id =$1'
+    const checkFacultyExistsQuery = 'SELECT * from organization_course_assi WHERE course_id =$1 AND organization_name=$2'
     const checkCourseExists =[courseid]
-    const result = await connection.query(checkFacultyExistsQuery,checkCourseExists)
+    const result = await connection.query(checkFacultyExistsQuery,[checkCourseExists,organization])
     if (result.rows.length !==0){
       return res.status(400).json({ message: `This course already assigned to ${organization}`})
 
@@ -178,10 +179,13 @@ exports.organizationCourseAssi = async (req,res) =>{
     await connection.query(insertQuery, values)
    return res.status(201).send('Organization Courses Creation Successfully')
   }
-    await connection.release();
   }catch (err){
     console.error(err)
    return res.status(500).json({message:'Error creating organization '})
+  }
+  finally{
+    await connection.release();
+
   }
 }
 exports.otherCategory = async (req,res) =>{
