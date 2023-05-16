@@ -556,12 +556,13 @@ exports.viewCoursesForEnrollment = async (req, res) => {
   let client;
   try {
     const { name } = req.params;
+    const { studentId } = req.params;
 
-    const check = 'SELECT u.organization, u.student_id, oca.course_id, oca.code, oca.course_no, oca.batch_no, oca.scheduling_id, oca.date_commencement, oca.date_completion, s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id WHERE  u.organization = $1 ORDER BY u.organization';
+    const check = 'SELECT DISTINCT u.organization, u.student_id, oca.course_id, oca.code, oca.course_no, oca.batch_no, oca.scheduling_id, oca.date_commencement, oca.date_completion, s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization';
 
     client = await pool.connect();
 
-    const result = await client.query(check, [name]);
+    const result = await client.query(check, [name, studentId]);
 
     if (result.rowCount === 0) {
       return res.status(404).send({ message: 'No Records Found!.' });
@@ -577,3 +578,4 @@ exports.viewCoursesForEnrollment = async (req, res) => {
     }
   }
 };
+

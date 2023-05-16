@@ -2,57 +2,38 @@ const pool = require("../config/pool");
 const fs = require('fs')
 
 
-
 exports.updateStudentDetails = async (req, res) => {
-
+  let client;
   try {
-
-    const client = await pool.connect()
-
-    const { first_name, middle_name, last_name, dob, phone, gender, email } = req.body
-
-    const checkQuery = 'SELECT * FROM users WHERE email = $1'
-
-    const result = await client.query(checkQuery, [email])
+    client = await pool.connect();
+    const { first_name, middle_name, last_name, dob, phone, gender, email } = req.body;
+    const checkQuery = 'SELECT * FROM users WHERE email = $1';
+    const result = await client.query(checkQuery, [email]);
 
     if (result.rowCount === 0) {
-
-      res.status(404).send({ message: 'User does not exist' })
-
-      await client.release()
-
-      return
-
+      res.status(404).send({ message: 'User does not exist' });
+      return;
     }
-
 
     const updateQuery =
-      'UPDATE users SET first_name=$1, middle_name=$2, last_name=$3, dob=$4, phone=$5, gender=$6,  WHERE email=$7';
-    await client.query(updateQuery, [fname, mname, lname, dob, phone, gender, email])
+      'UPDATE users SET first_name=$1, middle_name=$2, last_name=$3, dob=$4, phone=$5, gender=$6 WHERE email=$7';
+    await client.query(updateQuery, [first_name, middle_name, last_name, dob, phone, gender, email]);
 
-
-
-    res.status(200).send({ message: 'User details updated successfully' })
-
-    await client.release()
-
-  }
-  catch (error) {
-
-    console.error(error)
-
+    res.status(200).send({ message: 'User details updated successfully' });
+  } catch (error) {
+    console.error(error);
     if (error instanceof pg.errors.DBError) {
-
-      res.status(500).send({ message: 'Error connecting to the database' })
-
+      res.status(500).send({ message: 'Error connecting to the database' });
+    } else {
+      res.status(500).send({ message: 'Something went wrong' });
     }
-    else {
-
-      res.status(500).send({ message: 'Something went wrong' })
-
+  } finally {
+    if (client) {
+      client.release();
     }
   }
-}
+};
+
 
 
 
@@ -145,128 +126,89 @@ exports.updateFacultyDetails = async (req, res) => {
 
 
 exports.updateAdminVerificationStatus = async (req, res) => {
-
-  const { email, status } = req.body;
-
+let client
   try {
-    const client = await pool.connect()
+    const { email, status } = req.body;
+
+     client = await pool.connect();
 
     // Check if user with email exists
-    const checkQuery = 'SELECT * FROM users WHERE email = $1'
-
-    const result = await client.query(checkQuery, [email])
+    const checkQuery = 'SELECT * FROM users WHERE email = $1';
+    const result = await client.query(checkQuery, [email]);
 
     if (result.rowCount === 0) {
-
-      res.status(404).send({ message: 'User not found' })
-
-      await client.release()
-
-      return
-
+      res.status(404).send({ message: 'User not found' });
+      return;
     }
 
     // Update admin_verified status of user
-    const updateQuery = 'UPDATE users SET admin_verified = $1 WHERE email = $2'
+    const updateQuery = 'UPDATE users SET admin_verified = $1 WHERE email = $2';
+    await client.query(updateQuery, [status, email]);
 
-    const updateResult = await client.query(updateQuery, [status, email])
-
-
-    res.status(200).send({ message: 'Admin verification status updated successfully' })
-
-    await client.release()
-
+    res.status(200).send({ message: 'Admin verification status updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Something went wrong' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-  catch (error) {
+};
 
-    console.error(error)
-
-    res.status(500).send({ message: 'Something went wrong' })
-
-  }
-}
 
 
 exports.loginAccess = async (req, res) => {
-
+  let client
   try {
-
-    const { access, email } = req.body
-
-    const client = await pool.connect()
-
-    const check = 'SELECT * FROM faculty WHERE email=$1'
-
-    const result = await client.query(check, [email])
-
+    const { access, email } = req.body;
+     client = await pool.connect();
+    const check = 'SELECT * FROM faculty WHERE email=$1';
+    const result = await client.query(check, [email]);
     if (result.rowCount === 0) {
-
-      res.status(404).send({ message: 'Nothing to show!.' })
-
+      return res.status(404).send({ message: 'Nothing to show!.' });
+    } else {
+      const updation = 'UPDATE faculty SET admin_verified= $1 WHERE email=$2';
+      const data = [access, email];
+      await client.query(updation, data);
+      return res.status(200).send({ message: 'Access Changed!.' });
     }
-    else {
-
-      const updation = 'UPDATE faculty SET admin_verified= $1 WHERE email=$2'
-
-      const data = [access, email]
-
-      await client.query(updation, data)
-
-      res.status(200).send({ message: 'Access Changed!.' })
-
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
     }
-
-    await client.release()
-
   }
-  catch (error) {
+};
 
-    console.error(error)
 
-    res.status(500).send({ message: 'Internal Server Error.' })
-
-  }
-}
 exports.activeInactive = async (req, res) => {
-
+  let client
   try {
-
-    const { change, email } = req.body
-
-    const client = await pool.connect()
-
-    const check = 'SELECT * FROM faculty WHERE email=$1'
-
-    const result = await client.query(check, [email])
-
+    const { change, email } = req.body;
+     client = await pool.connect();
+    const check = 'SELECT * FROM faculty WHERE email=$1';
+    const result = await client.query(check, [email]);
     if (result.rowCount === 0) {
-
-      res.status(404).send({ message: 'Nothing to show!.' })
-
+      res.status(404).send({ message: 'Nothing to show!.' });
+    } else {
+      const updation = 'UPDATE faculty SET status= $1 WHERE email=$2';
+      const data = [change, email];
+      await client.query(updation, data);
+      res.status(200).send({ message: 'Access Changed!.' });
     }
-    else {
-
-      const updation = 'UPDATE faculty SET status= $1 WHERE email=$2'
-
-      const data = [change, email]
-
-      await client.query(updation, data)
-
-      res.status(200).send({ message: 'Access Changed!.' })
-
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
     }
-
-    await client.release()
-
   }
-  catch (error) {
+};
 
-    console.error(error)
-
-    res.status(500).send({ message: 'Internal Server Error.' })
-
-  }
-}
 
 
 

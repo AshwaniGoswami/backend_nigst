@@ -79,10 +79,12 @@ const generateNumericValue = require("../generator/NumericId");
 
 
 exports.departments = async (req, res) => {
+  let connection;
   try {
     // Extract the required data from the request body
-    const connection = await pool.connect();
+    connection = await pool.connect();
     const { organization, type, category, department, ministry , email, phone } = req.body;
+
     // Check if organization already exists in the database
     const checkOrgResult = await pool.query(`SELECT id FROM organizations WHERE organization = $1`, [organization]);
     if (checkOrgResult.rows.length > 0) {
@@ -98,30 +100,38 @@ exports.departments = async (req, res) => {
     );
 
     console.log(req.body);
-   return res.send({
+    return res.send({
       message: "Successfully created"
     });
-
-    await connection.release();
   } catch (error) {
-    console.error(error)
+    console.error(error);
     return res.status(500).send({ message: 'Something went wrong!' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
-}
+};
+
 
 // VIEW ALL ORGANIZATIONS TABLE DATA
 
 exports.viewAllOrganizations = async (req, res) => {
+  let connection;
   try {
-    const connection = await pool.connect();
+    connection = await pool.connect();
     const result = await connection.query('SELECT * FROM organizations');
-   return res.send(result.rows);
-    await connection.release();
+    return res.send(result.rows);
   } catch (error) {
     console.error(error);
-  return  res.status(500).send({ message: 'Something went wrong!' });
+    return res.status(500).send({ message: 'Something went wrong!' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
+
 
 // VIEW organization FROM ORGANIZATIONS TABLE DATA
 

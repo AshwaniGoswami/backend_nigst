@@ -296,174 +296,135 @@ exports.allFacultyDetail = async (req, res) => {
 
 
 exports.viewFacultyName = async (req, res) => {
-
+  let client
   try {
-
-    const check = `SELECT id,name FROM faculty_name  WHERE name <> 'NIGST'`
-
-    const client = await pool.connect()
-
-    const result = await client.query(check)
-
+    const check = `SELECT id, name FROM faculty_name WHERE name <> 'NIGST'`;
+     client = await pool.connect();
+    const result = await client.query(check);
     if (result.rowCount === 0) {
-
-     return res.send({ message: 'Something went wrong.' })
-
+      return res.send({ message: 'Something went wrong.' });
     }
-
-  return  res.status(200).send(result.rows)
-
-    await client.release()
-
+    return res.status(200).send(result.rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(400).send({ message: 'Something went wrong.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-  catch (error) {
-
-    console.error(error)
-
-   return res.status(400).send({ message: 'Something went wrong.' })
-
-  }
-}
+};
 
 exports.viewFacultyWithAccess = async (req, res) => {
-
+  let client
   try {
-
-    const { access } = req.params
-
-    const client = await pool.connect()
-
-    const check = 'SELECT * FROM faculty WHERE status=$1'
-
-    const result = await client.query(check, access)
-
+    const { access } = req.params;
+     client = await pool.connect();
+    const check = 'SELECT * FROM faculty WHERE status = $1';
+    const result = await client.query(check, [access]);
     if (result.rowCount === 0) {
-
-     return res.status(404).send({ message: 'Nothing to Show!.' })
-
+      return res.status(404).send({ message: 'Nothing to Show.' });
+    } else {
+      return res.status(200).send({ data: result.rows });
     }
-
-    else {
-
-     return res.status(200).send({ data: result.rows })
-
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
     }
-
-    await client.release()
-
   }
-  catch (error) {
+};
 
-    console.error(error)
-
-   return res.status(500).send({ message: 'Internal Serve Error!.' })
-
-  }
-}
 
 
 exports.viewFacultyMembersWithFaculty = async (req, res) => {
-
+  let client
   try {
-
-    const { faculty } = req.params
-
-    const client = await pool.connect()
-
-    const check = 'SELECT first_name as firstname,middle_name as middlename,last_name as lastname,faculty_id as facultyid FROM faculty where faculty=$1'
-
-    const result = await client.query(check, [faculty])
-
+    const { faculty } = req.params;
+     client = await pool.connect();
+    const check = 'SELECT first_name as firstname, middle_name as middlename, last_name as lastname, faculty_id as facultyid FROM faculty WHERE faculty = $1';
+    const result = await client.query(check, [faculty]);
     if (result.rowCount === 0) {
-
-     return res.status(404).send({ message: 'Nothing to Show!.' })
-
+      return res.status(404).send({ message: 'Nothing to Show.' });
+    } else {
+      return res.status(200).send({ data: result.rows });
     }
-    else {
-
-     return res.status(200).send({ data: result.rows })
-
-    }
-
-    await client.release()
-
-  }
-  catch (error) {
-
-    console.error(error)
-
-   return res.status(500).send({ message: 'Internal Server Error!.' })
-
-  }
-}
-
-exports.viewCourseByFaculty=async(req,res)=>{
-  try {
-
-    const {faculty}=req.params
-
-    const check = `SELECT title, course_id, description, (course_duration_weeks || \' Weeks \' || course_duration_days || \' Days\') AS duration, course_code, course_category, course_no,course_officer,course_director,course_mode,course_type,to_char(created_at,'YYYY/MM/DD') as createdAt FROM courses WHERE faculty = $1`
-
-const  client=await pool.connect()
-
-const result=await client.query(check,[faculty])
-
-if (result.rowCount===0) {
-
-  return res.status(404).send({message:'Course Not Found!.'})
-
-}
-
-else{
-
- return res.status(200).send({course:result.rows})
-
-}
-
-await client.release()
-
   } catch (error) {
-
-    console.error(error)
-
-   return res.status(500).send({message:'Internal Server Error!.'})
-    
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
 
 
-exports.viewAllEnrollment=async(req,res)=>{
+exports.viewCourseByFaculty = async (req, res) => {
+  let client
   try {
-    const client= await pool.connect()
-    const check=`SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee,e.nigst_approval as nigstapproval FROM enrolment e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id ;`
-    const result=await client.query(check)
-    if (result.rowCount===0) {
-     return res.status(404).send({message:'No record Found!.'})
+    const { faculty } = req.params;
+    const check = `SELECT title, course_id, description, (course_duration_weeks || ' Weeks ' || course_duration_days || ' Days') AS duration, course_code, course_category, course_no, course_officer, course_director, course_mode, course_type, to_char(created_at, 'YYYY/MM/DD') as createdAt FROM courses WHERE faculty = $1`;
+     client = await pool.connect();
+    const result = await client.query(check, [faculty]);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'Course Not Found.' });
+    } else {
+      return res.status(200).send({ course: result.rows });
     }
-    else{
-      return res.status(200).send({data: result.rows})
-    }
-    await client.release()
   } catch (error) {
-    console.error(error)
-   return res.status(500).send({message:'Internal Server Error!.'})
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
 
-exports.viewAllCancelEnrollment=async(req,res)=>{
+
+
+exports.viewAllEnrollment = async (req, res) => {
+  let client;
   try {
-    const client= await pool.connect()
-    const check=`SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee,e.nigst_approval as nigstapproval ,e.cancel_date as cancelDate FROM archive_enroll e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id ;`
-    const result=await client.query(check)
-    if (result.rowCount===0) {
-     return res.status(404).send({message:'No record Found!.'})
+    client = await pool.connect();
+    const check = `SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee, e.nigst_approval as nigstapproval FROM enrolment e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id;`;
+    const result = await client.query(check);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'No records found.' });
+    } else {
+      return res.status(200).send({ data: result.rows });
     }
-    else{
-      return res.status(200).send({data: result.rows})
-    }
-    await client.release()
   } catch (error) {
-    console.error(error)
-    return res.status(500).send({message:'Internal Server Error!.'})
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
+
+
+exports.viewAllCancelEnrollment = async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const check = `SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee, e.nigst_approval as nigstapproval, e.cancel_date as cancelDate FROM archive_enroll e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id;`;
+    const result = await client.query(check);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'No records found.' });
+    } else {
+      return res.status(200).send({ data: result.rows });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+};
