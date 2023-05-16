@@ -558,7 +558,8 @@ exports.viewCoursesForEnrollment = async (req, res) => {
     const { name } = req.params;
     const { studentId } = req.params;
 
-    const check = 'SELECT DISTINCT u.organization, u.student_id, oca.course_id, oca.code, oca.course_no, oca.batch_no, oca.scheduling_id, oca.date_commencement, oca.date_completion, s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization';
+    const check = 'SELECT DISTINCT u.organization, u.student_id, oca.course_id, c.course_category as category, c.course_code as code,c.course_mode as mode,c.course_type as type,c.description as courseDescription,c.title as courseName,c.course_officer as officer,c.faculty as faculty, oca.course_no, oca.batch_no, oca.scheduling_id, oca.date_commencement, oca.date_completion, s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id JOIN courses c ON oca.course_id = c.course_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization';
+
 
     client = await pool.connect();
 
@@ -569,7 +570,8 @@ exports.viewCoursesForEnrollment = async (req, res) => {
     } else {
       return res.status(200).send({ course: result.rows });
     }
-  } catch (error) {
+  }
+   catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Internal Server Error!.' });
   } finally {
