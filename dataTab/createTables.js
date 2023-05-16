@@ -2,7 +2,7 @@ const pool = require('../config/pool');
 
 const createTables = async () => 
 {
-  const client = await pool.connect();
+ let  client = await pool.connect();
 
   try 
     {
@@ -550,11 +550,13 @@ CREATE TABLE IF NOT EXISTS album (
         )
       `)
   console.log('Tables created successfully')
-await  client.release()
   }
 
   catch (err) {
     console.error(err)
+  }
+  finally{
+    await client.release()
   }
 }
 module.exports = { createTables }

@@ -150,16 +150,21 @@ exports.viewAllOrganizations = async (req, res) => {
 
 
 exports.viewOrganizations = async (req, res) => {
+  let connection;
   try {
-    const connection = await pool.connect();
+    connection = await pool.connect();
     const result = await connection.query('SELECT organization FROM organizations');
-   return res.send(result.rows);
-    await connection.release();
+    return res.send(result.rows);
   } catch (error) {
     console.error(error);
-   return res.status(500).send({ message: 'Something went wrong!' });
+    return res.status(500).send({ message: 'Something went wrong!' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
+
 
 
 exports.organizationCourseAssi = async (req,res) =>{
@@ -203,48 +208,68 @@ exports.organizationCourseAssi = async (req,res) =>{
 
 
 
-exports.otherCategory = async (req,res) =>{
-  try{
-    const client = await pool.connect();
-    const query=`SELECT category FROM organizations WHERE type=$1`
-    const result = await client.query(query,['Other']);
-    if(result.rows.length===0){res.send({message:"Nothing To Show"})}
-   return res.send( { organizations: result.rows });
-    await client.release();
-  }catch (err){
-    console.error(err)
-  return  res.status(500).json({message:'Error creating organization '})
+exports.otherCategory = async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const query = `SELECT category FROM organizations WHERE type=$1`;
+    const result = await client.query(query, ['Other']);
+    if (result.rows.length === 0) {
+      return res.send({ message: "Nothing To Show" });
+    }
+    return res.send({ organizations: result.rows });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Error creating organization' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
 
-exports.courseAssi = async(req,res)=>{
-  try{
-    const client = await pool.connect();
-    const query =`SELECT organization FROM organizations`
-    const result = await client(query);
-    if(result.rows.length===0){res.send({message:"Nothing TO Show"})}
-   return res.send({organization:result.rows});
-    await client.release(); 
-  }catch (err){
-    console.error(err)
-   return res.status(500).json({message:'Error creating organization '})
+
+exports.courseAssi = async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const query = `SELECT organization FROM organizations`;
+    const result = await client.query(query);
+    if (result.rows.length === 0) {
+      return res.send({ message: "Nothing To Show" });
+    }
+    return res.send({ organization: result.rows });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Error creating organization' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
 
-exports.idAssi =async(req,res)=>{
-  try{
-    const client = await pool.connect();
-    const query= `SELECT course_id FROM courses`
-    const result = await client(query);
-    if(result.rows.length===0){res.send({message:"Nothing TO Show"})}
-   return res.send({courses:result.rows});
-    await client.release();
 
-  }catch (err){
-    console.error(err)
-   return res.status(500).json({message:'Error creating organization '})
+exports.idAssi = async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const query = `SELECT course_id FROM courses`;
+    const result = await client.query(query);
+    if (result.rows.length === 0) {
+      return res.send({ message: "Nothing To Show" });
+    }
+    return res.send({ courses: result.rows });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Error creating organization' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
-}
+};
+
 // exports.departAssi = async(req,res)=>{
 //   try{
 //     const client = await pool.connect();
@@ -263,19 +288,24 @@ exports.idAssi =async(req,res)=>{
 // }
 
 exports.departAssi = async (req, res) => {
+  let client;
   try {
     const { org_name, courseId, des } = req.body;
     const query = 'INSERT INTO org_assi(organization_name, course_id, des) VALUES($1, $2, $3)';
     const values = [org_name, courseId, des];
-    const client = await pool.connect();
+    client = await pool.connect();
     await client.query(query, values);
-  return  res.status(200).json({ message: 'Successfully created' });
-   await client.release();
+    return res.status(200).json({ message: 'Successfully created' });
   } catch (err) {
     console.error(err);
-   return res.status(500).json({ message: 'Error creating organization' });
+    return res.status(500).json({ message: 'Error creating organization' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 };
+
 
 
 exports.viewdepartAssi = async (req, res) => {
