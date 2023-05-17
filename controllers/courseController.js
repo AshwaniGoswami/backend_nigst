@@ -174,7 +174,9 @@ const generateNumericValue = require("../generator/NumericId");
 // };
 
 exports.course_scheduling = async (req, res) => {
+  
   let client;
+  
   try {
     const { courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate } = req.body;
 
@@ -193,57 +195,100 @@ exports.course_scheduling = async (req, res) => {
     let result1 = await client.query(check1, [generateid]);
 
     while (result1.rowCount > 0) {
+    
       generateid = generateNumericValue(6);
+    
       result1 = await client.query(check1, [generateid]);
+    
     }
 
     if (result.rows.length > 0) {
+      
       const lastStatus = result.rows[result.rows.length - 1].course_status;
+      
       const lastBatchNumber = result.rows[result.rows.length - 1].batch_no;
+      
       const lastRunningDate = result.rows[result.rows.length - 1].running_date;
+      
       const lastCommencementDate = result.rows[result.rows.length - 1].date_comencement;
+      
       const lastCompletionDate = result.rows[result.rows.length - 1].date_completion;
 
       if (lastStatus === 'completed' || lastStatus === 'running' || lastStatus === 'scheduled') {
+        
         batch = parseInt(lastBatchNumber) + 1;
 
         if (runningDate >= dateCommencement && runningDate <= dateCompletion) {
+        
           const data = [courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate, batch, generateid];
+        
           const feed = 'INSERT INTO course_scheduler(name,course_id,course_capacity,date_comencement,date_completion,currency,fee,running_date,batch_no,course_scheduler_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ';
+        
           await client.query(feed, data);
+        
           return res.status(201).send({ message: 'Course Scheduled Successfully.' });
-        } else {
-          return res.send({ message: 'Running date is not between commencement and completion dates.' });
+        
         }
-      } else if (lastStatus === 'postponed') {
-        return res.send({ message: 'There is already a postponed course!.' });
-      } else {
-        return res.send({ message: 'You can\'t create a new course when there is a course for scheduling!.' });
+         else {
+      
+          return res.send({ message: 'Running date is not between commencement and completion dates.' });
+      
+        }
       }
-    } else {
+       else if (lastStatus === 'postponed') {
+      
+        return res.send({ message: 'There is already a postponed course!.' });
+      
+      }
+       else {
+    
+        return res.send({ message: 'You can\'t create a new course when there is a course for scheduling!.' });
+    
+      }
+    } 
+    else {
+      
       const insert = 'INSERT INTO course_scheduler(name,course_id,course_capacity,date_comencement,date_completion,currency,fee,running_date,batch_no,course_scheduler_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)';
+      
       if (runningDate >= dateCommencement && runningDate <= dateCompletion) {
+      
         await client.query(insert, [courseName, courseID, courseCapacity, dateCommencement, dateCompletion, currency, fees, runningDate, batch, generateid]);
+      
         return res.status(200).send({ message: 'New course Scheduled.' });
-      } else {
+      
+      }
+       else {
+  
         return res.send({ message: 'Running date is not between commencement and completion dates.' });
+  
       }
     }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ message: 'Internal Server Error!.' });
   }
+   catch (error) {
+  
+    console.error(error);
+  
+    return res.status(500).send({ message: 'Internal Server Error!.' });
+  
+  }
+  
   finally {
+  
     if (client) {
+  
       client.release();
+  
     }
   }
 };
 
 
 exports.viewScheduledCourses = async (req, res) => {
+  
   let client;
+  
   try {
+    
     const check = `SELECT name as title, course_capacity as coursecapacity,to_char(date_comencement,'YYYY/MM/DD') as datecomencement, to_char(date_completion,'YYYY/MM/DD') as datecompletion,currency,fee, batch_no as batch, course_status as status, to_char(running_date,'YYYY/MM/DD') as runningdate,to_char(scheduled_at, 'YYYY/MM/DD') as schedulingdate,course_scheduler_id as scheduling_id,course_id as courseid FROM course_scheduler ORDER BY name ASC, batch_no ASC`;
 
     client = await pool.connect();
@@ -251,16 +296,29 @@ exports.viewScheduledCourses = async (req, res) => {
     const result = await client.query(check);
 
     if (result.rowCount === 0) {
+    
       return res.status(404).send({ message: 'No records found' });
-    } else {
-      return res.status(200).send({ data: result.rows });
+    
     }
-  } catch (error) {
+     else {
+  
+      return res.status(200).send({ data: result.rows });
+  
+    }
+  }
+   catch (error) {
+  
     console.error(error);
+  
     return res.status(500).send({ message: 'Internal Server Error!.' });
-  } finally {
+  
+  }
+   finally {
+  
     if (client) {
+  
       client.release();
+  
     }
   }
 };
@@ -268,8 +326,11 @@ exports.viewScheduledCourses = async (req, res) => {
 
 
 exports.courseCreation = async (req, res) => {
+  
   let client;
+  
   try {
+  
     let { courseCategory, title, courseCode, courseNo, eligibility, courseDirector, courseOfficer, courseDurationInDays, courseDurationInWeeks, faculty, mode, type, description } = req.body;
     courseDirector = 'Head of Faculty ' + faculty;
 
@@ -292,7 +353,9 @@ exports.courseCreation = async (req, res) => {
     await client.query(insertQuery, values);
 
     res.status(201).send('Course created successfully');
-  } catch (error) {
+  }
+   catch (error) {
+  
     console.error(error);
 
     if (error.code === '23505') {
@@ -302,7 +365,8 @@ exports.courseCreation = async (req, res) => {
     } else {
       res.status(500).json({ message: 'Something went wrong!' });
     }
-  } finally {
+  }
+   finally {
     if (client) {
       client.release();
     }
@@ -366,17 +430,27 @@ exports.updateCourse=async(req,res)=>{
 //////////////////////////////view course table/////////////////////////////////////////////
 
 exports.viewCourses = async (req, res) => {
+  
   let client;
+  
   try {
+  
     client = await pool.connect();
+  
     const query =
       'SELECT  c.course_category, c.course_code, c.course_no, c.title, c.description, c.course_mode, c.course_duration_weeks, c.course_duration_days, c.eligibility, c.course_type, c.course_director, c.faculty, TO_CHAR(c.created_at::date, \'YYYY-MM-DD\') AS created_at, CONCAT(f.first_name, \' \', COALESCE(f.middle_name, \'\'), \' \', f.last_name) AS courseOfficer FROM courses c JOIN faculty f ON c.course_officer = f.faculty_id';
-    const result = await client.query(query);
-    if (result.rowCount === 0) {
-      return res.status(404).send({ message: 'Nothing to display.' });
-    }
-    return res.status(200).send({ courses: result.rows });
-  } catch (error) {
+  
+      const result = await client.query(query);
+  
+      if (result.rowCount === 0) {
+  
+        return res.status(404).send({ message: 'Nothing to display.' });
+  
+      }
+  
+      return res.status(200).send({ courses: result.rows });
+  
+    } catch (error) {
     console.log(error);
     return res.status(500).send({ error: 'Something went wrong.' });
   } finally {
@@ -388,41 +462,73 @@ exports.viewCourses = async (req, res) => {
 
 
 exports.filterCourse = async (req, res) => {
+
   let client;
+
   try {
+
     const { startDate, endDate, courseCategory, facultyId, eligibility } = req.body;
+
     client = await pool.connect();
+
     let query = `
       SELECT *
       FROM courses
       WHERE 1 = 1
     `;
+
     if (startDate && endDate) {
+
       query += `AND date_comencement >= '${startDate}' 
                  AND date_completion <= '${endDate}'`;
-    }
+
+                }
     if (courseCategory) {
+    
       query += `AND course_category = '${courseCategory}'`;
+    
     }
+    
     if (facultyId) {
+    
       query += `AND faculty_id = '${facultyId}'`;
+    
     }
+    
     if (eligibility) {
+    
       query += `AND eligibility = '${eligibility}'`;
+    
     }
+    
     query += 'ORDER BY date_comencement ASC';
+    
     const result = await client.query(query);
+    
     if (result.rows.length === 0) {
+    
       return res.send({ message: 'No courses found' });
-    } else {
-      return res.send({ courses: result.rows });
+    
     }
-  } catch (error) {
+     else {
+  
+      return res.send({ courses: result.rows });
+  
+    }
+  }
+   catch (error) {
+  
     console.error(error);
+  
     return res.send({ message: 'Something went wrong' });
-  } finally {
+  
+  }
+   finally {
+
     if (client) {
+
       client.release();
+
     }
   }
 };
@@ -651,7 +757,8 @@ exports.changeCourseStatus = async (req, res) => {
    await client.release()
 
   }
-};
+}
+
 //////////////////////////////////////////////course schedular//////////////////////////
 // exports.courseScheduler = async (req, res) => {
 //   try {
@@ -710,18 +817,158 @@ exports.changeCourseStatus = async (req, res) => {
 // };
 
 exports.sendCourseCodeNo = async (req, res) => {
+  
+  let client
+  
+  try {
+    
+    client = await pool.connect()
+    
+    const check = 'SELECT DISTINCT course_code, course_no FROM courses'
+    
+    const result = await client.query(check)
+    
+    if (result.rowCount === 0) {
+    
+      return res.status(404).send({ message: 'Not Found!' })
+    
+    } 
+    else {
+      
+      const data = result.rows.map(row => {
+      
+        return { course_code: row.course_code, course_no: row.course_no }
+      
+      })
+  
+      return res.status(200).send({ data })
+  
+    }
+  }
+   catch (error) {
+  
+    console.error(error)
+  
+    return res.status(500).send({ message: 'Internal Server Error!' })
+  
+  }
+   finally {
+ 
+    if (client) {
+ 
+      client.release()
+ 
+    }
+  }
+}
+
+
+
+exports.takeCodeNo = async (req, res) => {
+  
+  let connection
+  
+  try {
+    
+    const { code, no, type } = req.params
+    
+    const data = [code, no, type]
+    
+    connection = await pool.connect()
+    
+    const check = 'SELECT course_id as courseid, title as coursename, description FROM courses WHERE course_code = $1 AND course_no = $2 AND course_category = $3'
+    
+    const result = await connection.query(check, data)
+    
+    if (result.rowCount === 0) {
+    
+      return res.status(404).send({ message: 'No Course Found!' })
+    
+    }
+     else {
+  
+      return res.status(200).send({ course: result.rows })
+  
+    }
+  }
+   catch (error) {
+  
+    console.error(error)
+  
+    return res.status(500).send({ message: 'Internal Server Error!' })
+  
+  }
+   finally {
+ 
+    if (connection) {
+ 
+      await  connection.release()
+ 
+    }
+  }
+}
+
+
+exports.sendBatchAndInfo = async (req, res) => {
+  
+  let connection
+  
+  try {
+    
+    const { courseID } = req.params
+    
+    connection = await pool.connect()
+    
+    const check = 'SELECT course_scheduler_id as schedulingid, batch_no as batch, date_comencement as commencementdate, date_completion as completiondate FROM course_scheduler WHERE course_id=$1 AND course_status IN ($2, $3)'
+    
+    const data = [courseID, 'created', 'scheduled']
+    
+    const result = await connection.query(check, data)
+    
+    if (result.rowCount === 0) {
+    
+      return res.status(404).send({ message: 'No Course Found!' })
+    
+    } 
+    else {
+  
+      return res.status(200).send({ course: result.rows })
+  
+    }
+  }
+   catch (error) {
+   
+    console.error(error)
+  
+    return res.status(500).send({ message: 'Internal Server Error!' })
+  
+  }
+   finally {
+  
+    if (connection) {
+  
+      await connection.release()
+  
+    }
+  }
+}
+
+
+
+exports.courseCalender = async (req, res) => {
   let client;
+
   try {
     client = await pool.connect();
-    const check = 'SELECT DISTINCT course_code, course_no FROM courses';
-    const result = await client.query(check);
+
+    const query = `SELECT c.title AS course_title, c.course_id AS course_id, c.course_no, c.course_code, c.description, c.course_officer, c.faculty, c.course_mode, c.course_type, c.course_category, c.eligibility, CONCAT(c.course_duration_weeks, ' weeks ', c.course_duration_days, ' days') AS course_duration, cs.batch_no AS batch_no, CONCAT(cs.currency, ' ', cs.fee) AS fee, cs.course_capacity, cs.date_comencement AS start_date, cs.date_completion AS completion_date FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id`;
+
+    const result = await client.query(query);
+
     if (result.rowCount === 0) {
-      return res.status(404).send({ message: 'Not Found!' });
+      return res.status(404).send({ message: 'Nothing to Show!' });
     } else {
-      const data = result.rows.map(row => {
-        return { course_code: row.course_code, course_no: row.course_no };
-      });
-      return res.status(200).send({ data });
+      return res.send({ data: result.rows });
     }
   } catch (error) {
     console.error(error);
@@ -732,56 +979,3 @@ exports.sendCourseCodeNo = async (req, res) => {
     }
   }
 };
-
-
-
-exports.takeCodeNo = async (req, res) => {
-  let connection;
-  try {
-    const { code, no, type } = req.params;
-    const data = [code, no, type];
-    connection = await pool.connect();
-    const check = 'SELECT course_id as courseid, title as coursename, description FROM courses WHERE course_code = $1 AND course_no = $2 AND course_category = $3';
-    const result = await connection.query(check, data);
-    if (result.rowCount === 0) {
-      return res.status(404).send({ message: 'No Course Found!' });
-    } else {
-      return res.status(200).send({ course: result.rows });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ message: 'Internal Server Error!' });
-  } finally {
-    if (connection) {
-    await  connection.release();
-    }
-  }
-};
-
-
-exports.sendBatchAndInfo = async (req, res) => {
-  let connection;
-  try {
-    const { courseID } = req.params;
-    connection = await pool.connect();
-    const check = 'SELECT course_scheduler_id as schedulingid, batch_no as batch, date_comencement as commencementdate, date_completion as completiondate FROM course_scheduler WHERE course_id=$1 AND course_status IN ($2, $3)';
-    const data = [courseID, 'created', 'scheduled'];
-    const result = await connection.query(check, data);
-    if (result.rowCount === 0) {
-      return res.status(404).send({ message: 'No Course Found!' });
-    } else {
-      return res.status(200).send({ course: result.rows });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ message: 'Internal Server Error!' });
-  } finally {
-    if (connection) {
-     await connection.release();
-    }
-  }
-};
-
-
-
-

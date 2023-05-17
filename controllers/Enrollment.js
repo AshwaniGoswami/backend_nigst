@@ -366,6 +366,7 @@ const check='SELECT course_status,running_date,date_completion from course_sched
 }
 
 exports.reEnroll = async (req, res) => {
+
   let connection
 
   try {
@@ -385,6 +386,7 @@ exports.reEnroll = async (req, res) => {
     }
 
     const newId = result.rows[0].student_id
+
     const newScheId = result.rows[0].scheduling_id
 
     await connection.query('BEGIN')
@@ -497,87 +499,143 @@ exports.reEnroll = async (req, res) => {
 
 
 exports.viewEnrollmentOfStudent = async (req, res) => {
-  let connection;
-  try {
-    const { studentID } = req.params;
 
-    connection = await pool.connect();
+  let connection
+
+  try {
+
+    const { studentID } = req.params
+
+
+    connection = await pool.connect()
+
 
     const check = `
-    SELECT e.course_paid_status, e.enrolment_status, to_char(e.enrolment_date, 'YYYY/MM/DD') AS completion, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee  FROM enrolment e  LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id  WHERE e.student_id = $1; `;
+    SELECT e.course_paid_status, e.enrolment_status, to_char(e.enrolment_date, 'YYYY/MM/DD') AS completion, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee  FROM enrolment e  LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id  WHERE e.student_id = $1; `
 
-    const result = await connection.query(check, [studentID]);
+
+    const result = await connection.query(check, [studentID])
+
 
     if (result.rowCount === 0) {
-      return res.status(404).send({ message: 'No Records Found!.' });
-    } else {
-      return res.status(200).send({ data: result.rows });
+
+      return res.status(404).send({ message: 'No Records Found!.' })
+
+    } 
+    else {
+
+      return res.status(200).send({ data: result.rows })
+
     }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ message: 'Internal Server Error!.' });
-  } finally {
+
+  } 
+  catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({ message: 'Internal Server Error!.' })
+
+  } 
+  finally {
+
     if (connection) {
-      connection.release();
+
+      connection.release()
+
     }
   }
-};
+}
 
 
 
 exports.viewCanceledEnrollmentOfStudent = async (req, res) => {
-  let connection;
+
+  let connection
+
   try {
-    const { studentID } = req.params;
 
-    connection = await pool.connect();
+    const { studentID } = req.params
 
-    const check = `SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee,e.cancel_date as cancelled_date FROM archive_enroll e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id WHERE e.student_id = $1;`;
+    connection = await pool.connect()
 
-    const result = await connection.query(check, [studentID]);
+    const check = `SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee,e.cancel_date as cancelled_date FROM archive_enroll e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id WHERE e.student_id = $1;`
+
+    const result = await connection.query(check, [studentID])
+
 
     if (result.rowCount === 0) {
-      return res.status(404).send({ message: 'No Records Found!.' });
-    } else {
-      return res.status(200).send({ data: result.rows });
+
+      return res.status(404).send({ message: 'No Records Found!.' })
+
     }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ message: 'Internal Server Error!.' });
-  } finally {
-    if (connection) {
-      connection.release();
-    }
-  }
-};
+     else {
 
+      return res.status(200).send({ data: result.rows })
 
-exports.viewCoursesForEnrollment = async (req, res) => {
-  let client;
-  try {
-    const { name } = req.params;
-    const { studentId } = req.params;
-
-    const check = 'SELECT DISTINCT u.organization, u.student_id, oca.course_id, c.course_category as category, c.course_code as code,c.course_mode as mode,c.course_type as type,c.description as courseDescription,c.title as courseName,c.course_officer as officer,c.faculty as faculty, oca.course_no, oca.batch_no, oca.scheduling_id, oca.date_commencement, oca.date_completion, s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id JOIN courses c ON oca.course_id = c.course_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization';
-
-
-    client = await pool.connect();
-
-    const result = await client.query(check, [name, studentId]);
-
-    if (result.rowCount === 0) {
-      return res.status(404).send({ message: 'No Records Found!.' });
-    } else {
-      return res.status(200).send({ course: result.rows });
     }
   }
    catch (error) {
-    console.error(error);
-    return res.status(500).send({ message: 'Internal Server Error!.' });
+
+    console.error(error)
+
+    return res.status(500).send({ message: 'Internal Server Error!.' })
+
   } finally {
-    if (client) {
-      client.release();
+
+    if (connection) {
+
+      connection.release()
+
     }
   }
-};
+}
+
+
+exports.viewCoursesForEnrollment = async (req, res) => {
+
+  let client
+
+  try {
+
+    const { name,studentId } = req.body
+
+
+
+    const check = 'SELECT DISTINCT u.organization, u.student_id, oca.course_id, c.course_category as category, c.course_code as code,c.course_mode as mode,c.course_type as type,c.description as courseDescription,c.title as courseName,c.course_officer as officer,c.faculty as faculty, oca.course_no, oca.batch_no, oca.scheduling_id, oca.date_commencement, oca.date_completion, s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id JOIN courses c ON oca.course_id = c.course_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization'
+
+
+    client = await pool.connect()
+
+
+    const result = await client.query(check, [name, studentId])
+
+
+    if (result.rowCount === 0) {
+
+      return res.status(404).send({ message: 'No Records Found!.' })
+
+    } 
+    else {
+
+      return res.status(200).send({ course: result.rows })
+      
+    }
+  }
+
+   catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({ message: 'Internal Server Error!.' })
+
+  } 
+  finally {
+
+    if (client) {
+
+      client.release()
+
+    }
+  }
+}
 

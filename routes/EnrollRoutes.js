@@ -8,5 +8,6 @@ router.patch('/cancel/:enrollmentId',CancelEnrollment)
 router.put('/renroll/:enrollmentID',reEnroll)
 router.get('/view_enrol/:studentID',viewEnrollmentOfStudent)
 router.get('/view_cancel/:studentID',viewCanceledEnrollmentOfStudent)
-router.get('/view_courses/:name/:studentId',viewCoursesForEnrollment)
+router.post('/view_courses/',viewCoursesForEnrollment)
+
 module.exports=router

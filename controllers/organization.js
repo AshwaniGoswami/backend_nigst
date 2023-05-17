@@ -100,7 +100,6 @@ exports.departments = async (req, res) => {
       [organization, type, category, department, ministry, email, phone]
     );
 
-    console.log(req.body);
     return res.send({
       message: "Successfully created"
     });
@@ -167,44 +166,72 @@ exports.viewOrganizations = async (req, res) => {
 
 
 
-exports.organizationCourseAssi = async (req,res) =>{
-  let connection
-  try{
-     connection = await pool.connect();
-    const {organization, courseid, code,courseNo,batch,schedulingID,commencement,completition}=req.body;
-    const checkFacultyExistsQuery = 'SELECT * from organization_course_assi WHERE course_id =$1 AND organization_name=$2'
-    const checkCourseExists =[courseid,organization]
-    const result = await connection.query(checkFacultyExistsQuery,checkCourseExists)
+exports.organizationCourseAssi = async (req, res) => {
+
+  let connection;
+
+  try {
+
+    connection = await pool.connect();
+
+    const { organization, courseid, code, courseNo, batch, schedulingID, commencement, completition } = req.body;
+
+    const checkFacultyExistsQuery = 'SELECT * from organization_course_assi WHERE course_id = $1 AND organization_name = $2';
+
+    const checkCourseExists = [courseid, organization];
+
+    const result = await connection.query(checkFacultyExistsQuery, checkCourseExists);
+
     if (result.rows.length !== 0) {
+
       return res.status(400).json({ message: `This course already assigned to ${organization}` });
+
     }
-    else{
-      let organization_course_id = generateNumericValue(7)
-      const checkOrganizationIdQuery = 'SELECT * FROM organization_course_assi WHERE organization_course_id =$1'
-      let result1 = await connection.query(checkOrganizationIdQuery,[organization_course_id])
-      
-      while (result1.rows.length !==0){
-        organization_course_id= generateNumericValue(7)
-        result1 = await connection.query(checkOrganizationIdQuery,[organization_course_id])
+    else {
+
+      let organization_course_id = generateNumericValue(7);
+
+      const checkOrganizationIdQuery = 'SELECT * FROM organization_course_assi WHERE organization_course_id = $1';
+
+      let result1 = await connection.query(checkOrganizationIdQuery, [organization_course_id]);
+
+
+      while (result1.rows.length !== 0) {
+
+        organization_course_id = generateNumericValue(7);
+
+        result1 = await connection.query(checkOrganizationIdQuery, [organization_course_id]);
+
       }
-    
-    
-    const insertQuery = 'INSERT INTO organization_course_assi(organization_name, course_id, code,batch_no,course_no,scheduling_id,date_commencement, date_completion,organization_course_id) VALUES($1, $2, $3,$4,$5,$6,$7,$8,$9)';
-    
-    const values =[organization, courseid, code,batch,courseNo,schedulingID,commencement,completition,organization_course_id]
-  
-    await connection.query(insertQuery, values)
-   return res.status(201).send('Organization Courses Creation Successfully')
-  }
-  }catch (err){
-    console.error(err)
-   return res.status(500).json({message:'Error creating organization '})
-  }
-  finally{
-    await connection.release();
+
+      const insertQuery = 'INSERT INTO organization_course_assi(organization_name, course_id, code, batch_no, course_no, scheduling_id, date_commencement, date_completion, organization_course_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
+
+      const values = [organization, courseid, code, batch, courseNo, schedulingID, commencement, completition, organization_course_id];
+
+      await connection.query(insertQuery, values);
+
+      return res.status(201).send('Organization Courses Creation Successfully');
+
+    }
 
   }
-}
+   catch (err) {
+
+    console.error(err);
+
+    return res.status(500).json({ message: 'Error creating organization' });
+
+  } 
+  finally {
+
+    if (connection) {
+
+      await connection.release();
+
+    }
+  }
+};
+
 
 
 
@@ -220,7 +247,7 @@ exports.otherCategory = async (req, res) => {
     return res.send({ organizations: result.rows });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: 'Error creating organization' });
+    return res.status(500).json({ message: 'Internal Server Error!.' });
   } finally {
     if (client) {
       client.release();
