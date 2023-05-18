@@ -3,19 +3,12 @@ const fs = require('fs')
 
 
 
-
-
-
-
-
-
-
 exports.updateAdminVerificationStatus = async (req, res) => {
-let client
+  let client
   try {
     const { email, status } = req.body;
 
-     client = await pool.connect();
+    client = await pool.connect();
 
     // Check if user with email exists
     const checkQuery = 'SELECT * FROM users WHERE email = $1';
@@ -36,7 +29,7 @@ let client
     res.status(500).send({ message: 'Something went wrong' });
   } finally {
     if (client) {
-    await  client.release();
+      await client.release();
     }
   }
 };
@@ -47,7 +40,7 @@ exports.loginAccess = async (req, res) => {
   let client
   try {
     const { access, email } = req.body;
-     client = await pool.connect();
+    client = await pool.connect();
     const check = 'SELECT * FROM faculty WHERE email=$1';
     const result = await client.query(check, [email]);
     if (result.rowCount === 0) {
@@ -63,7 +56,7 @@ exports.loginAccess = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-    await  client.release();
+      await client.release();
     }
   }
 };
@@ -73,7 +66,7 @@ exports.activeInactive = async (req, res) => {
   let client
   try {
     const { change, email } = req.body;
-     client = await pool.connect();
+    client = await pool.connect();
     const check = 'SELECT * FROM faculty WHERE email=$1';
     const result = await client.query(check, [email]);
     if (result.rowCount === 0) {
@@ -89,7 +82,7 @@ exports.activeInactive = async (req, res) => {
     res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-    await  client.release();
+      await client.release();
     }
   }
 };

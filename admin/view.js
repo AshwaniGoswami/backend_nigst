@@ -3,43 +3,31 @@ const path = require('path')
 const fs = require('fs');
 
 
-
-
-
-
-
-
-
 exports.viewAllStudents = async (req, res) => {
+  let client;
 
   try {
+    client = await pool.connect();
 
-    const client = await pool.connect()
+    const query = 'SELECT * FROM users';
 
-    const check = 'SELECT *  FROM users'
-
-    const result = await client.query(check)
+    const result = await client.query(query);
 
     if (result.rowCount === 0) {
-
-    return  res.send({ message: 'Nothing to show!.' })
-
+      return res.send({ message: 'Nothing to show!.' });
     }
 
-   return res.status(200).send({ students: result.rows })
-
-    await client.release()
-
-  }
-  catch (error) {
-
-    console.log(error)
-
-  return  res.status(500).send({ message: 'Something went wrong!.' })
-
-
+    return res.status(200).send({ students: result.rows });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ message: 'Something went wrong!.' });
+  } finally {
+    if (client) {
+      await client.release();
+    }
   }
 }
+
 
 exports.organizationFilter = async (req, res) => {
 
@@ -87,12 +75,12 @@ exports.organizationFilter = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-     return res.status(404).send({ message: 'No matching records found.' })
+      return res.status(404).send({ message: 'No matching records found.' })
 
       return
 
     }
-   return res.status(200).send(result.rows)
+    return res.status(200).send(result.rows)
 
     await client.release()
 
@@ -101,80 +89,62 @@ exports.organizationFilter = async (req, res) => {
 
     console.error(error)
 
-   return res.status(500).send({ message: 'Internal server error.' })
+    return res.status(500).send({ message: 'Internal server error.' })
 
   }
-};
-
+}
 
 
 exports.viewAllCourses = async (req, res) => {
+  let client;
 
   try {
+    client = await pool.connect()
 
-    const client = await pool.connect()
+    const query = 'SELECT * EXCEPT(id) FROM courses'
 
-    const check = 'SELECT * EXCEPT(id) FROM courses'
-
-    const result = await client.query(check)
+    const result = await client.query(query)
 
     if (result.rowCount === 0) {
-
-    return  res.send({ message: 'Nothing to Show!.' })
-
-
+      return res.send({ message: 'Nothing to Show!.' })
     }
 
-   return res.status(200).send({ courses: result.rows })
-
-    await client.release()
-
-  }
-  catch (error) {
-
+    return res.status(200).send({ courses: result.rows })
+  } catch (error) {
     console.error(error)
-
-   return res.status(500).send({ message: 'Something went wrong!.' })
-
+    return res.status(500).send({ message: 'Something went wrong!.' })
+  } finally {
+    if (client) {
+      await client.release()
+    }
   }
 }
+
 
 exports.viewAnnouncement = async (req, res) => {
+  let client;
 
   try {
-
-    const client = await pool.connect()
-
-    const check = "SELECT * FROM announcement"
-
-    const result = await client.query(check)
+    client = await pool.connect();
+    const check = "SELECT * FROM announcement";
+    const result = await client.query(check);
 
     if (result.rowCount === 0) {
-
-     return res.status(404).send({
-        message: "Nothing to show"
-      })
-
-      await client.release()
-
+      return res.status(404).send({ message: "Nothing to show" });
     }
 
-    res.status(200).send(
-      result.rows)
-
-    await client.release()
-
+    res.status(200).send(result.rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: "Something went wrong." });
   }
-  catch (error) {
-
-    console.error(error)
-
-    return res.status(500).send({
-      message: "something went wrong."
-    })
-
+   finally {
+    if (client) {
+    await  client.release();
+    }
   }
-}
+};
+
 
 exports.allFacultyDetail = async (req, res) => {
   let client;
@@ -207,7 +177,7 @@ exports.viewFacultyName = async (req, res) => {
   let client
   try {
     const check = `SELECT id, name FROM faculty_name WHERE name <> 'NIGST'`;
-     client = await pool.connect();
+    client = await pool.connect();
     const result = await client.query(check);
     if (result.rowCount === 0) {
       return res.send({ message: 'Something went wrong.' });
@@ -218,7 +188,7 @@ exports.viewFacultyName = async (req, res) => {
     return res.status(400).send({ message: 'Something went wrong.' });
   } finally {
     if (client) {
-    await  client.release();
+      await client.release();
     }
   }
 };
@@ -227,7 +197,7 @@ exports.viewFacultyWithAccess = async (req, res) => {
   let client
   try {
     const { access } = req.params;
-     client = await pool.connect();
+    client = await pool.connect();
     const check = 'SELECT * FROM faculty WHERE status = $1';
     const result = await client.query(check, [access]);
     if (result.rowCount === 0) {
@@ -240,7 +210,7 @@ exports.viewFacultyWithAccess = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-    await  client.release();
+      await client.release();
     }
   }
 };
@@ -251,7 +221,7 @@ exports.viewFacultyMembersWithFaculty = async (req, res) => {
   let client
   try {
     const { faculty } = req.params;
-     client = await pool.connect();
+    client = await pool.connect();
     const check = 'SELECT first_name as firstname, middle_name as middlename, last_name as lastname, faculty_id as facultyid FROM faculty WHERE faculty = $1';
     const result = await client.query(check, [faculty]);
     if (result.rowCount === 0) {
@@ -264,7 +234,7 @@ exports.viewFacultyMembersWithFaculty = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-    await  client.release();
+      await client.release();
     }
   }
 };
@@ -275,7 +245,7 @@ exports.viewCourseByFaculty = async (req, res) => {
   try {
     const { faculty } = req.params;
     const check = `SELECT title, course_id, description, (course_duration_weeks || ' Weeks ' || course_duration_days || ' Days') AS duration, course_code, course_category, course_no, course_officer, course_director, course_mode, course_type, to_char(created_at, 'YYYY/MM/DD') as createdAt FROM courses WHERE faculty = $1`;
-     client = await pool.connect();
+    client = await pool.connect();
     const result = await client.query(check, [faculty]);
     if (result.rowCount === 0) {
       return res.status(404).send({ message: 'Course Not Found.' });
@@ -287,7 +257,7 @@ exports.viewCourseByFaculty = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-     await client.release();
+      await client.release();
     }
   }
 };
@@ -310,7 +280,7 @@ exports.viewAllEnrollment = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-    await  client.release();
+      await client.release();
     }
   }
 };
@@ -332,7 +302,7 @@ exports.viewAllCancelEnrollment = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-   await   client.release();
+      await client.release();
     }
   }
 };

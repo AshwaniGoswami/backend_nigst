@@ -3,87 +3,6 @@ const generateNumericValue = require("../generator/NumericId");
 const sendMail = require("../mailing_Service/mailconfig")
 
 
-// exports.Enrol = async (req, res) => {
-//   var client;
-//   try {
-//     client = await pool.connect();
-
-//     const { studentId, scheduleId } = req.body;
-
-//     await client.query('BEGIN');
-
-//     const checkStu = 'SELECT * FROM users WHERE student_id=$1';
-
-//     const studentExists = await client.query(checkStu, [studentId]);
-
-//     if (studentExists.rowCount === 0) {
-//       await client.query('ROLLBACK');
-//       return res.status(404).send({ error: 'Student does not exist' });
-//     }
-
-//     const checkCourse = 'SELECT * FROM course_scheduler WHERE course_scheduler_id=$1 AND course_status IN ($2, $3)';
-
-//     const courseExists = await client.query(checkCourse, [scheduleId, 'scheduled', 'running']);
-
-//     if (courseExists.rowCount === 0) {
-//       await client.query('ROLLBACK');
-//       return res.status(400).send({ error: 'Course does not exist or is not currently active' });
-//     }
-
-//     const checkEnrollmentExists = 'SELECT * FROM enrolment WHERE student_id=$1 AND scheduling_id=$2';
-
-//     const enrolmentExists = await client.query(checkEnrollmentExists, [studentId, scheduleId]);
-
-//     if (enrolmentExists.rowCount === 0) {
-//       const enrollId = 'E-' + generateNumericValue(8);
-//       const checkFee = 'SELECT fee,course_capacity FROM course_scheduler WHERE course_scheduler_id=$1';
-//       const feeResult = await client.query(checkFee, [scheduleId]);
-//       let feePaid = false;
-
-//       if (feeResult.rows[0].fee === '0') {
-//         feePaid = true;
-//       }
-
-//       const countQuery = 'SELECT COUNT(*) AS count FROM enrolment WHERE scheduling_id=$1';
-//       const countResult = await client.query(countQuery, [scheduleId]);
-
-//       let EnrollStatus;
-
-//       if (countResult.rows[0].count >= feeResult.rows[0].course_capacity) {
-//         EnrollStatus = 'waiting';
-//       } else {
-//         EnrollStatus = 'requested';
-//       }
-
-//       const populateEnrollment = 'INSERT INTO enrolment (student_id, scheduling_id, enrolment_status, course_paid_status, enrolment_id) VALUES ($1, $2, $3, $4, $5)';
-//       await client.query(populateEnrollment, [studentId, scheduleId, EnrollStatus, feePaid, enrollId]);
-
-//       await client.query('COMMIT');
-//       res.status(201).send({ message: 'Student enrolled in the course' });
-//     } else {
-//       const enrollmentId = enrolmentExists.rows[0].enrolment_id;
-//       const enrollmentStatus = enrolmentExists.rows[0].enrolment_status;
-
-//       if (enrollmentStatus === 'completed' || enrollmentStatus === 'cancelled') {
-//         await client.query('ROLLBACK');
-//         return res.status(400).send({ error: 'Student cannot cancel enrollment as it has already been completed or cancelled.' });
-//       }
-
-//       const cancelEnrollment = 'UPDATE enrolment SET enrolment_status = $1 WHERE enrolment_id = $2';
-//       await client.query(cancelEnrollment, ['cancelled', enrollmentId]);
-
-//       await client.query('COMMIT');
-//       res.status(200).send({ message: 'Student enrollment has been cancelled.' });
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     await client.query('ROLLBACK');
-//     res.status(500).send({ message: 'Internal Server Error!' });
-//   } finally {
-//     client.release();
-// }
-// } 
-
 exports.Enrol = async (req, res) => {
   let client 
   try {
@@ -240,7 +159,7 @@ exports.GetEnrolledCourses = async (req, res) => {
     const schedulingIds = enrolledSchedulingIds.rows.map(row => row.scheduling_id)
 
     const courseDetails = `
-    SELECT cs.name as course_name , cs.running_date as runningDate, cs.date_completion as completionDate, cs.fee, e.enrolment_status as enrollStatus, e.enrolment_id as enrollmentId,e.enrolment_date as dateEnrollment
+    SELECT cs.name as course_name , to_char(cs.running_date,'YYYY/MM/DD') as runningDate, to_char(cs.date_completion,'YYYY/MM/DD') as completionDate, cs.fee, e.enrolment_status as enrollStatus, e.enrolment_id as enrollmentId,e.enrolment_date as dateEnrollment
     FROM course_scheduler cs
     JOIN enrolment e ON e.scheduling_id = cs.course_scheduler_id
     WHERE e.student_id = $1 AND cs.course_scheduler_id = ANY($2)
@@ -511,7 +430,7 @@ exports.viewEnrollmentOfStudent = async (req, res) => {
 
 
     const check = `
-    SELECT e.course_paid_status, e.enrolment_status, to_char(e.enrolment_date, 'YYYY/MM/DD') AS completion, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee  FROM enrolment e  LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id  WHERE e.student_id = $1; `
+    SELECT e.course_paid_status, e.enrolment_status, to_char(e.enrolment_date, 'YYYY/MM/DD') AS completion, e.enrolment_id, s.name,to_char(s.date_completion,'YYYY/MM/DD') as completionDate, to_char(s.running_date,'YYYY/MM/DD') as runningDate, s.course_status, s.currency || ' ' || s.fee AS fee  FROM enrolment e  LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id  WHERE e.student_id = $1; `
 
 
     const result = await connection.query(check, [studentID])
@@ -558,7 +477,7 @@ exports.viewCanceledEnrollmentOfStudent = async (req, res) => {
 
     connection = await pool.connect()
 
-    const check = `SELECT DISTINCT e.course_paid_status, e.enrolment_status, e.enrolment_date, e.enrolment_id, s.name, s.date_completion, s.running_date, s.course_status, s.currency || ' ' || s.fee AS fee,e.cancel_date as cancelled_date FROM archive_enroll e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id WHERE e.student_id = $1;`
+    const check = `SELECT DISTINCT e.course_paid_status, e.enrolment_status, to_char(e.enrolment_date,'YYYY/MM/DD'), e.enrolment_id, s.name, to_char(s.date_completion,'YYYY/MM/DD'), to_char(s.running_date,'YYYY/MM/DD'), s.course_status, s.currency || ' ' || s.fee AS fee,to_char(e.cancel_date,'YYYY/MM/DD') as cancelled_date FROM archive_enroll e LEFT JOIN course_scheduler s ON e.scheduling_id = s.course_scheduler_id WHERE e.student_id = $1;`
 
     const result = await connection.query(check, [studentID])
 
@@ -584,7 +503,7 @@ exports.viewCanceledEnrollmentOfStudent = async (req, res) => {
 
     if (connection) {
 
-      connection.release()
+    await  connection.release()
 
     }
   }
@@ -601,7 +520,7 @@ exports.viewCoursesForEnrollment = async (req, res) => {
 
 
 
-    const check = 'SELECT DISTINCT u.organization, u.student_id, oca.course_id, c.course_category as category, c.course_code as code,c.course_mode as mode,c.course_type as type,c.description as courseDescription,c.title as courseName,c.course_officer as officer,c.faculty as faculty, oca.course_no, oca.batch_no, oca.scheduling_id, oca.date_commencement, oca.date_completion, s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id JOIN courses c ON oca.course_id = c.course_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization'
+    const check = `SELECT DISTINCT u.organization, u.student_id, oca.course_id, c.course_category as category, c.course_code as code,c.course_mode as mode,c.course_type as type,c.description as courseDescription,c.title as courseName,c.course_officer as officer,c.faculty as faculty, oca.course_no, oca.batch_no, oca.scheduling_id,to_char(oca.date_commencement,'YYYY/MM/DD') as commencementDate, to_char(oca.date_completion,'YYYY/MM/DD'), s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id JOIN courses c ON oca.course_id = c.course_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization`
 
 
     client = await pool.connect()
@@ -633,7 +552,7 @@ exports.viewCoursesForEnrollment = async (req, res) => {
 
     if (client) {
 
-      client.release()
+     await client.release()
 
     }
   }

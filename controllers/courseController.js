@@ -417,7 +417,7 @@ exports.sendBatchAndInfo = async (req, res) => {
 
     connection = await pool.connect()
 
-    const check = 'SELECT course_scheduler_id as schedulingid, batch_no as batch, date_comencement as commencementdate, date_completion as completiondate FROM course_scheduler WHERE course_id=$1 AND course_status IN ($2, $3)'
+    const check =` SELECT course_scheduler_id as schedulingid, batch_no as batch, to_char(date_comencement,'YYYY/MM/DD') as commencementdate, to_char(date_completion,'YYYY/MM/DD') as completiondate FROM course_scheduler WHERE course_id=$1 AND course_status IN ($2, $3)`
 
     const data = [courseID, 'created', 'scheduled']
 
@@ -459,7 +459,7 @@ exports.courseCalender = async (req, res) => {
   try {
     client = await pool.connect();
 
-    const query = `SELECT c.title AS course_title, c.course_id AS course_id, c.course_no, c.course_code, c.description, c.course_officer, c.faculty, c.course_mode, c.course_type, c.course_category, c.eligibility, CONCAT(c.course_duration_weeks, ' weeks ', c.course_duration_days, ' days') AS course_duration, cs.batch_no AS batch_no, CONCAT(cs.currency, ' ', cs.fee) AS fee, cs.course_capacity, cs.date_comencement AS start_date, cs.date_completion AS completion_date FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id WHERE cs.course_status IN ('created', 'scheduled')`;
+    const query = `SELECT c.title AS course_title, c.course_id AS course_id, c.course_no, c.course_code, c.description, c.course_officer, c.faculty, c.course_mode, c.course_type, c.course_category, c.eligibility, CONCAT(c.course_duration_weeks, ' weeks ', c.course_duration_days, ' days') AS course_duration, cs.batch_no AS batch_no, CONCAT(cs.currency, ' ', cs.fee) AS fee, cs.course_capacity, to_char(cs.date_comencement,'YYYY/MM/DD') AS start_date, to_char(cs.date_completion,'YYYY/MM/DD') AS completion_date FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id WHERE cs.course_status IN ('created', 'scheduled')`;
 
     const result = await client.query(query);
 
