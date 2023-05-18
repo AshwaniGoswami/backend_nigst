@@ -2,7 +2,6 @@ const pool = require("../config/pool");
 const generateNumericValue = require("../generator/NumericId");
 
 
-///////////////////////create announcement/////////////////////////////
 
 exports.createAnnouncement = async (req, res) => {
 

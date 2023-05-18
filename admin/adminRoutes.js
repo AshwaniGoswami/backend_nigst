@@ -7,7 +7,6 @@ const { deleteSchedulingCourse } = require('./delete')
 const router=express.Router()
 
 router.get('/studentsView',viewAllStudents)
-router.get('/facultyView',viewFaculty)
 router.post('/subassign',assignSubjects)
 router.get('/contactview',viewContact)
 router.get('/organizationfilter',organizationFilter)
@@ -21,4 +20,6 @@ router.patch('/updateSchedule',updateScheduling)
 router.get('/course_faculty/:faculty',viewCourseByFaculty)
 router.get('/view_all_enrol',viewAllEnrollment)
 router.get('/view_all_cancelenrol',viewAllCancelEnrollment)
+
+
 module.exports=router

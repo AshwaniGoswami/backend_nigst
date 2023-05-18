@@ -11,33 +11,6 @@ const s3Client = new S3Client({
 });
 
 
-// exports.tenderCreation = async (req, res) => {
-//   const { title, description, startDate, endDate, tenderRefNo } = req.body;
-//   const file = req.files.pdf;
-// console.log(file)
-//   try {
-//     const client = await pool.connect();
-
-//     const checkTenderResult = await client.query('SELECT * FROM tender WHERE tender_ref_no = $1', [tenderRefNo]);
-//     const checkarchive = await client.query('SELECT * FROM archive_tender WHERE tender_ref_no=$1', [tenderRefNo])
-//     if (checkTenderResult.rows.length > 0 || checkarchive.rowCount > 0) {
-//       return res.status(400).send({ message: 'Tender reference number already exists.' });
-//     }
-
-//     const query = 'INSERT INTO tender (title, description, start_date, end_date, attachment, tender_ref_no) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
-//     const values = [title, description, startDate, endDate, file[0].path, tenderRefNo];
-//     const result = await client.query(query, values);
-
-//     res.status(201).send({ message: 'Tender created successfully' });
-
-//     await client.release();
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send({ error: 'Something went wrong' });
-//   }
-// }
-
-///s3 code
 exports.tenderCreation = async (req, res) => {
   const { title, description, startDate, endDate, tenderRefNo } = req.body;
   const file = req.files.pdf;
@@ -378,68 +351,7 @@ exports.viewArchiveTender = async (req, res) => {
 };
 
 
-// exports.viewPdf = async (req, res) => {
-//   try {
-//     const { id } = req.params; // Get the tender ID from the request URL
 
-//     // Query the database for the attachment path
-//     const result = await pool.query(`SELECT attachment FROM tender WHERE id = $1`, [id]);
-//     if (result.rows.length === 0) {
-//       return res.status(404).send({
-//         message: `Tender with ID ${id} not found`
-//       });
-//     }
-
-//     // Construct the file path to the attachment
-//     const attachmentPath = path.join(__dirname, '..', result.rows[0].attachment);
-
-//     // Check if the attachment file exists
-//     if (!fs.existsSync(attachmentPath)) {
-//       return res.status(404).send({
-//         message: `Attachment not found for tender with ID ${id}`
-//       });
-//     }
-
-//     // Stream the attachment file to the response
-//     const attachmentStream = fs.createReadStream(attachmentPath);
-//     attachmentStream.pipe(res);
-//   } catch (error) {
-//     console.error('Error fetching attachment:', error);
-//     res.status(500).send({ error: "Something went wrong." });
-//   }
-// };
-
-//
-
-
-// exports.viewPdf = async (req, res) => {
-//   const { tender_number } = req.params;
-
-//   try {
-//     const client = await pool.connect();
-//     const query = 'SELECT attachment FROM tender WHERE tender_ref_no = $1';
-//     const result = await client.query(query, [tender_number]);
-
-//     if (result.rowCount === 0) {
-//       return res.status(404).send({ error: `Tender not found.` });
-//     }
-
-//     const filePath = result.rows[0].attachment;
-//     const fileStream = fs.createReadStream(filePath);
-//     const stat = fs.statSync(filePath);
-
-//     res.setHeader('Content-Type', 'application/pdf');
-//     res.setHeader('Content-Length', stat.size);
-//     res.setHeader('Content-Disposition', `attachment; filename=${filePath}`);
-
-//     fileStream.pipe(res);
-
-//     client.release();
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send({ error: 'Something went wrong.' });
-//   }
-// };
 
 
 
@@ -486,33 +398,6 @@ exports.viewPdf = async (req, res) => {
 
 
 
-
-
-
-
-// exports.downloadPdf = async (req, res) => {
-//   try {
-//     const client = await pool.connect();
-//     const id = req.params.id;
-//     const result = await client.query(`SELECT attachment FROM tender WHERE id = $1`, [id]);
-//     if (result.rows.length === 0) {
-//       return res.status(404).send({ error: `Tender with id ${id} not found.` });
-//     }
-//     const filePath = result.rows[0].attachment;
-//     const stat = await fs.statSync(filePath);
-//     res.writeHead(200, {
-//       'Content-Type': 'application/pdf',
-//       'Content-Length': stat.size,
-//       'Content-Disposition': `attachment; filename=${id}.pdf`,
-//     });
-//     const fileStream = await fs.createReadStream(filePath);
-//     fileStream.pipe(res);
-//     await client.release();
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).send({ error: "Something went wrong." });
-//   }
-// };
 
 
 exports.downloadPdf = async (req, res) => {
