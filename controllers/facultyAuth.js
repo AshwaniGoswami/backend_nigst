@@ -9,20 +9,7 @@ const generatePassword = require('generate-password');
 exports.facultyCreation = async (req, res) => {
   let client;
   try {
-    const {
-      first_name,
-      middle_name,
-      last_name,
-      dob,
-      phone,
-      gender,
-      email,
-      education,
-      designation,
-      profile,
-      faculty,
-      loginAccess
-    } = req.body;
+    const { first_name, middle_name, last_name, dob, phone, gender, email, education, designation, profile, faculty, loginAccess } = req.body;
 
     client = await pool.connect();
 
@@ -30,8 +17,7 @@ exports.facultyCreation = async (req, res) => {
     const resultEmail = await client.query(checkEmailQuery, [email]);
 
     if (resultEmail.rowCount > 0) {
-      res.status(400).send({ error: 'Faculty already exists' });
-      return;
+      return res.status(400).send({ error: 'Faculty already exists' }); 
     }
 
     let facultyId = 'T-NIGST' + generateNumericValue(8);
@@ -57,43 +43,30 @@ exports.facultyCreation = async (req, res) => {
 
     await client.query('BEGIN');
 
-    const data = [
-      first_name,
-      middle_name,
-      last_name,
-      dob,
-      phone,
-      gender,
-      email,
-      education,
-      designation,
-      profile,
-      faculty,
-      loginAccess,
-      facultyId,
-    ];
+    const data = [first_name, middle_name, last_name, dob, phone, gender, email, education, designation, profile, faculty, loginAccess, facultyId];
 
     const insertFacultyQuery =
-      'INSERT INTO faculty(first_name,middle_name,last_name,dob,phone,gender,email,education,designation,profile,faculty,admin_verified,faculty_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)';
+      'INSERT INTO faculty(first_name, middle_name, last_name, dob, phone, gender, email, education, designation, profile, faculty, admin_verified, faculty_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)';
 
     await client.query(insertFacultyQuery, data);
 
-    const insertPasswordQuery ='INSERT INTO faculty_passwords(faculty_email,password) VALUES($1,$2)';
+    const insertPasswordQuery = 'INSERT INTO faculty_passwords(faculty_email, password) VALUES($1, $2)';
     await client.query(insertPasswordQuery, [email, hashedPass]);
 
     await client.query('COMMIT');
 
-    res.status(200).send({ message: 'Successfully Created', password: password });
+    res.status(200).send({ message: 'Successfully Created' });
   } catch (error) {
     await client.query('ROLLBACK');
     console.error(error);
-    res.send({ message: 'Something went wrong' });
+    res.status(500).send({ message: 'Something went wrong' });
   } finally {
     if (client) {
       client.release();
     }
   }
 };
+
 
 
 

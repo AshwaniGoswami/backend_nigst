@@ -128,7 +128,7 @@ exports.login = async (req, res) => {
   }
    finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -189,7 +189,7 @@ exports.signUp = async (req, res) => {
     return res.status(500).send({ message: 'Something went wrong' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -291,7 +291,7 @@ exports.ForgotPassword = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   } finally {
     if (client) {
-      client.release();
+     await client.release();
     }
   }
 };
@@ -336,7 +336,7 @@ exports.passwordReset = async (req, res) => {
     }
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -384,7 +384,7 @@ exports.verifyEmail = async (req, res) => {
     }
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -418,7 +418,7 @@ exports.sendVeriMailAgain = async (req, res) => {
     return res.status(500).send({ error: 'Internal Server Error!' });
   } finally {
     if (connection) {
-      connection.release();
+    await  connection.release();
     }
   }
 };
@@ -440,7 +440,7 @@ exports.viewVeriStatus = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error!' });
   } finally {
     if (client) {
-      client.release();
+     await client.release();
     }
   }
 };
@@ -725,7 +725,7 @@ exports.filter = async (req, res) => {
     return res.status(500).send({ message: 'Internal server error.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -763,7 +763,7 @@ exports.adminVerify = async (req, res) => {
     return res.status(500).send({ message: 'Internal server error.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };

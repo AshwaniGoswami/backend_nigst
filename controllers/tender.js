@@ -41,33 +41,35 @@ const s3Client = new S3Client({
 exports.tenderCreation = async (req, res) => {
   const { title, description, startDate, endDate, tenderRefNo } = req.body;
   const file = req.files.pdf;
-console.log(file)
+
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
 
     const checkTenderResult = await client.query('SELECT * FROM tender WHERE tender_ref_no = $1', [tenderRefNo]);
-    const checkarchive = await client.query('SELECT * FROM archive_tender WHERE tender_ref_no=$1', [tenderRefNo])
+    const checkarchive = await client.query('SELECT * FROM archive_tender WHERE tender_ref_no=$1', [tenderRefNo]);
     if (checkTenderResult.rows.length > 0 || checkarchive.rowCount > 0) {
-      await client.release();
-
       return res.status(400).send({ message: 'Tender reference number already exists.' });
     }
 
     const query = 'INSERT INTO tender (title, description, start_date, end_date, attachment, tender_ref_no) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
     const values = [title, description, startDate, endDate, file[0].location, tenderRefNo];
     const result = await client.query(query, values);
-    await client.release();
 
-   return res.status(201).send({ message: 'Tender created successfully' });
-
+    return res.status(201).send({ message: 'Tender created successfully' });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: 'Something went wrong' });
+  } finally {
+    if (client) {
+    await  client.release();
+    }
   }
-}
+};
+
 
 exports.addCorrigendum = async (req, res) => {
-  let client; 
+  let client;
 
   try {
     const { corrigendum, tender_number } = req.body;
@@ -76,48 +78,47 @@ exports.addCorrigendum = async (req, res) => {
 
     const tenderResult = await client.query('SELECT * FROM tender WHERE tender_ref_no = $1', [tender_number]);
     if (tenderResult.rowCount === 0) {
-      await client.release();
       return res.status(400).send({ message: 'Tender not found' });
     }
 
-    const check = 'SELECT * FROM corrigendum_tender WHERE corri_id=$1'
-    let corrigendumID = 'TENDER-' + generateNumericValue(6)
+    const check = 'SELECT * FROM corrigendum_tender WHERE corri_id=$1';
+    let corrigendumID = 'TENDER-' + generateNumericValue(6);
     let checkResult = await client.query(check, [corrigendumID]);
     while (checkResult.rows.length !== 0) {
       corrigendumID = 'TENDER-' + generateNumericValue(6);
       checkResult = await client.query(check, [corrigendumID]);
     }
 
-    const feed = 'INSERT INTO corrigendum_tender(corrigendum,tender_ref_no,corri_id' + (file ? ', attachment' : '') + ') VALUES ($1,$2,$3' + (file ? ',$4' : '') + ')'
+    const feed = 'INSERT INTO corrigendum_tender(corrigendum,tender_ref_no,corri_id' + (file ? ', attachment' : '') + ') VALUES ($1,$2,$3' + (file ? ',$4' : '') + ')';
     const data = [corrigendum, tender_number, corrigendumID];
     if (file) data.push(file[0].path);
 
     await client.query(feed, data);
-    await client.release();
 
     return res.status(201).send({ message: 'Corrigendum successfully created' });
   } catch (error) {
     console.error(error);
-
-    if (client) {
-      await client.release();
-    }
-
     return res.status(500).send({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+    await  client.release();
+    }
   }
-}
+};
+
 
 
 exports.viewCorriPdf = async (req, res) => {
   const { corrigendumID } = req.params;
+  let client;
 
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
+
     const query = 'SELECT attachment FROM corrigendum_tender WHERE corri_id = $1';
     const result = await client.query(query, [corrigendumID]);
 
     if (result.rowCount === 0) {
-      await client.release();
       return res.status(404).send({ error: `PDF not found.` });
     }
 
@@ -133,12 +134,10 @@ exports.viewCorriPdf = async (req, res) => {
     try {
       response = await s3Client.send(getObjectCommand);
     } catch (error) {
-      await client.release();
       return res.status(404).send({ error: `Attachment file does not exist.` });
     }
 
     if (!response.Body) {
-      await client.release();
       return res.status(404).send({ error: `Attachment file does not exist.` });
     }
 
@@ -146,11 +145,13 @@ exports.viewCorriPdf = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=${fileUrl}`);
 
     response.Body.pipe(res);
-
-    await client.release();
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: 'Something went wrong.' });
+  } finally {
+    if (client) {
+     await client.release();
+    }
   }
 };
 
@@ -219,7 +220,7 @@ exports.archiveTender = async (req, res) => {
     });
   } finally {
     if (client) {
-      client.release();
+     await client.release();
     }
   }
 };
@@ -255,8 +256,9 @@ exports.retrieveTender = async (req, res) => {
 
 
 exports.viewTender = async (req, res) => {
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
     const query = `
       SELECT 
         tender.id, 
@@ -281,13 +283,17 @@ exports.viewTender = async (req, res) => {
     if (result.rowCount === 0) {
       return res.status(404).send({ message: 'Nothing to show.' });
     }
-    await client.release();
     return res.status(200).send({ tender: result.rows });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ error: "Something went wrong." });
+    return res.status(500).send({ error: 'Something went wrong.' });
+  } finally {
+    if (client) {
+    await  client.release();
+    }
   }
 };
+
 
 
 
@@ -366,7 +372,7 @@ exports.viewArchiveTender = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error!' });
   } finally {
     if (client) {
-      client.release();
+     await client.release();
     }
   }
 };
@@ -473,7 +479,7 @@ exports.viewPdf = async (req, res) => {
     return res.status(500).send({ error: "Something went wrong." });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };

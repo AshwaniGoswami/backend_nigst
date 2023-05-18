@@ -266,33 +266,30 @@ exports.viewAnnouncement = async (req, res) => {
 }
 
 exports.allFacultyDetail = async (req, res) => {
-
+  let client;
   try {
-
-    const client = await pool.connect()
-
+    client = await pool.connect();
 
     const query1 = `
-            SELECT faculty.first_name, faculty.middle_name, faculty.last_name, faculty.dob, faculty.phone, faculty.gender, faculty.email, faculty.admin_verified, faculty.education, faculty.designation, faculty.faculty_id, faculty.profile, faculty.created_on_date_time, faculty.updated_at TIMESTAMP, assigned_subjects.subject_name
-            FROM faculty 
-            INNER JOIN assigned_subjects 
-            ON faculty.id = assigned_subjects.faculty_id
-        `
+      SELECT faculty.first_name, faculty.middle_name, faculty.last_name, faculty.dob, faculty.phone, faculty.gender, faculty.email, faculty.admin_verified, faculty.education, faculty.designation, faculty.faculty_id, faculty.profile, faculty.created_on_date_time, faculty.updated_at TIMESTAMP, assigned_subjects.subject_name
+      FROM faculty 
+      INNER JOIN assigned_subjects 
+      ON faculty.id = assigned_subjects.faculty_id
+    `;
 
+    const result = await client.query(query1);
 
-    const result = await client.query(query1)
-
-   return res.status(200).send({ data: result.rows })
-
+    return res.status(200).send({ data: result.rows });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Something went wrong.' });
+  } finally {
+    if (client) {
+      await client.release();
+    }
   }
-  catch (error) {
+};
 
-    console.error(error)
-
-   return res.status(500).json({ message: 'Something went wrong.' })
-
-  }
-}
 
 
 exports.viewFacultyName = async (req, res) => {
@@ -310,7 +307,7 @@ exports.viewFacultyName = async (req, res) => {
     return res.status(400).send({ message: 'Something went wrong.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -332,7 +329,7 @@ exports.viewFacultyWithAccess = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -356,7 +353,7 @@ exports.viewFacultyMembersWithFaculty = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -379,7 +376,7 @@ exports.viewCourseByFaculty = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-      client.release();
+     await client.release();
     }
   }
 };
@@ -402,7 +399,7 @@ exports.viewAllEnrollment = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -424,7 +421,7 @@ exports.viewAllCancelEnrollment = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
-      client.release();
+   await   client.release();
     }
   }
 };

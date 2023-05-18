@@ -29,19 +29,25 @@ exports.limiter = rateLimit({
     message: 'Too many requests from this IP, please try again later',
 });
 
+
 exports.visitorCounter = async (req, res) => {
-  // Get the IP address of the visitor
-  const ip = req.ip;
-
-  // Get the user agent string
-  const userAgent = req.headers['user-agent'];
-
-  // Generate the unique ID number of the visitor using the IP address and user agent string
-  const id = exports.generateVisitorId(ip, userAgent);
+  let client;
 
   try {
+    // Get a client from the connection pool
+    client = await pool.connect();
+
+    // Get the IP address of the visitor
+    const ip = req.ip;
+
+    // Get the user agent string
+    const userAgent = req.headers['user-agent'];
+
+    // Generate the unique ID number of the visitor using the IP address and user agent string
+    const id = exports.generateVisitorId(ip, userAgent);
+
     // Check if the visitor's IP address and ID number are already in the PostgreSQL database
-    const { rows } = await pool.query('SELECT COUNT(*) FROM visitors WHERE ip = $1 AND id = $2', [ip, id]);
+    const { rows } = await client.query('SELECT COUNT(*) FROM visitors WHERE ip = $1 AND id = $2', [ip, id]);
     const exists = rows[0].count > 0;
 
     if (!exists) {
@@ -51,24 +57,26 @@ exports.visitorCounter = async (req, res) => {
       const fingerprint = Fingerprint2.x64hash128(values.join(''), 31);
 
       // Insert the visitor's IP address, ID number, user agent string, and fingerprint into the PostgreSQL database
-      await pool.query('INSERT INTO visitors (ip, id, user_agent, fingerprint) VALUES ($1, $2, $3, $4)', [ip, id, userAgent, fingerprint]);
+      await client.query('INSERT INTO visitors (ip, id, user_agent, fingerprint) VALUES ($1, $2, $3, $4)', [ip, id, userAgent, fingerprint]);
     }
+
+    // Get the total number of visitors from PostgreSQL
+    const { rows: totalRows } = await client.query('SELECT COUNT(*) FROM visitors');
+    const totalVisitors = totalRows[0].count;
+
+    // Get the total number of unique visitors from PostgreSQL
+    const { rows: uniqueRows } = await client.query('SELECT COUNT(DISTINCT fingerprint) FROM visitors');
+    const uniqueVisitors = uniqueRows[0].count;
+
+    // Send the visitor count as a response
+    res.json({ total: totalVisitors, unique: uniqueVisitors });
   } catch (err) {
     console.error(err);
-    return res.status(500).send('An error occurred while processing your request.');
+    res.status(500).send('An error occurred while processing your request.');
+  } finally {
+    // Release the client back to the connection pool
+    if (client) {
+     await client.release();
+    }
   }
-
-  // Get the total number of visitors from PostgreSQL
-  const { rows } = await pool.query('SELECT COUNT(*) FROM visitors');
-  const totalVisitors = rows[0].count;
-
-  // Get the total number of unique visitors from PostgreSQL
-  const { rows: uniqueRows } = await pool.query('SELECT COUNT(DISTINCT fingerprint) FROM visitors');
-  const uniqueVisitors = uniqueRows[0].count;
-
-  // Send the visitor count as a response
-  res.json({total:totalVisitors ,unique:uniqueVisitors });
-
-  // Release the database connection back to the pool
-  pool.release();
 };
