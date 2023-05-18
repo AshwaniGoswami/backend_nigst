@@ -108,7 +108,7 @@ exports.departments = async (req, res) => {
     return res.status(500).send({ message: 'Something went wrong!' });
   } finally {
     if (connection) {
-      connection.release();
+    await  connection.release();
     }
   }
 };
@@ -127,7 +127,7 @@ exports.viewAllOrganizations = async (req, res) => {
     return res.status(500).send({ message: 'Something went wrong!' });
   } finally {
     if (connection) {
-      connection.release();
+     await connection.release();
     }
   }
 };
@@ -159,7 +159,7 @@ exports.viewOrganizations = async (req, res) => {
     return res.status(500).send({ message: 'Something went wrong!' });
   } finally {
     if (connection) {
-      connection.release();
+    await  connection.release();
     }
   }
 };
@@ -250,7 +250,7 @@ exports.otherCategory = async (req, res) => {
     return res.status(500).json({ message: 'Internal Server Error!.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -271,7 +271,7 @@ exports.courseAssi = async (req, res) => {
     return res.status(500).json({ message: 'Error creating organization' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -292,7 +292,7 @@ exports.idAssi = async (req, res) => {
     return res.status(500).json({ message: 'Error creating organization' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -328,7 +328,7 @@ exports.departAssi = async (req, res) => {
     return res.status(500).json({ message: 'Error creating organization' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -348,7 +348,7 @@ exports.viewdepartAssi = async (req, res) => {
   }
   finally {
     if (connection) {
-      connection.release();
+    await  connection.release();
     }
   }
 };
