@@ -6,6 +6,7 @@ const pool = require("../config/pool");
 const generateNumericValue = require("../generator/NumericId");
 const generatePassword = require('generate-password');
 
+
 exports.facultyCreation = async (req, res) => {
   let client;
   try {
@@ -55,17 +56,18 @@ exports.facultyCreation = async (req, res) => {
 
     await client.query('COMMIT');
 
-    res.status(200).send({ message: 'Successfully Created' });
+    return res.status(200).send({ message: 'Successfully Created' });
   } catch (error) {
     await client.query('ROLLBACK');
     console.error(error);
-    res.status(500).send({ message: 'Something went wrong' });
+    return res.status(500).send({ message: 'Something went wrong' });
   } finally {
     if (client) {
-     await client.release();
+      await client.release();
     }
   }
 };
+
 
 
 
@@ -188,7 +190,9 @@ exports.facultyLogin = async (req, res) => {
   } 
   finally {
 
-    await client.release()
+    if (client) {
+      await client.release();
+    }
 
   }
 }

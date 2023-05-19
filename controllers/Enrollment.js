@@ -119,7 +119,9 @@ exports.Enrol = async (req, res) => {
   } 
   finally {
 
-   await client.release()
+    if (client) {
+     await client.release();
+    }
 
   }
 };
@@ -129,58 +131,46 @@ exports.Enrol = async (req, res) => {
 
 
 exports.GetEnrolledCourses = async (req, res) => {
-
+  let enrol
   try {
-
     const { studentId } = req.params
 
-    const enrol = await pool.connect()
+    enrol = await pool.connect()
 
     const checkStu = 'SELECT * FROM users WHERE student_id=$1'
-
     const studentExists = await enrol.query(checkStu, [studentId])
 
     if (studentExists.rowCount === 0) {
-
       return res.status(400).send({ error: 'Student does not exist' })
-
     }
 
-    const courses = `SELECT e.scheduling_id FROM enrolment e WHERE e.student_id = $1 `
-
+    const courses = 'SELECT e.scheduling_id FROM enrolment e WHERE e.student_id = $1'
     const enrolledSchedulingIds = await enrol.query(courses, [studentId])
 
     if (enrolledSchedulingIds.rowCount === 0) {
-
       return res.status(400).send({ error: 'Student is not enrolled in any courses' })
-
     }
 
     const schedulingIds = enrolledSchedulingIds.rows.map(row => row.scheduling_id)
 
     const courseDetails = `
-    SELECT cs.name as course_name , to_char(cs.running_date,'YYYY/MM/DD') as runningDate, to_char(cs.date_completion,'YYYY/MM/DD') as completionDate, cs.fee, e.enrolment_status as enrollStatus, e.enrolment_id as enrollmentId,e.enrolment_date as dateEnrollment
-    FROM course_scheduler cs
-    JOIN enrolment e ON e.scheduling_id = cs.course_scheduler_id
-    WHERE e.student_id = $1 AND cs.course_scheduler_id = ANY($2)
+      SELECT cs.name as course_name, to_char(cs.running_date,'YYYY/MM/DD') as runningDate, to_char(cs.date_completion,'YYYY/MM/DD') as completionDate, cs.fee, e.enrolment_status as enrollStatus, e.enrolment_id as enrollmentId, e.enrolment_date as dateEnrollment
+      FROM course_scheduler cs
+      JOIN enrolment e ON e.scheduling_id = cs.course_scheduler_id
+      WHERE e.student_id = $1 AND cs.course_scheduler_id = ANY($2)
     `
 
     const enrolledCourses = await enrol.query(courseDetails, [studentId, schedulingIds])
 
-   return res.status(200).send({ courses: enrolledCourses.rows })
-
-    await enrol.release()
-
-  } 
-
-  catch (error) {
-
+    return res.status(200).send({ courses: enrolledCourses.rows })
+  } catch (error) {
     console.error(error)
-
-  return  res.status(500).send({ error: 'Something went wrong!' })
-
+    return res.status(500).send({ error: 'Something went wrong!' })
+  } finally {
+    if (enrol) {
+      await enrol.release()
+    }
   }
-  
 }
 
 
@@ -279,7 +269,9 @@ const check='SELECT course_status,running_date,date_completion from course_sched
   }
   finally {
 
-   await client.release()
+    if (client) {
+    await  client.release();
+    }
 
   }
 }
@@ -411,7 +403,9 @@ exports.reEnroll = async (req, res) => {
   } 
   finally{
 
-    await connection.release()
+    if (connection) {
+     await connection.release();
+    }
 
   }
 }
@@ -459,7 +453,7 @@ exports.viewEnrollmentOfStudent = async (req, res) => {
 
     if (connection) {
 
-      connection.release()
+   await   connection.release()
 
     }
   }

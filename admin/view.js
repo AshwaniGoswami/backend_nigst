@@ -30,69 +30,45 @@ exports.viewAllStudents = async (req, res) => {
 
 
 exports.organizationFilter = async (req, res) => {
+  let client; 
 
   try {
-
-    const { type, category } = req.query
-
-    const client = await pool.connect()
-
-    const params = []
-
-    let query = 'SELECT * FROM organizations'
-
+    const { type, category } = req.query;
+    client = await pool.connect();
+    const params = [];
+    let query = 'SELECT * FROM organizations';
 
     if (type) {
-
-      params.push(type)
-
-      query += ' WHERE type = $1'
-
+      params.push(type);
+      query += ' WHERE type = $1';
     }
 
     if (category) {
-
       if (params.length === 0) {
-
-        query += ' WHERE'
-
+        query += ' WHERE';
+      } else {
+        query += ' AND';
       }
-      else {
-
-        query += ' AND'
-
-      }
-
-      params.push(category)
-
-      query += ' category = $' + (params.length)
-
+      params.push(category);
+      query += ' category = $' + params.length;
     }
 
-
-
-    const result = await client.query(query, params)
+    const result = await client.query(query, params);
 
     if (result.rowCount === 0) {
-
-      return res.status(404).send({ message: 'No matching records found.' })
-
-      return
-
+      return res.status(404).send({ message: 'No matching records found.' });
     }
-    return res.status(200).send(result.rows)
 
-    await client.release()
-
+    res.status(200).send(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal server error.' });
+  } finally {
+    if (client) {
+    await  client.release(); 
+    }
   }
-  catch (error) {
-
-    console.error(error)
-
-    return res.status(500).send({ message: 'Internal server error.' })
-
-  }
-}
+};
 
 
 exports.viewAllCourses = async (req, res) => {
