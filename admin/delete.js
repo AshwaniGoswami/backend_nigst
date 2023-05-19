@@ -19,12 +19,12 @@ exports.deleteSchedulingCourse = async (req, res) => {
       if (result.rows[0].course_status === 'running' || result.rows[0].course_status === 'completed') {
         return res.send(result.rows[0].course_status);
       } else {
-        res.send(result.rows);
+      return  res.send(result.rows);
       }
     }
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error!' });
+   return res.status(500).send({ message: 'Internal Server Error!' });
   } finally {
     if (client) {
       await client.release();

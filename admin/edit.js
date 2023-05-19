@@ -23,10 +23,10 @@ exports.updateAdminVerificationStatus = async (req, res) => {
     const updateQuery = 'UPDATE users SET admin_verified = $1 WHERE email = $2';
     await client.query(updateQuery, [status, email]);
 
-    res.status(200).send({ message: 'Admin verification status updated successfully' });
+   return res.status(200).send({ message: 'Admin verification status updated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Something went wrong' });
+   return res.status(500).send({ message: 'Something went wrong' });
   } finally {
     if (client) {
       await client.release();
@@ -70,16 +70,16 @@ exports.activeInactive = async (req, res) => {
     const check = 'SELECT * FROM faculty WHERE email=$1';
     const result = await client.query(check, [email]);
     if (result.rowCount === 0) {
-      res.status(404).send({ message: 'Nothing to show!.' });
+     return res.status(404).send({ message: 'Nothing to show!.' });
     } else {
       const updation = 'UPDATE faculty SET status= $1 WHERE email=$2';
       const data = [change, email];
       await client.query(updation, data);
-      res.status(200).send({ message: 'Access Changed!.' });
+     return res.status(200).send({ message: 'Access Changed!.' });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error.' });
+   return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
       await client.release();
@@ -134,7 +134,7 @@ exports.updateScheduling = async (req, res) => {
             await client.query(updateCreatedS, data1);
             return res.status(200).send({ message: 'Successfully Changed!.' });
           } else {
-            res.send({ message: 'Not Allowed To Change' });
+           return res.send({ message: 'Not Allowed To Change' });
           }
           break;
         case 'scheduled':
@@ -170,13 +170,13 @@ exports.updateScheduling = async (req, res) => {
           }
           break;
         default:
-          res.send({ message: 'Something went wrong!.' });
+         return res.send({ message: 'Something went wrong!.' });
           break;
       }
     }
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error!.' });
+   return res.status(500).send({ message: 'Internal Server Error!.' });
   } finally {
     if (client) {
       await client.release();

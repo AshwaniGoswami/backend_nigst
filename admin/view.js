@@ -59,10 +59,10 @@ exports.organizationFilter = async (req, res) => {
       return res.status(404).send({ message: 'No matching records found.' });
     }
 
-    res.status(200).send(result.rows);
+   return res.status(200).send(result.rows);
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal server error.' });
+   return res.status(500).send({ message: 'Internal server error.' });
   } finally {
     if (client) {
     await  client.release(); 
@@ -109,7 +109,7 @@ exports.viewAnnouncement = async (req, res) => {
       return res.status(404).send({ message: "Nothing to show" });
     }
 
-    res.status(200).send(result.rows);
+   return res.status(200).send(result.rows);
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: "Something went wrong." });
