@@ -434,34 +434,39 @@ exports.facultyPositionAssi = async (req, res) => {
 
     const { facultyId, faculty_pos, faculty_admin, position_assi_id } = req.body;
 
-    const checkAdmin = 'SELECT * FROM faculty WHERE faculty=$1';
+    const checkAdmin = 'SELECT * FROM faculty WHERE faculty = $1';
     const resultAdmin = await client.query(checkAdmin, [faculty_admin]);
 
     if (resultAdmin.rowCount === 0) {
       return res.status(400).send({ message: 'Admin of this faculty does not exist.' });
     }
 
-    const checkPosition = 'SELECT * FROM faculty_position WHERE faculty_pos=$1';
+    const checkPosition = 'SELECT * FROM faculty_position WHERE faculty_pos = $1';
     const resultPosition = await client.query(checkPosition, [faculty_pos]);
 
     if (resultPosition.rowCount === 0) {
       return res.status(400).send({ message: 'Faculty position does not exist.' });
     }
 
-    const query = 'INSERT INTO faculty_position_assi(faculty_id, faculty_pos, faculty_admin, position_assi_id) values($1,$2,$3,$4)';
+    const query = 'INSERT INTO faculty_position_assi (faculty_id, faculty_pos, faculty_admin, position_assi_id) VALUES ($1, $2, $3, $4)';
     const values = [facultyId, faculty_pos, faculty_admin, position_assi_id];
     await client.query(query, values);
 
-    return res.status(200).send({ message: 'Successfully assign Faculty Position' });
+    return res.status(200).send({ message: 'Successfully assigned faculty position.' });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Internal Server Error!' });
   } finally {
     if (client) {
-    await  client.release();
+      try {
+        await client.release();
+      } catch (releaseError) {
+        console.error('Error occurred while releasing the database client:', releaseError);
+      }
     }
   }
 };
+
 
 
 exports.viewFaculty = async (req, res) => {
