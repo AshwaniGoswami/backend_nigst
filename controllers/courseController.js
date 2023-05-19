@@ -258,7 +258,7 @@ exports.viewCourses = async (req, res) => {
 
     if (client) {
 
-      await client.release(
+      await client.release()
 
     }
   }
