@@ -13,7 +13,7 @@ router.patch('/change',fChangePassword)
 router.post('/position',facultyPosition)
 router.get('/send',positionSend)
 router.get('/officer/:profile',officerFaculty)
-router.post('/position_assi',facultyPositionAssi)
+router.post('/possition_assi',facultyPositionAssi)
 router.get('/view',viewAllFacultyPositions)
 router.get('/faculty_view',viewFaculty)
 
