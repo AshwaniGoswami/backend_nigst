@@ -516,7 +516,7 @@ exports.viewCoursesForEnrollment = async (req, res) => {
 
   try {
 
-    const { name,studentId } = req.body
+    const { name,studentID } = req.body
 
 
 
@@ -526,7 +526,7 @@ exports.viewCoursesForEnrollment = async (req, res) => {
     client = await pool.connect()
 
 
-    const result = await client.query(check, [name, studentId])
+    const result = await client.query(check, [name, studentID])
 
 
     if (result.rowCount === 0) {

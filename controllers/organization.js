@@ -39,7 +39,6 @@ exports.departments = async (req, res) => {
 };
 
 
-// VIEW ALL ORGANIZATIONS TABLE DATA
 
 exports.viewAllOrganizations = async (req, res) => {
   let connection;
@@ -238,7 +237,6 @@ exports.viewdepartAssi = async (req, res) => {
      connection = await pool.connect();
     const result = await connection.query('SELECT * FROM org_assi');
    return res.send(result.rows);
-    await connection.release();
   } catch (error) {
     console.error(error);
    return res.status(500).send({ message: 'Something went wrong!' });

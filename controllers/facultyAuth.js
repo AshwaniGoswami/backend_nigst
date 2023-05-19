@@ -62,7 +62,7 @@ exports.facultyCreation = async (req, res) => {
     res.status(500).send({ message: 'Something went wrong' });
   } finally {
     if (client) {
-      client.release();
+     await client.release();
     }
   }
 };
@@ -107,7 +107,7 @@ exports.facultyPassForgot = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error!' });
   } finally {
     if (connection) {
-      connection.release();
+    await  connection.release();
     }
   }
 };
@@ -237,14 +237,13 @@ exports.fPassReset = async (req, res) => {
     }
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
 
 
 
-////////////////////////////////////////change password by dashboard///////////////////////////
 
 exports.fChangePassword = async (req, res) => {
   let client;
@@ -285,38 +284,14 @@ exports.fChangePassword = async (req, res) => {
     return res.status(500).send({ message: 'Password change failed!.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
 
 
 
-// exports.facultyPosition = async (req, res) =>{
-//   try{
-//     const client = await pool.connect();
-//     const {faculty_pos, description } = req.body;
 
-//     let positionId =  generateNumericValue(6);
-
-//     const query2 = 'SELECT * FROM faculty_position WHERE position_id = $1';
-//     let result2 = await client.query(query2, [positionId]);
-
-//     while (result2.rowCount !== 0) {
-//       positionId =  generateNumericValue(6);
-//       result2 = await client.query(query2, [positionId]);
-//     }
-//     const result = await pool.query(
-//       `INSERT INTO faculty_position(faculty_pos, position_id, description) VALUES ($1,$2,$3) RETURNING*`,
-//       [faculty_pos,positionId , description]
-//     );
-//     res.send({message:"Successfully Position Created"});
-//     await client.release();
-//   }catch (error) {
-//     console.error(error)
-//     return res.status(500).send({ message: 'Something went wrong!' });
-//   }
-// }
 
 
 
@@ -355,7 +330,7 @@ exports.facultyPosition = async (req, res) => {
     return res.status(500).send({ message: 'Internal server error!' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -377,7 +352,7 @@ exports.viewAllFacultyPositions = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error!.' });
   } finally {
     if (connection) {
-      connection.release();
+    await  connection.release();
     }
   }
 };
@@ -405,7 +380,7 @@ exports.positionSend = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error!.' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -446,28 +421,7 @@ exports.officerFaculty = async (req, res) => {
   }
 }
 
-/////////////////////////faculty position assi/////////////////
 
-// exports.facultyPositionAssi = async(req,res) =>{
-//   try{
-//     const client= await pool.connect();
-//     const {facultyId, faculty_pos,faculty_admin, position_assi_id}=req.body;
-//     const check='SELECT * FROM faculty WHERE name=$1'
-//     const result=await client.query(check,[faculty_admin])
-//     if (result.rowCount===0) {
-//       res.send({message:'Admin of this faculty not exists.'})
-//     }
-//     const query = 'INSERT INTO faculty_position_assi(faculty_id, faculty_pos, faculty_admin, position_assi_id) values($1,$2,$3,$4)';
-//     const values = [ facultyId, faculty_pos, faculty_admin, position_assi_id];
-//     await client.query(query, values);
-//     res.status(200).send({ message: 'Successfully assign Faculty Position' });
-//       await client.release() 
-
-//   }catch (error) {
-//     console.error(error)
-//     return res.status(500).send({ message: 'Something went wrong!' });
-//   }
-// }
 
 exports.facultyPositionAssi = async (req, res) => {
   let client;
@@ -500,7 +454,7 @@ exports.facultyPositionAssi = async (req, res) => {
     return res.status(500).send({ message: 'Internal Server Error!' });
   } finally {
     if (client) {
-      client.release();
+    await  client.release();
     }
   }
 };
@@ -528,7 +482,7 @@ exports.viewFaculty = async (req, res) => {
     return res.status(500).send({ message: 'Internal server error.' });
   } finally {
     if (client) {
-      client.release();
+      await client.release();
     }
   }
 };
