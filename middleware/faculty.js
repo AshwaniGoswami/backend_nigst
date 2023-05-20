@@ -220,7 +220,8 @@ const videoUpload = createUploadMiddleware('videos');
 const pdfUpload = createUploadMiddleware('pdf');
 const tenderpdf = createUploadMiddleware('tender');
 const corrigendum = createUploadMiddleware('tender/corrigendum');
+const reportSubmit= createUploadMiddleware('report')
 
 
 
-module.exports = { uploadFacultyPhoto, uploadStudentPhoto,uploadAnnouncement,galleryUpload,videoUpload,pdfUpload,tenderpdf,corrigendum };
+module.exports = { uploadFacultyPhoto, uploadStudentPhoto,uploadAnnouncement,galleryUpload,videoUpload,pdfUpload,tenderpdf,corrigendum,reportSubmit };

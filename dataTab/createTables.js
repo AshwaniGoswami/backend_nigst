@@ -101,7 +101,9 @@ CREATE TABLE IF NOT EXISTS admin (
         faculty_pos varchar(255) NOT NULL REFERENCES faculty_position(faculty_pos),
         faculty_admin varchar(255) NOT NULL REFERENCES admin(faculty),
         position_assi_id integer NOT NULL ,
-        created_at TIMESTAMP DEFAULT NOW()
+        created_at TIMESTAMP DEFAULT NOW(),
+        CONSTRAINT unique_position_combination UNIQUE (faculty_id, faculty_pos, faculty_admin)
+
       )
       `)
 

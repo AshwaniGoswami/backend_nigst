@@ -25,13 +25,13 @@ exports.login = async (req, res) => {
     else {
       const user = userResult.rows[0];
       if (!user.hasOwnProperty('email_verified') || user.email_verified === false) {
-        return res.json({ message: 'Email not verified' });
+        return res.json({ message: 'Email not verified',email:user.email });
       }
        else if (!user.hasOwnProperty('mobile_verified') || user.mobile_verified === false) {
-        return res.json({ message: 'Mobile not verified' });
+        return res.json({ message: 'Mobile not verified',email:user.email  });
       }
        else if (!user.hasOwnProperty('admin_verified') || user.admin_verified === false) {
-        return res.json({ message: 'Admin not verified' });
+        return res.json({ message: 'Admin not verified',email:user.email  });
       }
        else {
         const passwordQuery = `SELECT * FROM password WHERE email = '${userResult.rows[0].email}'`;
@@ -114,7 +114,7 @@ exports.signUp = async (req, res) => {
     await client.query(insertQuery, [...data, studentId, now]);
 
     const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-      expiresIn: '30m',
+      expiresIn: '7d',
     });
 
     const url = `${process.env.URL}/secure/${token}`;

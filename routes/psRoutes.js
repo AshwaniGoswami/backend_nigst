@@ -11,5 +11,5 @@ router.patch('/resend',sendVeriMailAgain)
 
 router.get('/filter',filter)
 router.patch('/verify',adminVerify)
-router.get('/view_veri_status/',viewVeriStatus)
+router.get('/view_veri_status/:email',viewVeriStatus)
 module.exports=router

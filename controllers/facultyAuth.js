@@ -5,7 +5,8 @@ const transporter = require('../mailing_Service/mailconfig');
 const pool = require("../config/pool");
 const generateNumericValue = require("../generator/NumericId");
 const generatePassword = require('generate-password');
-
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { v4: uuidv4 } = require('uuid');
 
 exports.facultyCreation = async (req, res) => {
   let client;
@@ -489,6 +490,52 @@ exports.viewFaculty = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Internal server error.' });
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+};
+
+
+exports.reportSubmission = async (req, res) => {
+  let client;
+  try {
+    const { facultyId, scheduleId } = req.body;
+    const file = req.files.report; // Assuming 'report' is the field name for the file upload
+
+    if (!file) {
+      return res.status(400).send({ message: 'No file uploaded!' });
+    }
+
+    client = await pool.connect();
+    const check = 'SELECT * FROM report_submission WHERE faculty_id=$1 AND schedule_id=$2';
+    const result = await client.query(check, [facultyId, scheduleId]);
+    if (result.rowCount > 0) {
+      return res.send({ message: 'Report Already Exists!' });
+    }
+
+    const reportPath = `reports/${uuidv4()}.pdf`; // Generate a unique key for the PDF file
+
+    // Upload the PDF file to S3 bucket
+    const params = {
+      Bucket: 'YOUR_S3_BUCKET_NAME',
+      Key: reportPath,
+      Body: file.data
+    };
+
+    await s3.upload(params).promise();
+
+    // Store the report path in the report_submission table
+    const insertQuery = 'INSERT INTO report_submission (faculty_id, schedule_id, report_path) VALUES ($1, $2, $3)';
+    await client.query(insertQuery, [facultyId, scheduleId, reportPath]);
+
+    return res.send({ message: 'Report submitted successfully!' });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+
   } finally {
     if (client) {
       await client.release();
