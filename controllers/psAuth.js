@@ -156,7 +156,7 @@ exports.ForgotPassword = async (req, res) => {
       return res.status(404).json({ message: 'Email not found' });
     } else {
       const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' });
-      const resetURL = `${process.env.URL_FRONT}/passwordform/resetpassword.html?reset/auth/${resetToken}`;
+      const resetURL = `${process.env.URL_FRONT}#/reset/${resetToken}`;
       await client.query('UPDATE password SET reset_token = $1 WHERE email = $2', [resetToken, email]);
 
       sendMail(

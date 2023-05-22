@@ -5,8 +5,17 @@ const transporter = require('../mailing_Service/mailconfig');
 const pool = require("../config/pool");
 const generateNumericValue = require("../generator/NumericId");
 const generatePassword = require('generate-password');
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client,GetObjectCommand } = require("@aws-sdk/client-s3");
 const { v4: uuidv4 } = require('uuid');
+
+
+const s3Client = new S3Client({
+  region: process.env.BUCKET_REGION,
+  credentials: {
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  },
+});
 
 exports.facultyCreation = async (req, res) => {
   let client;
@@ -497,48 +506,50 @@ exports.viewFaculty = async (req, res) => {
   }
 };
 
-
 exports.reportSubmission = async (req, res) => {
   let client;
   try {
     const { facultyId, scheduleId } = req.body;
-    const file = req.files.report; // Assuming 'report' is the field name for the file upload
+    const file = req.files.pdf;
 
     if (!file) {
       return res.status(400).send({ message: 'No file uploaded!' });
     }
 
     client = await pool.connect();
+    const check0= 'SELECT * FROM faculty WHERE faculty_id=$1'
+    const result0=await client.query(check0,[facultyId])
+    if (result0.rowCount===0) {
+      return res.status(404).send({message:'Faculty Not Exists!.'})
+    }
     const check = 'SELECT * FROM report_submission WHERE faculty_id=$1 AND schedule_id=$2';
     const result = await client.query(check, [facultyId, scheduleId]);
     if (result.rowCount > 0) {
-      return res.send({ message: 'Report Already Exists!' });
+      return res.status(409).send({ message: 'Report Already Exists!' });
+    }
+   
+    const check2 = 'SELECT * FROM course_scheduler WHERE course_scheduler_id=$1';
+    const result2 = await client.query(check2, [scheduleId]);
+    if (result2.rowCount === 0) {
+      return res.status(404).send({ message: 'No Course Found!' });
+    }
+    if (result2.rows[0].course_status !== 'completed') {
+      return res.status(400).send({ message: 'You are not allowed to submit a report for a course that is not completed!' });
     }
 
-    const reportPath = `reports/${uuidv4()}.pdf`; // Generate a unique key for the PDF file
+    const reportPath = file[0].location;
 
-    // Upload the PDF file to S3 bucket
-    const params = {
-      Bucket: 'YOUR_S3_BUCKET_NAME',
-      Key: reportPath,
-      Body: file.data
-    };
-
-    await s3.upload(params).promise();
-
-    // Store the report path in the report_submission table
     const insertQuery = 'INSERT INTO report_submission (faculty_id, schedule_id, report_path) VALUES ($1, $2, $3)';
     await client.query(insertQuery, [facultyId, scheduleId, reportPath]);
 
-    return res.send({ message: 'Report submitted successfully!' });
-
+    return res.status(200).send({ message: 'Report submitted successfully!' });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Internal Server Error!' });
-
   } finally {
     if (client) {
       await client.release();
     }
   }
 };
+
