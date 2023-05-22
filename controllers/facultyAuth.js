@@ -553,3 +553,40 @@ exports.reportSubmission = async (req, res) => {
   }
 };
 
+
+exports.displayReport = async (req, res) => {
+  let client;
+  try {
+    const { scheduleId } = req.params;
+
+    client = await pool.connect();
+    const query = 'SELECT report_path FROM report_submission WHERE schedule_id = $1';
+    const result = await client.query(query, [scheduleId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'No report found for the specified schedule ID!' });
+    }
+
+    const fileUrl = result.rows[0].report_path;
+
+    const params = {
+      Bucket: 'nigstdata',
+      Key: 'report/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+    };
+
+    const getObjectCommand = new GetObjectCommand(params);
+    const { Body } = await s3Client.send(getObjectCommand);
+
+    res.setHeader('Content-Disposition', `attachment; filename="${params.Key}"`);
+    res.setHeader('Content-Type', 'application/pdf');
+    Body.pipe(res); // Pipe the Body stream directly to the response
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+};
+
