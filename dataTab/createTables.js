@@ -431,6 +431,7 @@ await client.query(`
 CREATE TABLE IF NOT EXISTS report_submission (
   id SERIAL PRIMARY KEY,
   faculty_id varchar(255) REFERENCES faculty(faculty_id),
+  remarks text,
   report_path varchar(255),
   schedule_id varchar(255) REFERENCES course_scheduler(course_scheduler_id),
   submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -509,7 +509,7 @@ exports.viewFaculty = async (req, res) => {
 exports.reportSubmission = async (req, res) => {
   let client;
   try {
-    const { facultyId, scheduleId } = req.body;
+    const { facultyId, scheduleId,remarks } = req.body;
     const file = req.files.pdf;
 
     if (!file) {
@@ -539,8 +539,8 @@ exports.reportSubmission = async (req, res) => {
 
     const reportPath = file[0].location;
 
-    const insertQuery = 'INSERT INTO report_submission (faculty_id, schedule_id, report_path) VALUES ($1, $2, $3)';
-    await client.query(insertQuery, [facultyId, scheduleId, reportPath]);
+    const insertQuery = 'INSERT INTO report_submission (faculty_id, schedule_id, report_path,remarks) VALUES ($1, $2, $3,$4)';
+    await client.query(insertQuery, [facultyId, scheduleId, reportPath,remarks]);
 
     return res.status(200).send({ message: 'Report submitted successfully!' });
   } catch (error) {
@@ -579,7 +579,7 @@ exports.displayReport = async (req, res) => {
 
     res.setHeader('Content-Disposition', `attachment; filename="${params.Key}"`);
     res.setHeader('Content-Type', 'application/pdf');
-    Body.pipe(res); // Pipe the Body stream directly to the response
+    Body.pipe(res); 
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Internal Server Error!' });
