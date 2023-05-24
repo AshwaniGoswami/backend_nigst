@@ -183,12 +183,12 @@ exports.facultyLogin = async (req, res) => {
 
     const tokenPayload = { id: user.email }
 
-    const tokenOptions = { expiresIn: '1h' }
+    const tokenOptions = { expiresIn: '1d' }
 
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, tokenOptions)
 
 
-    return res.status(200).json({ token, type: user.faculty })
+    return res.status(200).json({ token, type: user.faculty,id: user.faculty_id })
 
   } 
   catch (error) {
@@ -509,7 +509,7 @@ exports.viewFaculty = async (req, res) => {
 exports.reportSubmission = async (req, res) => {
   let client;
   try {
-    const { facultyId, scheduleId,remarks } = req.body;
+    const { facultyId, scheduleId,remarks,faculty } = req.body;
     const file = req.files.pdf;
 
     if (!file) {
@@ -521,6 +521,11 @@ exports.reportSubmission = async (req, res) => {
     const result0=await client.query(check0,[facultyId])
     if (result0.rowCount===0) {
       return res.status(404).send({message:'Faculty Not Exists!.'})
+    }
+    const facCheck='SELECT * from faculty_name WHERE name=$1'
+    const facultyResult= await client.query(facCheck,[faculty])
+    if (facultyResult.rowCount===0) {
+      return res.status(404).send({message:'This Faculty Not Exists!'})
     }
     const check = 'SELECT * FROM report_submission WHERE faculty_id=$1 AND schedule_id=$2';
     const result = await client.query(check, [facultyId, scheduleId]);
@@ -539,8 +544,8 @@ exports.reportSubmission = async (req, res) => {
 
     const reportPath = file[0].location;
 
-    const insertQuery = 'INSERT INTO report_submission (faculty_id, schedule_id, report_path,remarks) VALUES ($1, $2, $3,$4)';
-    await client.query(insertQuery, [facultyId, scheduleId, reportPath,remarks]);
+    const insertQuery = 'INSERT INTO report_submission (faculty_id, schedule_id, report_path,remarks,faculty) VALUES ($1, $2, $3,$4,$5)';
+    await client.query(insertQuery, [facultyId, scheduleId, reportPath,remarks,faculty]);
 
     return res.status(200).send({ message: 'Report submitted successfully!' });
   } catch (error) {
