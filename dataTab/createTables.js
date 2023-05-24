@@ -433,6 +433,7 @@ CREATE TABLE IF NOT EXISTS report_submission (
   faculty_id varchar(255) REFERENCES faculty(faculty_id),
   remarks text,
   report_path varchar(255),
+  faculty varchar(255) REFERENCES faculty_name(name),
   schedule_id varchar(255) REFERENCES course_scheduler(course_scheduler_id),
   submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT unique_schedule_submission UNIQUE (schedule_id, faculty_id)
