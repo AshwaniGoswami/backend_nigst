@@ -100,7 +100,7 @@ exports.facultyPassForgot = async (req, res) => {
       return res.send({ message: 'User not found!' });
     } else {
       const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' });
-      const resetURL = `${process.env.URL_FRONT}#/password/${resetToken}`;
+      const resetURL = `${process.env.Admin_dash}#/password/${resetToken}`;
 
       const updateQuery = 'UPDATE faculty_passwords SET reset_token=$1 WHERE faculty_email=$2';
       const updateData = [resetToken, email];
