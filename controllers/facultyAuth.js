@@ -595,3 +595,25 @@ exports.displayReport = async (req, res) => {
   }
 };
 
+exports.filterReportsByFaculty = async (req, res) => {
+  let client;
+  try {
+    const { faculty } = req.params;
+
+    client = await pool.connect();
+     
+    const filterQuery = 'SELECT * FROM report_submission WHERE faculty = $1';
+    const reports = await client.query(filterQuery, [faculty]);
+    if (reports.rowCount===0) {
+      return res.status(404).send({message:'No Reports Found!.'})
+    }
+    return res.status(200).send({ reports: reports.rows });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+};
