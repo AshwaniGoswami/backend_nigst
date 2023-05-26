@@ -9,204 +9,323 @@ const pg = require('pg');
 
 
 exports.login = async (req, res) => {
-  let client;
+
+  let client
+
   try {
-    client = await pool.connect();
 
-    const email = req.body.email;
-    const password = req.body.password;
+    client = await pool.connect()
 
-    const userQuery = `SELECT * FROM users WHERE email = $1`;
+    const email = req.body.email
 
-    const userResult = await client.query(userQuery, [email]);
+    const password = req.body.password
+
+    const userQuery = `SELECT * FROM users WHERE email = $1`
+
+    const userResult = await client.query(userQuery, [email])
+
     if (userResult.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+
+      return res.status(401).json({ error: 'Invalid email or password' })
+
     } 
+
     else {
-      const user = userResult.rows[0];
+
+      const user = userResult.rows[0]
+
       if (!user.hasOwnProperty('email_verified') || user.email_verified === false) {
-        return res.json({ message: 'Email not verified',email:user.email });
+
+        return res.json({ message: 'Email not verified',email:user.email })
+
       }
+
        else if (!user.hasOwnProperty('mobile_verified') || user.mobile_verified === false) {
-        return res.json({ message: 'Mobile not verified',email:user.email  });
+
+        return res.json({ message: 'Mobile not verified',email:user.email  })
+
       }
+
        else if (!user.hasOwnProperty('admin_verified') || user.admin_verified === false) {
-        return res.json({ message: 'Admin not verified',email:user.email  });
+        
+        return res.json({ message: 'Admin not verified',email:user.email  })
+
       }
        else {
-        const passwordQuery = `SELECT * FROM password WHERE email = '${userResult.rows[0].email}'`;
-        const passwordResult = await client.query(passwordQuery);
+
+        const passwordQuery = `SELECT * FROM password WHERE email = '${userResult.rows[0].email}'`
+
+        const passwordResult = await client.query(passwordQuery)
 
         if (passwordResult.rows.length === 0) {
-          return res.json({ error: 'Invalid email or password' });
-        } else {
-          const match = await bcrypt.compare(password, passwordResult.rows[0].password);
+
+          return res.json({ error: 'Invalid email or password' })
+
+        } 
+        else {
+
+          const match = await bcrypt.compare(password, passwordResult.rows[0].password)
+
 
           if (match) {
             const updateQuery = `
               UPDATE users
               SET updated_at = NOW()
               WHERE email = '${email}'
-            `;
-            await client.query(updateQuery);
+            `
+
+            await client.query(updateQuery)
 
             const data = {
-              id: passwordResult.rows[0].student_id,
-            };
 
-            const veri = userResult.rows[0].email_verified;
+              id: passwordResult.rows[0].student_id
 
-            const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' });
+            }
 
-            return res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id, email: userResult.rows[0].email, org: userResult.rows[0].organization });
+            const veri = userResult.rows[0].email_verified
+
+            const organization=userResult.rows[0].organization
+
+            const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' })
+
+
+            return res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id, email: userResult.rows[0].email, org: organization })
+
           } 
+
           else {
-            return res.status(401).json({ error: 'Invalid email or password' });
+
+            return res.status(401).json({ error: 'Invalid email or password' })
+
           }
         }
       }
     }
   }
    catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Error connecting to the server' });
+
+    console.error(error)
+
+    return res.status(500).json({ error: 'Error connecting to the server' })
+
   }
    finally {
+
     if (client) {
-    await  client.release();
+
+    await  client.release()
+
     }
   }
-};
+}
 
 
 
 exports.signUp = async (req, res) => {
-  let studentId = 'S-NIGST' + generateNumericValue(8);
-  let client;
-  try {
-    client = await pool.connect();
 
-    const { fname, mname, lname, dob, phone, gender, email, password, organization } = req.body;
+  let studentId = 'S-NIGST' + generateNumericValue(8)
+
+  let client
+  try {
+
+    client = await pool.connect()
+
+
+    const { fname, mname, lname, dob, phone, gender, email, password, organization } = req.body
+
     if (!password || password === "") {
-      return res.send({ message: 'Please provide a password' });
+
+      return res.send({ message: 'Please provide a password' })
+
     }
 
-    const checkQuery = 'SELECT * FROM users WHERE email = $1';
-    const result = await client.query(checkQuery, [email]);
+    const checkQuery = 'SELECT * FROM users WHERE email = $1'
+
+    const result = await client.query(checkQuery, [email])
 
     if (result.rowCount > 0) {
-      return res.send({ message: 'User already exists' });
+
+      return res.send({ message: 'User already exists' })
+
     }
 
-    const query2 = "SELECT * FROM users WHERE student_id = $1";
-    let result2 = await client.query(query2, [studentId]);
+    const query2 = "SELECT * FROM users WHERE student_id = $1"
+
+    let result2 = await client.query(query2, [studentId])
+
     while (result2.rows.length !== 0) {
-      studentId = 'S-NIGST' + generateNumericValue(8);
-      result2 = await client.query(query2, [studentId]);
-    }
-    const salt = await bcrypt.genSalt(16);
-    const hashedPass = await bcrypt.hash(password, salt);
 
-    const data = [fname, mname, lname, dob, phone, gender, email, organization];
+      studentId = 'S-NIGST' + generateNumericValue(8)
+
+      result2 = await client.query(query2, [studentId])
+
+    }
+    const salt = await bcrypt.genSalt(16)
+
+    const hashedPass = await bcrypt.hash(password, salt)
+
+
+    const data = [fname, mname, lname, dob, phone, gender, email, organization]
+
     const insertQuery =
-      'INSERT INTO users (first_name, middle_name, last_name, dob, phone, gender, email, organization, student_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
-    const now = new Date();
-    await client.query(insertQuery, [...data, studentId, now]);
+      'INSERT INTO users (first_name, middle_name, last_name, dob, phone, gender, email, organization, student_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)'
+
+    const now = new Date()
+
+    await client.query(insertQuery, [...data, studentId, now])
+    
 
     const token = jwt.sign({ email }, process.env.JWT_SECRET, {
       expiresIn: '7d',
-    });
+    })
 
-    const url = `${process.env.URL}/secure/${token}`;
 
-    const data2 = [email, hashedPass];
-    const passQuery = 'INSERT INTO password (email, password) VALUES ($1, $2)';
-    await client.query(passQuery, data2);
+    const url = `${process.env.URL}/secure/${token}`
+
+    const data2 = [email, hashedPass]
+
+    const passQuery = 'INSERT INTO password (email, password) VALUES ($1, $2)'
+
+    await client.query(passQuery, data2)
+
 
     sendMail(
       `${req.body.email}`,
       'Please verify your email.',
       `<p>Hello ${req.body.fname} ${req.body.lname}, Thanks for registering with us. Please click below to verify your email.</p><br><a href=${url}><button style="color:white;background-color:#4CFA50;border-radius:8px;border:none;padding:auto;">Click Here to Verify Your Email</button></a>`
-    );
-    return res.status(200).send({ message: 'Verification email sent. Please check your email to verify.' });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({ message: 'Something went wrong' });
-  } finally {
-    if (client) {
-    await  client.release();
+    )
+
+    return res.status(200).send({ message: 'Verification email sent. Please check your email to verify.' })
+
+  }
+   catch (error) {
+
+    console.log(error)
+   
+    if (error.code === '23505') {
+
+     return res.status(409).json({ message: 'Mobile no. already registered.' })
+
+    } else if (error.code === '23502') {
+
+     return res.status(400).json({ message: 'Missing required field.' })
+
+    } else {
+
+     return res.status(500).json({ message: 'Internal Server Error!.' })
+
     }
   }
-};
+   finally {
+
+    if (client) {
+
+    await  client.release()
+
+    }
+  }
+}
 
 
 
 
 
 exports.ForgotPassword = async (req, res) => {
-  const { email } = req.body;
 
-  let client;
+  const { email } = req.body
+
+  let client
+
   try {
-    client = await pool.connect();
 
-    const results = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+    client = await pool.connect()
+
+    const results = await client.query('SELECT * FROM users WHERE email = $1', [email])
 
     if (results.rowCount === 0) {
-      return res.status(404).json({ message: 'Email not found' });
-    } else {
-      const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' });
-      const resetURL = `${process.env.URL_FRONT}#/reset/${resetToken}`;
-      await client.query('UPDATE password SET reset_token = $1 WHERE email = $2', [resetToken, email]);
+
+      return res.status(404).json({ message: 'Email not found' })
+
+    } 
+    else {
+
+      const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' })
+
+      const resetURL = `${process.env.URL_FRONT}#/reset/${resetToken}`
+
+      await client.query('UPDATE password SET reset_token = $1 WHERE email = $2', [resetToken, email])
+
 
       sendMail(
         `${email}`,
         'Password reset',
         `<p>You requested for password reset</p><h5>Click on this <a href=${resetURL}>link</a> to reset password</h5>`
-      );
+      )
 
-      return res.status(200).json({ message: 'Reset token sent to email' });
+      return res.status(200).json({ message: 'Reset token sent to email' })
     }
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  } finally {
+  } 
+  catch (error) {
+
+    return res.status(500).json({ message: 'Internal server error' })
+
+  } 
+  finally {
+
     if (client) {
-     await client.release();
+
+     await client.release()
+
     }
   }
-};
+}
 
 
 
 
 exports.passwordReset = async (req, res) => {
-  let client;
+
+  let client
   try {
-    const { password, resetToken } = req.body;
-    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
-    const email = decoded.email;
 
-    client = await pool.connect();
-    const query = `SELECT * FROM password WHERE email = $1`;
+    const { password, resetToken } = req.body
 
-    const result = await client.query(query, [email]);
+    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET)
+
+    const email = decoded.email
+
+    client = await pool.connect()
+
+    const query = `SELECT * FROM password WHERE email = $1`
+
+    const result = await client.query(query, [email])
+
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Email not found' });
+
+      return res.status(404).json({ message: 'Email not found' })
+
     }
 
     if (!resetToken || resetToken !== result.rows[0].reset_token) {
-      return res.status(401).json({ message: 'Invalid reset token' });
+
+      return res.status(401).json({ message: 'Invalid reset token' })
+
     }
 
-    const salt = await bcrypt.genSalt(16);
-    const hash = await bcrypt.hash(password, salt);
+    const salt = await bcrypt.genSalt(16)
 
-    const updatePassword = 'UPDATE password SET password = $1, reset_token = NULL WHERE email = $2';
+    const hash = await bcrypt.hash(password, salt)
 
-    await client.query(updatePassword, [hash, email]);
 
-    return res.status(200).json({ message: 'Password reset successful' });
-  } catch (error) {
+    const updatePassword = 'UPDATE password SET password = $1, reset_token = NULL WHERE email = $2'
+
+    await client.query(updatePassword, [hash, email])
+
+    return res.status(200).json({ message: 'Password reset successful' })
+
+  } 
+  catch (error) {
+    
     if (error instanceof jwt.TokenExpiredError) {
       return res.status(401).send('Token expired');
     } else if (error instanceof jwt.JsonWebTokenError) {
