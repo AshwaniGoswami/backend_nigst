@@ -202,19 +202,10 @@ exports.signUp = async (req, res) => {
 
     console.log(error)
    
-    if (error.code === '23505') {
-
-     return res.status(409).json({ message: 'Mobile no. already registered.' })
-
-    } else if (error.code === '23502') {
-
-     return res.status(400).json({ message: 'Missing required field.' })
-
-    } else {
 
      return res.status(500).json({ message: 'Internal Server Error!.' })
 
-    }
+    
   }
    finally {
 
