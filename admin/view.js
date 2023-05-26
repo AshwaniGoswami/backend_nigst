@@ -282,3 +282,26 @@ exports.viewAllCancelEnrollment = async (req, res) => {
     }
   }
 };
+
+
+exports.showReportsToAdmin = async (req, res) => {
+  let client;
+  try {
+
+    client = await pool.connect();
+     
+    const filterQuery = 'SELECT * FROM report_submission ';
+    const reports = await client.query(filterQuery);
+    if (reports.rowCount===0) {
+      return res.status(404).send({message:'No Reports Found!.'})
+    }
+    return res.status(200).send({ reports: reports.rows });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+};

@@ -1,7 +1,7 @@
 const express=require('express')
 const { viewContact } = require('../controllers/ContactController')
 const { createFacultyMembership, assignSubjects, createFaculty } = require('./create')
-const { viewStudents, viewAllStudents, viewFaculty, viewAllDetailsFaculty, organizationFilter, viewFacultyName, viewFacultyMembersWithFaculty, viewCourseByFaculty, viewAllEnrollment, viewAllCancelEnrollment } = require('./view')
+const { viewStudents, viewAllStudents, viewFaculty, viewAllDetailsFaculty, organizationFilter, viewFacultyName, viewFacultyMembersWithFaculty, viewCourseByFaculty, viewAllEnrollment, viewAllCancelEnrollment, showReportsToAdmin } = require('./view')
 const { loginAccess, activeInactive, updateScheduling } = require('./edit')
 const { deleteSchedulingCourse } = require('./delete')
 const router=express.Router()
@@ -20,6 +20,7 @@ router.patch('/updateSchedule',updateScheduling)
 router.get('/course_faculty/:faculty',viewCourseByFaculty)
 router.get('/view_all_enrol',viewAllEnrollment)
 router.get('/view_all_cancelenrol',viewAllCancelEnrollment)
+router.get('/all_reports',showReportsToAdmin)
 
 
 module.exports=router
