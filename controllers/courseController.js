@@ -189,7 +189,7 @@ exports.courseCreation = async (req, res) => {
 
     await client.query(insertQuery, values)
 
-    res.status(201).send('Course created successfully')
+   return res.status(201).send('Course created successfully')
 
   }
   catch (error) {
@@ -198,15 +198,15 @@ exports.courseCreation = async (req, res) => {
 
     if (error.code === '23505') {
 
-      res.status(409).json({ message: 'This course already exists.' })
+    return  res.status(409).json({ message: 'This course already exists.' })
 
     } else if (error.code === '23502') {
 
-      res.status(400).json({ message: 'Missing required field.' })
+     return res.status(400).json({ message: 'Missing required field.' })
 
     } else {
 
-      res.status(500).json({ message: 'Something went wrong!' })
+     return res.status(500).json({ message: 'Something went wrong!' })
 
     }
   }

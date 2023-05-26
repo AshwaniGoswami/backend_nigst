@@ -311,7 +311,7 @@ CREATE TABLE IF NOT EXISTS album (
         await client.query(`
         CREATE TABLE IF NOT EXISTS otps (
           id SERIAL PRIMARY KEY,
-          phone_number VARCHAR(20) NOT NULL,
+          phone_number VARCHAR(20) NOT NULL UNIQUE,
           otp VARCHAR(6) NOT NULL,
           verified BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
