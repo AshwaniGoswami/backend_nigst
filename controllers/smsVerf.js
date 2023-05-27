@@ -7,7 +7,7 @@ const twilio = require('twilio');
 // const twilioAccountSid = 'AC85b3c233434413a9ab00497b49238ec3'
 // const twilioAuthToken = 'be2e75fe3787738eaf80864c83182ca7'
 const twilioAccountSid = 'AC26c9038bc95d7ba2481777c93f4ddc57'
-const twilioAuthToken = '723dee91ab33fd393b580d6fab1548d5'
+const twilioAuthToken = '514d591ccf5d66c39a3f1573dec10d72'
 const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
 
 
@@ -206,7 +206,7 @@ exports.resendOTP = async (req, res) => {
       await twilioClient.messages.create({
         body: `Your NIGST Phone Number registration OTP is ${otp}`,
         from: '+13157400734',
-        to: phoneNumber,
+        to: '+91'+' '+phoneNumber,
       });
 
       return res.status(200).json({ message: 'OTP replaced and sent successfully.' });
@@ -221,7 +221,7 @@ exports.resendOTP = async (req, res) => {
       await twilioClient.messages.create({
         body: `Your NIGST Phone Number registration OTP is ${otp}`,
         from: '+13157400734',
-        to: phoneNumber,
+        to: '+91'+' '+phoneNumber,
       });
 
       return res.status(200).json({ message: 'New OTP sent successfully.' });
