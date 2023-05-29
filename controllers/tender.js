@@ -47,8 +47,9 @@ exports.addCorrigendum = async (req, res) => {
   try {
     const { corrigendum, tender_number } = req.body;
     const file = req.files.pdf;
+    
     client = await pool.connect();
-
+   
     const tenderResult = await client.query('SELECT * FROM tender WHERE tender_ref_no = $1', [tender_number]);
     if (tenderResult.rowCount === 0) {
       return res.status(400).send({ message: 'Tender not found' });
@@ -64,7 +65,7 @@ exports.addCorrigendum = async (req, res) => {
 
     const feed = 'INSERT INTO corrigendum_tender(corrigendum,tender_ref_no,corri_id' + (file ? ', attachment' : '') + ') VALUES ($1,$2,$3' + (file ? ',$4' : '') + ')';
     const data = [corrigendum, tender_number, corrigendumID];
-    if (file) data.push(file[0].path);
+    if (file) data.push(file[0].location);
 
     await client.query(feed, data);
 

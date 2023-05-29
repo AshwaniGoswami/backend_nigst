@@ -109,7 +109,7 @@ exports.facultyPassForgot = async (req, res) => {
       sendMail(
         `${email}`,
         'Password-reset',
-        `<p>You requested for password reset</p><h5>Click on this <a href=${resetURL}>link</a> to reset password</h5>`
+        `<p>You requested for password reset</p><h5>Click on this <a href=${resetURL}>link</a> to reset password</h5><p>It is valid for 30 minutes only</p>`
       );
 
       return res.send({ message: 'Reset Token sent to email' });
@@ -505,6 +505,7 @@ exports.viewFaculty = async (req, res) => {
     }
   }
 };
+
 
 exports.reportSubmission = async (req, res) => {
   let client;

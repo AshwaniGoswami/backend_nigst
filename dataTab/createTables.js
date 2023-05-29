@@ -40,10 +40,30 @@ CREATE TABLE IF NOT EXISTS admin (
             id serial PRIMARY KEY,
             course_category_name varchar(255) NOT NULL UNIQUE,
             category_id varchar(20) NOT NULL UNIQUE,
-            title varchar(100) NOT NULL,
-            description text NOT NULL
+            created_at TIMESTAMP DEFAULT NOW()
           )
       `)
+
+      await client.query(`
+    CREATE TABLE IF NOT EXISTS category_code (
+      id serial PRIMARY KEY,
+      category varchar(255) REFERENCES course_category(course_category_name),
+      code varchar(255) NOT NULL,
+      CONSTRAINT uc_category_code UNIQUE (category, code)
+    )
+`);
+
+
+      await client.query(
+        `
+        CREATE TABLE IF NOT EXISTS category_number
+        (
+         id serial PRIMARY KEY,
+         category varchar(255) REFERENCES course_category(course_category_name),
+         number INTEGER NOT NULL,
+         CONSTRAINT uc_category_number UNIQUE (category,number)
+        )`
+      )
 
       await client.query
       (`
