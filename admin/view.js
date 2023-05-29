@@ -305,3 +305,78 @@ exports.showReportsToAdmin = async (req, res) => {
     }
   }
 };
+exports.filter = async (req, res) => {
+  let client;
+  try {
+    const { email, organization, status, startDate, endDate } = req.query;
+    client = await pool.connect();
+    const params = [];
+    let query = 'SELECT *, TO_CHAR(created_at::date, \'YYYY-MM-DD\') as created_at FROM users';
+
+    if (email) {
+      params.push(email);
+      query += ' WHERE email = $1';
+    }
+
+    if (organization) {
+      if (params.length === 0) {
+        query += ' WHERE';
+      } else {
+        query += ' AND';
+      }
+      params.push(organization);
+      query += ' organization = $' + (params.length);
+    }
+
+    if (status === 'true' || status === 'false') {
+      if (params.length === 0) {
+        query += ' WHERE';
+      } else {
+        query += ' AND';
+      }
+      params.push(status === 'true');
+      query += ' admin_verified = $' + (params.length);
+    }
+
+    if (startDate && endDate) {
+      if (params.length === 0) {
+        query += ' WHERE';
+      } else {
+        query += ' AND';
+      }
+      params.push(startDate);
+      query += ' created_at >= $' + (params.length);
+      params.push(endDate);
+      query += ' AND created_at <= $' + (params.length);
+    } else if (startDate) {
+      if (params.length === 0) {
+        query += ' WHERE';
+      } else {
+        query += ' AND';
+      }
+      params.push(startDate);
+      query += ' created_at >= $' + (params.length);
+    } else if (endDate) {
+      if (params.length === 0) {
+        query += ' WHERE';
+      } else {
+        query += ' AND';
+      }
+      params.push(endDate);
+      query += ' created_at <= $' + (params.length);
+    }
+
+    const result = await client.query(query, params);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'No matching records found.' });
+    }
+   return res.send(result.rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal server error.' });
+  } finally {
+    if (client) {
+    await  client.release();
+    }
+  }
+};

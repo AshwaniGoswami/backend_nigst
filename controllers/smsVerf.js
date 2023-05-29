@@ -6,8 +6,10 @@ const twilio = require('twilio');
 
 // const twilioAccountSid = 'AC85b3c233434413a9ab00497b49238ec3'
 // const twilioAuthToken = 'be2e75fe3787738eaf80864c83182ca7'
-const twilioAccountSid = 'AC26c9038bc95d7ba2481777c93f4ddc57'
-const twilioAuthToken = '514d591ccf5d66c39a3f1573dec10d72'
+// const twilioAccountSid = 'AC26c9038bc95d7ba2481777c93f4ddc57'
+// const twilioAuthToken = '514d591ccf5d66c39a3f1573dec10d72'
+const twilioAccountSid = process.env.accountSid
+const twilioAuthToken = process.env.authTOken
 const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
 
 
