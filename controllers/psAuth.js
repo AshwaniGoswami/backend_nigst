@@ -404,7 +404,7 @@ exports.sendVeriMailAgain = async (req, res) => {
     } else {
       const { first_name, last_name } = result.rows[0];
       const newToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' });
-      const url = `${process.env.URL}secure/${newToken}`;
+      const url = `${process.env.URL}/secure/${newToken}`;
       sendMail(email, 'Please verify your email', `
         <p>Hello ${first_name} ${last_name},</p>
         <p>Thanks for registering with us. Please click the link below to verify your email:</p>
