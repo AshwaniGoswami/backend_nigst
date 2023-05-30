@@ -149,3 +149,98 @@ exports.addCodeToCategory=async(req,res)=>{
     }
   }
 }
+
+exports.addNumberToCategory=async(req,res)=>{
+
+  let connection
+
+  try {
+
+    const {name,number}=req.body
+
+    const check= 'SELECT * FROM category_number WHERE category=$1 AND number=$2'
+
+    const result=await client.query(check,[name,number])
+
+    if (result.rowCount>0) {
+
+      return res.send({message:`This code already allocated to: ${name}` })
+
+    }
+    else{
+
+      const insertQ='INSERT INTO category_code (category,number) VALUES ($1,$2)'
+
+      await connection.query(insertQ,[name,number])
+
+      return res.status(201).send({message:'Successfully added code.'})
+
+    }
+  } 
+  catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+  finally{
+
+    if (connection) {
+
+      await connection.release()
+      
+    }
+  }
+}
+
+
+exports.getNumberByCategory = async (req, res) => {
+  let connection;
+  try {
+    const { category } = req.body;
+    connection = await pool.connect();
+    
+    const query = 'SELECT number FROM category_number WHERE category = $1';
+    const result = await connection.query(query, [category]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: `No numbers found for category: ${category}` });
+    } else {
+      const numbers = result.rows.map((row) => row.number);
+      return res.status(200).send({ category, numbers });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
+  }
+};
+exports.getCodeByCategory = async (req, res) => {
+  let connection;
+  try {
+    const { category } = req.body;
+    connection = await pool.connect();
+    
+    const query = 'SELECT number FROM category_code WHERE category = $1';
+    const result = await connection.query(query, [category]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: `No numbers found for category: ${category}` });
+    } else {
+      const numbers = result.rows.map((row) => row.number);
+      return res.status(200).send({ category, numbers });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
+  }
+};
+
