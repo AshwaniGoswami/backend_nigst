@@ -235,8 +235,11 @@ exports.viewdepartAssi = async (req, res) => {
   let connection
   try {
      connection = await pool.connect();
-    const result = await connection.query('SELECT * FROM org_assi');
-   return res.send(result.rows);
+    const result = await connection.query('SELECT * FROM organization_course_assi');
+    if (result.rowCount===0) {
+      return res.status(404).send({message:'No Records to Display!.'})
+    }
+   return res.status(200).send(result.rows);
   } catch (error) {
     console.error(error);
    return res.status(500).send({ message: 'Something went wrong!' });
