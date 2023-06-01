@@ -243,7 +243,7 @@ await client.query(`
         title VARCHAR(255) NOT NULL,
         description text NOT NULL,
         url VARCHAR(255),
-        photo_path VARCHAR (255),
+        pdf_path VARCHAR (255),
         status BOOLEAN DEFAULT FALSE,
         created_at DATE DEFAULT NOW(),
         posted_at TIMESTAMP
@@ -260,7 +260,7 @@ await client.query(`
         title VARCHAR(255) NOT NULL,
         description text NOT NULL,
         url VARCHAR(255),
-        photo_path VARCHAR (255),
+        pdf_path VARCHAR (255),
         status BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP,
         archive_at TIMESTAMP DEFAULT NOW()

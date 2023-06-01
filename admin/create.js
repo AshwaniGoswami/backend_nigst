@@ -4,6 +4,8 @@ const generateNumericValue = require("../generator/NumericId");
 
 
 exports.createAnnouncement = async (req, res) => {
+ 
+  let connection
 
   try {
 
@@ -13,31 +15,39 @@ exports.createAnnouncement = async (req, res) => {
 
     if (req.file) {
 
-      photoUrl = req.file.path
+      photoUrl = req.files.pdf.location
 
     }
 
-    const connection = await pool.connect()
+     connection = await pool.connect()
 
-    const insert = "INSERT INTO announcement (title, description, url, photo_path) VALUES ($1, $2, $3, $4)"
+    const insert = "INSERT INTO announcement (title, description, url, pdf_path) VALUES ($1, $2, $3, $4)"
 
     const data = [title, description, url, photoUrl]
 
     const result = await connection.query(insert, data)
 
-    res.status(201).send({
+   return res.status(201).send({
       message: "Successfully created"
     })
 
-    await connection.release()
+   
 
   }
   catch (error) {
 
     console.error(error)
 
-    return res.status(500).send({ message: 'Something went wrong!' })
+    return res.status(500).send({ message: 'Internal Server Error!.' })
 
+  }
+  finally{
+
+    if (connection) {
+    
+      await connection.release()
+    
+    }
   }
 }
 
