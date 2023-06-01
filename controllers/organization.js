@@ -87,15 +87,15 @@ exports.organizationCourseAssi = async (req, res) => {
 
     const { organization, courseid, code, courseNo, batch, schedulingID, commencement, completition } = req.body;
 
-    const checkFacultyExistsQuery = 'SELECT * from organization_course_assi WHERE course_id = $1 AND organization_name = $2';
+    const checkFacultyExistsQuery = 'SELECT * from organization_course_assi WHERE course_id = $1 AND organization_name = $2 AND batch_no=$3';
 
-    const checkCourseExists = [courseid, organization];
+    const checkCourseExists = [courseid, organization,batch];
 
     const result = await connection.query(checkFacultyExistsQuery, checkCourseExists);
 
     if (result.rows.length !== 0) {
 
-      return res.status(400).json({ message: `This course already assigned to ${organization}` });
+      return res.status(400).json({ message: `This course with batch: ${batch} already assigned to ${organization}` });
 
     }
     else {
