@@ -245,6 +245,7 @@ await client.query(`
         url VARCHAR(255),
         pdf_path VARCHAR (255),
         status BOOLEAN DEFAULT FALSE,
+        a_id VARCHAR(255) NOT NULL UNIQUE,
         created_at DATE DEFAULT NOW(),
         posted_at TIMESTAMP
       )
@@ -438,13 +439,13 @@ CREATE TABLE IF NOT EXISTS album (
         )`
       )
   
-    await client.query(`
-  CREATE TABLE IF NOT EXISTS org_assi(
-    id SERIAL PRIMARY KEY,
-    organization_name VARCHAR(255) NOT NULL,
-    course_id text NOT NULL,
-    des TEXT NOT NULL
-    )`)
+  //   await client.query(`
+  // CREATE TABLE IF NOT EXISTS org_assi(
+  //   id SERIAL PRIMARY KEY,
+  //   organization_name VARCHAR(255) NOT NULL,
+  //   course_id text NOT NULL,
+  //   des TEXT NOT NULL
+  //   )`)
 
  
 await client.query(`

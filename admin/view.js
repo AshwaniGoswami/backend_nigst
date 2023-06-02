@@ -380,3 +380,28 @@ exports.filter = async (req, res) => {
     }
   }
 };
+
+
+exports.viewAnnouncementToAdmin=async(req,res)=>{
+
+  let connection
+  try {
+    const check='SELECT * FROM announcement'
+    connection=await pool.connect()
+    const result=await connection.query(check)
+    if (result.rowCount===0) {
+      return res.status(404).send({message:'No Announcement To Display!.'})
+    }
+    else{
+      return res.status(200).send({data:result.rows})
+    }
+  } catch (error) {
+    console.error(error)
+    return res.status(500).send({message:'Internal Server Error!.'})
+  }
+  finally{
+    if (connection) {
+      await connection.release()
+    }
+  }
+}

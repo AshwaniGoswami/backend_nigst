@@ -478,14 +478,39 @@ exports.sendBatchAndInfo = async (req, res) => {
 
 
 exports.courseCalender = async (req, res) => {
-
+  
   let client
 
   try {
 
     client = await pool.connect()
 
-    const query = `SELECT c.title AS course_title, c.course_id AS course_id, c.course_no, c.course_code, c.description, c.course_officer, c.faculty, c.course_mode, c.course_type, c.course_category, c.eligibility, CONCAT(c.course_duration_weeks, ' weeks ', c.course_duration_days, ' days') AS course_duration, cs.batch_no AS batch_no, CONCAT(cs.currency, ' ', cs.fee) AS fee, cs.course_capacity, to_char(cs.date_comencement,'YYYY/MM/DD') AS start_date, to_char(cs.date_completion,'YYYY/MM/DD') AS completion_date FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id WHERE cs.course_status IN ('created', 'scheduled')`
+    const query = `
+      SELECT
+        c.title AS course_title,
+        c.course_id,
+        c.course_no,
+        c.course_code,
+        c.description,
+        CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS course_officer,
+        c.faculty,
+        c.course_mode,
+        c.course_type,
+        c.course_category,
+        c.eligibility,
+        CONCAT(c.course_duration_weeks, ' weeks ', c.course_duration_days, ' days') AS course_duration,
+        cs.batch_no,
+        CONCAT(cs.currency, ' ', cs.fee) AS fee,
+        cs.course_capacity,
+        to_char(cs.date_comencement,'YYYY/MM/DD') AS start_date,
+        to_char(cs.date_completion,'YYYY/MM/DD') AS completion_date
+      FROM
+        courses c
+        INNER JOIN course_scheduler cs ON c.course_id = cs.course_id
+        INNER JOIN faculty f ON c.course_officer = f.faculty_id
+      WHERE
+        cs.course_status IN ('created', 'scheduled')
+    `
 
     const result = await client.query(query)
 
@@ -499,8 +524,8 @@ exports.courseCalender = async (req, res) => {
       return res.send({ data: result.rows })
 
     }
-  }
-   catch (error) {
+  } 
+  catch (error) {
 
     console.error(error)
 

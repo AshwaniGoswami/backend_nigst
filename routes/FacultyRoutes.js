@@ -1,6 +1,6 @@
 const express =require('express')
 const { updateFacultyDetails } = require('../admin/edit')
-const { facultyCreation, facultyPassForgot, facultyLogin, fPassReset, fChangePassword, facultyPosition, positionSend, officerFaculty, facultyPositionAssi, viewAllFacultyPositions, viewFaculty, reportSubmission, displayReport, filterReportsByFaculty, sendIDForReport } = require('../controllers/facultyAuth')
+const { facultyCreation, facultyPassForgot, facultyLogin, fPassReset, fChangePassword, facultyPosition, positionSend, officerFaculty, facultyPositionAssi, viewAllFacultyPositions, viewFaculty, reportSubmission, displayReport, filterReportsByFaculty, sendIDForReport, viewFacultyPositionAssi } = require('../controllers/facultyAuth')
 const { uploadFacultyPhoto, reportSubmit } = require('../middleware/faculty')
 const router= express.Router()
 
@@ -20,4 +20,5 @@ router.post('/report/submit',reportSubmit,reportSubmission)
 router.get('/report/view/:scheduleId',displayReport)
 router.get('/view_by_faculty/:faculty',filterReportsByFaculty)
 router.get('/send_course/:faculty',sendIDForReport)
+router.get('/faculty_position',viewFacultyPositionAssi)
 module.exports=router

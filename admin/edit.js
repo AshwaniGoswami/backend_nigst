@@ -183,3 +183,46 @@ exports.updateScheduling = async (req, res) => {
     }
   }
 };
+
+
+exports.editAnnouncementForPosting=async(req,res)=>{
+
+  let connection
+
+  try {
+  
+    const {id}=req.body
+  
+    connection=await pool.connect()
+
+    const check='SELECT * FROM announcement WHERE a_id=$1'
+
+    const result=await connection.query(check,[id])
+
+    if (result.rowCount===0) {
+    
+      return res.status(404).send({message:'This Announcement Not Exists!.'})
+    
+    }
+     const postedDate= new Date()
+    const editQ= 'UPDATE announcement SET status=$1, posted_at=$2 WHERE a_id=$3'
+    const data=[true,postedDate,id]
+    await connection.query(editQ,data)
+    return res.status(200).send({message:'Successfully Updated!.'})
+  }
+   catch (error) {
+    
+    console.error(error)
+    
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+  finally{
+ 
+    if (connection) {
+  
+  await connection.release()
+
+ }
+  }
+}

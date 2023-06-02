@@ -4,52 +4,69 @@ const generateNumericValue = require("../generator/NumericId");
 
 
 exports.createAnnouncement = async (req, res) => {
- 
+  
   let connection
 
   try {
-
+  
     const { title, description, url } = req.body
+  
+    let pdfPath = null
 
-    let photoUrl = null
+    if (req.files && req.files.pdf) {
+      
+      const fileContent = req.files.pdf
+      
+      pdfPath = fileContent[0].location
+    
+    }
 
-    if (req.file) {
+    connection = await pool.connect()
+    
+    const check = 'SELECT * FROM announcement WHERE a_id=$1'
 
-      photoUrl = req.files.pdf.location
+    let AID = 'AN-' +generateNumericValue(5)
+
+    let result = await connection.query(check, [AID])
+
+    while (result.rows.length !== 0) {
+
+      fID = 'AN-'+generateNumericValue(5)
+
+      result = await connection.query(check, [AID])
 
     }
 
-     connection = await pool.connect()
+    const insert = "INSERT INTO announcement (title, description, url, pdf_path,a_id) VALUES ($1, $2, $3, $4,$5)"
+    
+    const data = [title, description, url, pdfPath,AID]
 
-    const insert = "INSERT INTO announcement (title, description, url, pdf_path) VALUES ($1, $2, $3, $4)"
+     await connection.query(insert, data)
 
-    const data = [title, description, url, photoUrl]
-
-    const result = await connection.query(insert, data)
-
-   return res.status(201).send({
+    return res.status(201).send({
       message: "Successfully created"
     })
 
-   
-
-  }
+  } 
   catch (error) {
-
+  
     console.error(error)
-
-    return res.status(500).send({ message: 'Internal Server Error!.' })
-
-  }
-  finally{
-
+  
+    return res.status(500).send({ message: 'Internal Server Error!' })
+  
+  } 
+  finally {
+  
     if (connection) {
-    
+  
       await connection.release()
-    
+  
     }
   }
 }
+
+
+
 
 exports.archiveAnnouncement = async (req, res) => {
 
