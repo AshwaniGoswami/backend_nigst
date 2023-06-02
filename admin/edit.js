@@ -204,11 +204,17 @@ exports.editAnnouncementForPosting=async(req,res)=>{
       return res.status(404).send({message:'This Announcement Not Exists!.'})
     
     }
+
      const postedDate= new Date()
+     
     const editQ= 'UPDATE announcement SET status=$1, posted_at=$2 WHERE a_id=$3'
+
     const data=[true,postedDate,id]
+
     await connection.query(editQ,data)
+
     return res.status(200).send({message:'Successfully Updated!.'})
+    
   }
    catch (error) {
     

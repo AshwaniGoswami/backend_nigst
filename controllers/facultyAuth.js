@@ -655,42 +655,57 @@ exports.facultyPositionAssi = async (req, res) => {
 
 
 exports.viewFacultyPositionAssi = async (req, res) => {
-  let client;
+
+  let client
 
   try {
-    client = await pool.connect();
 
+     const {faculty}=req.params
+
+    client = await pool.connect()
+    
     const query = `
       SELECT
-        fa.faculty_id,
         f.first_name,
         f.middle_name,
         f.last_name,
+        fa.faculty_id,
         fp.faculty_pos
       FROM
         faculty_position_assi fa
         INNER JOIN faculty f ON fa.faculty_id = f.faculty_id
         INNER JOIN faculty_position fp ON fa.faculty_pos = fp.faculty_pos
-    `;
+        WHERE fa.faculty_admin=$1
+    `
 
-    const result = await client.query(query);
+    const result = await client.query(query,[faculty])
+
     if (result.rowCount===0) {
+
       return res.status(404).send({message:'No Record Exists!.'})
+
     }
-    return res.send({ facultyPositions: result.rows });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ message: 'Internal Server Error!' });
-  } finally {
+
+    return res.send({ facultyPositions: result.rows })
+
+  }
+   catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({ message: 'Internal Server Error!' })
+
+  } 
+ 
+  finally {
+
     if (client) {
-      try {
-        await client.release();
-      } catch (releaseError) {
-        console.error('Error occurred while releasing the database client:', releaseError);
-      }
+
+        await client.release()
+
     }
   }
-};
+}
 
 
 exports.viewFaculty = async (req, res) => {
@@ -722,6 +737,7 @@ exports.viewFaculty = async (req, res) => {
 
     }
   }
+
   catch (error) {
 
     console.error(error)

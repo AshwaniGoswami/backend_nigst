@@ -20,5 +20,5 @@ router.post('/report/submit',reportSubmit,reportSubmission)
 router.get('/report/view/:scheduleId',displayReport)
 router.get('/view_by_faculty/:faculty',filterReportsByFaculty)
 router.get('/send_course/:faculty',sendIDForReport)
-router.get('/faculty_position',viewFacultyPositionAssi)
+router.get('/faculty_position/:faculty',viewFacultyPositionAssi)
 module.exports=router
