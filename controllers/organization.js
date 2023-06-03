@@ -21,7 +21,7 @@ exports.departments = async (req, res) => {
 
     // Insert the new department into the database
     const insertResult = await pool.query(
-      `INSERT INTO organizations (organization, type, category, department, ministry, email, phone) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      `INSERT INTO organizations (organization, type, category, department, ministry, email, phone) VALUES ($1, $2, $3, $4, $5, $6, $7) `,
       [organization, type, category, department, ministry, email, phone]
     );
 
