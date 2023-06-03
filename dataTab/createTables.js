@@ -130,20 +130,18 @@ CREATE TABLE IF NOT EXISTS admin (
 
   
 
-      await client.query
-      (`
-        CREATE TABLE IF NOT EXISTS organizations 
-        (
-          id SERIAL PRIMARY KEY,
-          organization varchar(255) NOT NULL UNIQUE,
-          type varchar(255)NOT NULL,
-          category varchar(255)NOT NULL,
-          ministry varchar(255),
-          department varchar(255),
-          email varchar(255) NOT NULL,
-          phone VARCHAR(255) 
-        )
-      `)
+      await client.query(`
+      CREATE TABLE IF NOT EXISTS organizations (
+        id SERIAL PRIMARY KEY,
+        organization VARCHAR(255) NOT NULL UNIQUE,
+        type VARCHAR(255) NOT NULL,
+        category VARCHAR(255) NOT NULL,
+        ministry VARCHAR(255),
+        department VARCHAR(255),
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(255)
+      )
+    `);
      
 
   

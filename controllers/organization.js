@@ -6,37 +6,44 @@ const generateNumericValue = require("../generator/NumericId");
 
 exports.departments = async (req, res) => {
   let connection;
-  try {
-    // Extract the required data from the request body
-    connection = await pool.connect();
-    const { organization, type, category, department, ministry , email, phone } = req.body;
 
-    // Check if organization already exists in the database
-    const checkOrgResult = await pool.query(`SELECT id FROM organizations WHERE organization = $1`, [organization]);
-    if (checkOrgResult.rows.length > 0) {
+  try {
+    connection = await pool.connect();
+
+    const { organization, type, category, department, ministry, email, phone } = req.body;
+
+  
+    if (!organization || !type || !category || !email) {
       return res.status(400).send({
-        message: `Duplicate organization found`
+        message: 'Missing required fields',
       });
     }
 
-    // Insert the new department into the database
-    const insertResult = await pool.query(
-      `INSERT INTO organizations (organization, type, category, department, ministry, email, phone) VALUES ($1, $2, $3, $4, $5, $6, $7) `,
-      [organization, type, category, department, ministry, email, phone]
-    );
+    const check = `SELECT id FROM organizations WHERE organization = $1`;
+    const checkOrgResult = await pool.query(check, [organization]);
 
-    return res.send({
-      message: "Successfully created"
-    });
+    if (checkOrgResult.rowCount > 0) {
+      return res.status(400).send({
+        message: `Duplicate organization found`,
+      });
+    } else {
+      const insertQ = `INSERT INTO organizations (organization, type, category, department, ministry, email, phone) VALUES ($1, $2, $3, $4, $5, $6, $7)`;
+      const data = [organization, type, category, department, ministry, email, phone];
+      await connection.query(insertQ, data);
+      return res.send({
+        message: 'Successfully created',
+      });
+    }
   } catch (error) {
     console.error(error);
-    return res.status(500).send({ message: 'Something went wrong!' });
+    return res.status(500).send({ message: 'Internal Server Error!.' });
   } finally {
     if (connection) {
-    await  connection.release();
+      await connection.release();
     }
   }
 };
+
 
 
 
