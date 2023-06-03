@@ -70,34 +70,45 @@ exports.createAnnouncement = async (req, res) => {
 
 exports.archiveAnnouncement = async (req, res) => {
 
+  let connection
+
   try {
 
-    const { id } = req.body
+    const { aid } = req.body
 
-    const connection = await pool.connect()
+     connection = await pool.connect()
 
-    const insert = "INSERT INTO archive_announcement (title , description, url, photo_path, status, created_at) SELECT title , description, url, photo_path, status, created_at FROM announcement WHERE id=$1"
+    const insert = "INSERT INTO archive_announcement (title , description, url, pdf_path, status, created_at,posted_at,a_id) SELECT title , description, url, pdf_path, status, created_at,posted_at,a_id FROM announcement WHERE a_id=$1"
 
-    const result = await connection.query(insert, [id])
+    const result = await connection.query(insert, [aid])
+if (result.rowCount===0) {
+  return res.staus(404).send({message:'Announcement Not Exits!.'})
+}
+    const deleteq = "DELETE FROM announcement WHERE a_id=$1"
 
-    const deleteq = "DELETE FROM announcement WHERE id=$1"
+    await connection.query(deleteq, [aid])
 
-    await connection.query(deleteq, [id])
-
-    res.status(204).send({
+   return  res.status(204).send({
       message: "successfully Archive"
     })
 
-    await connection.release()
 
   }
   catch (error) {
 
     console.error(error)
 
-    return res.status(500).send({ message: 'Something went wrong!' })
+    return res.status(500).send({ message: 'Internal Server Error!.' })
 
   }
+
+finally{
+
+  if (connection) {
+    await connection.release()
+  }
+}
+
 }
 
 

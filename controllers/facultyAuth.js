@@ -689,6 +689,7 @@ exports.viewFacultyPositionAssi = async (req, res) => {
     return res.send({ facultyPositions: result.rows })
 
   }
+
    catch (error) {
 
     console.error(error)
@@ -702,7 +703,7 @@ exports.viewFacultyPositionAssi = async (req, res) => {
     if (client) {
 
         await client.release()
-
+        
     }
   }
 }

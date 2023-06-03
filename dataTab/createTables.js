@@ -263,7 +263,9 @@ await client.query(`
         url VARCHAR(255),
         pdf_path VARCHAR (255),
         status BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP,
+        a_id VARCHAR(255),
+        created_at DATE,
+        posted_at TIMESTAMP,
         archive_at TIMESTAMP DEFAULT NOW()
       )
     `)
