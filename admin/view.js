@@ -387,7 +387,7 @@ exports.viewAnnouncementToAdmin=async(req,res)=>{
 
   let connection
   try {
-    const check=`SELECT title,description,url,pdf_path,status, to_char(created_at,'YYYY/MM/DD')as createdat,to_char(posted_at,'YYYY/MM/DD')as postedat FROM announcement`
+    const check=`SELECT title,description,url,pdf_path,status, a_id as aid,to_char(created_at,'YYYY/MM/DD')as createdat,to_char(posted_at,'YYYY/MM/DD')as postedat FROM announcement`
     connection=await pool.connect()
     const result=await connection.query(check)
     if (result.rowCount===0) {
