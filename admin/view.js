@@ -102,7 +102,7 @@ exports.viewAnnouncement = async (req, res) => {
 
   try {
     client = await pool.connect();
-    const check = "SELECT * FROM announcement";
+    const check = `SELECT title,description,url,pdf_path,status, to_char(created_at,'YYYY/MM/DD')as createdat,to_char(posted_at,'YYYY/MM/DD')as postedat FROM announcement`;
     const result = await client.query(check);
 
     if (result.rowCount === 0) {
