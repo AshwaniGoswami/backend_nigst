@@ -122,6 +122,30 @@ exports.viewAnnouncement = async (req, res) => {
 };
 
 
+exports.viewArchiveAnnouncementToAdmin = async (req, res) => {
+  let client;
+
+  try {
+    client = await pool.connect();
+    const check = "SELECT * FROM archive_announcement";
+    const result = await client.query(check);
+
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: "Nothing to show" });
+    }
+
+   return res.status(200).send(result.rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: "Something went wrong." });
+  }
+   finally {
+    if (client) {
+    await  client.release();
+    }
+  }
+};
+
 exports.allFacultyDetail = async (req, res) => {
   let client;
   try {
