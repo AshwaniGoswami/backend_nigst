@@ -14,7 +14,7 @@ const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
 
 
 exports.sendsms = async (req, res) => {
-  const phoneNumber = req.body.phoneNumber;
+  const phoneNumber = req.body.email;
   const message = req.body.message;
   let client;
 
@@ -242,13 +242,19 @@ exports.resendOTP = async (req, res) => {
 //API TO VERIFY OTP
 
 exports.verifyOTP = async (req, res) => {
-  const phoneNumber = req.body.phoneNumber;
+  const email = req.body.email;
   const otp = req.body.otp;
   let client;
 
   try {
     client = await pool.connect();
-
+      const check='SELECT phone from users WHERE email=$1'
+      const phone=await client.query(check,[email])
+      if (phone.rowCount===0) {
+        return res.status(404).send({message:'User Not Exists!.'})
+      }
+      const phoneNumber=phone.rows[0].phone
+      console.log(phoneNumber)
     // Check if the OTP is valid
     const result = await client.query('SELECT * FROM otps WHERE phone_number = $1 AND otp = $2', [phoneNumber, otp]);
     if (result.rows.length === 0) {
