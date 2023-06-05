@@ -254,7 +254,6 @@ exports.verifyOTP = async (req, res) => {
         return res.status(404).send({message:'User Not Exists!.'})
       }
       const phoneNumber=phone.rows[0].phone
-      console.log(phoneNumber)
     // Check if the OTP is valid
     const result = await client.query('SELECT * FROM otps WHERE phone_number = $1 AND otp = $2', [phoneNumber, otp]);
     if (result.rows.length === 0) {
