@@ -706,7 +706,7 @@ exports.viewFaculty = async (req, res) => {
 
     const page = req.query.page || 1
 
-    const limit = req.query.limit || 10
+    const limit = req.query.limit || 50
 
     const offset = (page - 1) * limit
 
@@ -892,6 +892,7 @@ exports.displayReport = async (req, res) => {
   }
 }
 
+
 exports.filterReportsByFaculty = async (req, res) => {
 
   let client
@@ -931,6 +932,8 @@ exports.filterReportsByFaculty = async (req, res) => {
     }
   }
 }
+
+
 
 exports.sendIDForReport = async (req, res) => {
 
