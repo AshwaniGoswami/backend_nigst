@@ -239,3 +239,156 @@ exports.viewAllPDFs = async (req, res) => {
     }
   }
 };
+
+
+
+// exports.viewArchiveToWebsite = async (req, res) => {
+//   let connection;
+
+//   try {
+//     const check = 'SELECT * FROM archive_announcement';
+//     connection = await pool.connect();
+
+//     const result = await connection.query(check);
+//     if (result.rowCount === 0) {
+//       return res.status(404).send({ message: 'No Records Found!' });
+//     }
+
+//     const pdfData = result.rows.map(async (row) => {
+//       const { pdf_path, ...otherData } = row;
+
+//       if (!pdf_path) {
+//         return { pdf_path: null, ...otherData };
+//       }
+
+//       const fileUrl = pdf_path;
+//       const key = 'announcement/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+
+//       try {
+//         const s3Client = new S3Client({
+//           region: process.env.BUCKET_REGION,
+//           credentials: {
+//             accessKeyId: process.env.ACCESS_KEY,
+//             secretAccessKey: process.env.SECRET_ACCESS_KEY,
+//           },
+//         });
+
+//         const command = new GetObjectCommand({
+//           Bucket: process.env.BUCKET_NAME,
+//           Key: key,
+//         });
+
+//         const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+//         return { pdf_path: url, ...otherData };
+//       } catch (error) {
+//         console.error(`Error retrieving file '${key}': ${error}`);
+//         return { pdf_path: null, ...otherData };
+//       }
+//     });
+
+//     const resolvedPdfData = await Promise.all(pdfData);
+//     res.json({ pdfs: resolvedPdfData });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).send({ message: 'Internal Server Error!' });
+//   } finally {
+//     if (connection) {
+//       await connection.release();
+//     }
+//   }
+// };
+
+
+exports.viewArchiveToWebsite = async (req, res) => {
+
+  let connection
+
+  try {
+
+    const check =` SELECT title,description,pdf_path,url,to_char(posted_at,'YYYY/MM/DD') as postedat FROM archive_announcement WHERE status=$1`
+
+    connection = await pool.connect()
+
+const status=true
+
+    const result = await connection.query(check,[status])
+
+    if (result.rowCount === 0) {
+
+      return res.status(404).send({ message: 'No Records Found!' })
+
+    }
+
+    const pdfDataPromises = result.rows.map(async (row) => {
+
+      const { pdf_path, ...otherData } = row
+
+
+      if (!pdf_path) {
+
+        return { pdf_path: null, ...otherData }
+
+      }
+
+      const fileUrl = pdf_path
+
+      const key = 'announcement/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+
+
+      try {
+
+        const s3Client = new S3Client({
+          region: process.env.BUCKET_REGION,
+          credentials: {
+            accessKeyId: process.env.ACCESS_KEY,
+            secretAccessKey: process.env.SECRET_ACCESS_KEY,
+          },
+        })
+
+
+        const command = new GetObjectCommand({
+          Bucket: process.env.BUCKET_NAME,
+          Key: key,
+        })
+
+
+        const urlPromise = getSignedUrl(s3Client, command, { expiresIn: 36000 })
+
+        const url = await urlPromise
+
+
+        return { pdf_path: url, ...otherData }
+
+      } 
+      catch (error) {
+
+        console.error(`Error retrieving file '${key}': ${error}`)
+
+        return { pdf_path: null, ...otherData }
+
+      }
+    })
+
+
+    const resolvedPdfData = await Promise.allSettled(pdfDataPromises)
+
+    const pdfs = resolvedPdfData.map((result) => result.status === 'fulfilled' ? result.value : null)
+
+   return res.status(200).json({ pdfs })
+
+  } catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({ message: 'Internal Server Error!' })
+
+  } 
+  finally {
+
+    if (connection) {
+
+      await connection.release()
+
+    }
+  }
+}
