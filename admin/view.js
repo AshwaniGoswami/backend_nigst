@@ -199,7 +199,7 @@ exports.viewFacultyMembersWithFaculty = async (req, res) => {
   try {
     const { faculty } = req.params;
     client = await pool.connect();
-    const check = 'SELECT first_name as firstname, middle_name as middlename, last_name as lastname, faculty_id as facultyid FROM faculty WHERE faculty = $1';
+    const check = 'SELECT first_name as firstname, middle_name as middlename, last_name as lastname, faculty_id as facultyid,dob as dateofbirth,phone as mobileno, email,education,designation,profile FROM faculty WHERE faculty = $1';
     const result = await client.query(check, [faculty]);
     if (result.rowCount === 0) {
       return res.status(404).send({ message: 'Nothing to Show.' });
