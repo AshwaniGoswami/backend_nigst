@@ -82,7 +82,7 @@ exports.archiveAnnouncement = async (req, res) => {
 
     const result = await connection.query(insert, [aid])
 if (result.rowCount===0) {
-  return res.staus(404).send({message:'Announcement Not Exits!.'})
+  return res.status(404).send({message:'Announcement Not Exits!.'})
 }
     const deleteq = "DELETE FROM announcement WHERE a_id=$1"
 
