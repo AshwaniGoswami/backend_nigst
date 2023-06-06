@@ -69,47 +69,44 @@ exports.createAnnouncement = async (req, res) => {
 
 
 exports.archiveAnnouncement = async (req, res) => {
-
-  let connection
+  let connection;
 
   try {
+    const { aid } = req.body;
+    connection = await pool.connect();
 
-    const { aid } = req.body
+    await connection.query('BEGIN'); 
 
-     connection = await pool.connect()
+    const insert = `INSERT INTO archive_announcement (title, description, url, pdf_path, status, created_at, posted_at, a_id) SELECT title, description, url, pdf_path, status, created_at, posted_at, a_id FROM announcement WHERE a_id = $1 AND status = $2`;
+    const insertData = [aid, true];
+    const insertResult = await connection.query(insert, insertData);
 
-    const insert = "INSERT INTO archive_announcement (title , description, url, pdf_path, status, created_at,posted_at,a_id) SELECT title , description, url, pdf_path, status, created_at,posted_at,a_id FROM announcement WHERE a_id=$1"
+    if (insertResult.rowCount === 0) {
+      await connection.query('ROLLBACK'); 
+      return res.status(404).send({ message: 'Announcement Not Exists or Cannot archive hidden announcement.' });
+    }
 
-    const result = await connection.query(insert, [aid])
-if (result.rowCount===0) {
-  return res.status(404).send({message:'Announcement Not Exits!.'})
-}
-    const deleteq = "DELETE FROM announcement WHERE a_id=$1"
+    const deleteq = 'DELETE FROM announcement WHERE a_id = $1';
+    await connection.query(deleteq, [aid]);
 
-    await connection.query(deleteq, [aid])
+    await connection.query('COMMIT'); 
 
-   return  res.status(204).send({
-      message: "successfully Archive"
-    })
-
-
+    return res.status(200).send({
+      message: 'Successfully archived'
+      
+    });
+  } catch (error) {
+    console.error(error);
+    if (connection) {
+      await connection.query('ROLLBACK'); 
+    }
+    return res.status(500).send({ message: 'Internal Server Error!.' });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
   }
-  catch (error) {
-
-    console.error(error)
-
-    return res.status(500).send({ message: 'Internal Server Error!.' })
-
-  }
-
-finally{
-
-  if (connection) {
-    await connection.release()
-  }
-}
-
-}
+};
 
 
 exports.retrieveAnnouncement = async (req, res) => {
