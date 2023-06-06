@@ -259,7 +259,9 @@ exports.verifyOTP = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(400).json({ message: 'Invalid OTP.' });
     }
-
+if (result.rows[0].verified===true) {
+  return res.send({message:'OTP Already Verified!.'})
+}
     // Update the OTP in the database
     await client.query('UPDATE otps SET verified = true WHERE phone_number = $1', [phoneNumber]);
     await client.query('UPDATE users SET mobile_verified = true WHERE phone = $1', [phoneNumber]);
