@@ -144,7 +144,7 @@ exports.viewArchiveAnnouncementToAdmin = async (req, res) => {
 
     client = await pool.connect()
 
-    const check = `SELECT title,description,url,pdf_path,status, to_char(created_at,'YYYY/MM/DD')as createdat,to_char(posted_at,'YYYY/MM/DD')as postedat,to_char(archive_at,'YYYY/MM/DD')as archivedat FROM archive_announcement`
+    const check = `SELECT title,description,url,pdf_path,status, to_char(created_at,'YYYY/MM/DD')as createdat,to_char(posted_at,'YYYY/MM/DD')as postedat,to_char(archive_at,'YYYY/MM/DD')as archivedat,a_id as aid FROM archive_announcement`
 
     const result = await client.query(check)
 
