@@ -252,6 +252,7 @@ exports.viewTender = async (req, res) => {
       FROM tender
       LEFT JOIN corrigendum_tender ON tender.tender_ref_no = corrigendum_tender.tender_ref_no
       GROUP BY tender.id
+      ORDER BY tender.id DESC 
     `;
     const result = await client.query(query);
     if (result.rowCount === 0) {
@@ -263,10 +264,11 @@ exports.viewTender = async (req, res) => {
     return res.status(500).send({ error: 'Something went wrong.' });
   } finally {
     if (client) {
-    await  client.release();
+      await client.release();
     }
   }
 };
+
 
 
 

@@ -191,7 +191,7 @@ function createUploadMiddleware(destination) {
         return cb('Error: Images, Videos, and PDFs Only!');
       }
     },
-  }).fields([{ name: 'photo', maxCount: 1 }, { name: 'video', maxCount: 1 }, { name: 'pdf', maxCount: 1 }, { name: 'file', maxCount: 1 }]);
+  }).fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }, { name: 'pdf', maxCount: 1 }, { name: 'file', maxCount: 1 }]);
 
   return function (req, res, next) {
     // Set destination directory in request object
@@ -221,7 +221,8 @@ const pdfUpload = createUploadMiddleware('pdf');
 const tenderpdf = createUploadMiddleware('tender');
 const corrigendum = createUploadMiddleware('tender/corrigendum');
 const reportSubmit= createUploadMiddleware('report')
+const bannerUpload=createUploadMiddleware('banner')
 
 
 
-module.exports = { uploadFacultyPhoto, uploadStudentPhoto,uploadAnnouncement,galleryUpload,videoUpload,pdfUpload,tenderpdf,corrigendum,reportSubmit };
+module.exports = { uploadFacultyPhoto, uploadStudentPhoto,uploadAnnouncement,galleryUpload,videoUpload,pdfUpload,tenderpdf,corrigendum,reportSubmit,bannerUpload };

@@ -1,15 +1,16 @@
 const express = require('express')
 const { viewAllDetailsFaculty } = require('../../viewList/allview')
 const { viewWebAnnouncement, viewAllWebAnnouncement, viewPDFAnnouncement, viewAllPDFs, viewArchiveToWebsite, viewArchivePDFAnnouncement } = require('../announcement')
-const { viewFacultyByStatus } = require('../facultyView')
+const { createBanner } = require('../Banner')
+const { bannerUpload } = require('../../middleware/faculty')
 const router = express.Router()
 
 router.get('/webannouncement',viewWebAnnouncement)
 router.get('/facultynsub',viewAllDetailsFaculty)
-router.get('/faculty_members',viewFacultyByStatus)
 router.get('/view_ann_all',viewAllWebAnnouncement)
 router.get('/view_ann/:aid',viewPDFAnnouncement)
 router.get('/view',viewAllPDFs)
 router.get('/view_archive',viewArchiveToWebsite)
 router.get('/view_archive/:aid',viewArchivePDFAnnouncement)
+router.post('/create_banner',bannerUpload,createBanner)
 module.exports=router

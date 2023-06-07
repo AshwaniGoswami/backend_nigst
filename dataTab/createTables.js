@@ -439,13 +439,7 @@ CREATE TABLE IF NOT EXISTS album (
         )`
       )
   
-  //   await client.query(`
-  // CREATE TABLE IF NOT EXISTS org_assi(
-  //   id SERIAL PRIMARY KEY,
-  //   organization_name VARCHAR(255) NOT NULL,
-  //   course_id text NOT NULL,
-  //   des TEXT NOT NULL
-  //   )`)
+  
 
  
 await client.query(`
@@ -460,9 +454,20 @@ CREATE TABLE IF NOT EXISTS report_submission (
   CONSTRAINT unique_schedule_submission UNIQUE (schedule_id, faculty_id)
 
 
-
 )`)
    
+await client.query(`
+CREATE TABLE IF NOT EXISTS banner(
+  id SERIAL PRIMARY KEY,
+  name varchar(255),
+  alt varchar(255),
+  banner_path varchar(255),
+  banner_id varchar(255) NOT NULL UNIQUE,
+  url varchar(255),
+  section varchar(255) UNIQUE,
+  date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)`)
+
   console.log('Tables created successfully')
   }
 
