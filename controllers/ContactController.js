@@ -49,14 +49,20 @@ exports.postContact = async (req, res) => {
   }
 };
 exports.viewContact = async(req,res)=>{
+  let connection
   try{
-    const connection = await pool.connect();
+     connection = await pool.connect();
     const query = "SELECT * FROM contact_form";
     const result = await connection.query(query);
    return res.send( { details: result.rows });
-    await connection.release();
+   
   }catch (error) {
     console.error(error)
     return res.status(500).send({ message: 'Something went wrong!' });
+  }
+  finally{
+    if (connection) {
+      await connection.release()
+    }
   }
 }

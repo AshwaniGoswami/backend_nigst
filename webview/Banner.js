@@ -56,3 +56,58 @@ return res.send({message:'This is still in testing!.'})
         }
     }
 }
+
+
+exports.editBanner=async(req,res)=>{
+
+    let client
+
+    try {
+        
+client=await pool.connect()
+
+const {bid,alt,url,section}=req.body
+
+const image=req.files.image 
+
+const name=image[0].originalname
+
+const path=image[0].key 
+
+
+const check='SELECT * FROM banner WHERE banner_id=$1'
+
+const result= await client.query(check,bid)
+
+if (result.rowCount===0) {
+
+    return res.status(404).send({message:'Banner not Found!.'})
+
+}
+ 
+const date= new Date()
+
+const data=[name,alt,url,section,path,date]
+
+const updateQ='UPDATE banner SET name=$1,alt=$2,url=$3,section=$4,path=$5,date=$6 WHERE banner_id=$7'
+
+await client.query(updateQ,data)
+
+return res.status(200).send({message:'Successfully Updated!.'})
+
+
+    } catch (error) {
+        
+        console.log(error)
+
+        return res.status(500).json({message:'Internal Server Error!.'})
+    }
+    finally{
+        
+        if (client) {
+            
+            await client.release()
+
+        }
+    }
+}
