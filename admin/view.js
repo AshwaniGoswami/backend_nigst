@@ -303,7 +303,7 @@ exports.viewFacultyMembersWithFaculty = async (req, res) => {
 
     client = await pool.connect()
 
-    const check = `SELECT first_name as firstname, middle_name as middlename, last_name as lastname, faculty_id as facultyid,dob as dateofbirth,phone as mobileno, email,education,designation,profile,to_char(created_on_date_time,'YYYY/MM/DD') as createdat,admin_verified, status FROM faculty WHERE faculty = $1`
+    const check = `SELECT first_name as firstname, middle_name as middlename, last_name as lastname, faculty_id as facultyid,dob as dateofbirth,phone as mobileno, email,education,designation,profile,to_char(created_on_date_time,'YYYY/MM/DD') as created_at,admin_verified, status FROM faculty WHERE faculty = $1`
 
     const result = await client.query(check, [faculty])
 
