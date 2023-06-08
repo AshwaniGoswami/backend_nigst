@@ -165,7 +165,7 @@ try {
     const {faculty}=req.params
 
   
-    const checkCourse = `SELECT c.title,  to_char(cs.running_date,'YYYY/MM/DD') as runningdate ,cs.course_id  as courseid,to_char(cs.date_comencement,'YYYY/MM/DD') as datecomencement,cs.course_capacity as coursecapacity,to_char(cs.date_completion,'YYYY/MM/DD') as datecompletion,cs.batch_no as batch,cs.course_status,to_char(cs.scheduled_at, 'YYYY/MM/DD') as schedulingdate,cs.course_scheduler_id as scheduling_id,CONCAT(cs.currency, ' ', cs.fee) AS fee FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id WHERE c.faculty = $1`
+    const checkCourse = `SELECT c.title,  to_char(cs.running_date,'YYYY/MM/DD') as runningdate ,cs.course_id  as courseid,to_char(cs.date_comencement,'YYYY/MM/DD') as datecomencement,cs.course_capacity as coursecapacity,to_char(cs.date_completion,'YYYY/MM/DD') as datecompletion,cs.batch_no as batch,cs.course_status,to_char(cs.scheduled_at, 'YYYY/MM/DD') as schedulingdate,cs.course_scheduler_id as scheduling_id,CONCAT(cs.currency, ' ', cs.fee) AS fee,cs.course_scheduler_id as schedulerid FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id WHERE c.faculty = $1`
 
  
     connection=await pool.connect()
