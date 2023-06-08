@@ -211,7 +211,7 @@ exports.resendOTP = async (req, res) => {
         to: '+91'+' '+phoneNumber,
       });
 
-      return res.status(200).json({ message: 'OTP replaced and sent successfully.' });
+      return res.status(200).json({ message: 'OTP  resend successfully.' });
     } else {
       const otp = Math.floor(100000 + Math.random() * 900000);
 
