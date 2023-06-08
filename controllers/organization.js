@@ -160,7 +160,7 @@ exports.otherCategory = async (req, res) => {
     const query = `SELECT category FROM organizations WHERE type=$1`;
     const result = await client.query(query, ['Other']);
     if (result.rows.length === 0) {
-      return res.send({ message: "Nothing To Show" });
+      return res.send({ message: "Nothing to show or not created!." });
     }
     return res.send({ organizations: result.rows });
   } catch (err) {
