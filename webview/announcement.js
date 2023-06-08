@@ -262,7 +262,7 @@ exports.viewAllPDFs = async (req, res) => {
           Bucket: process.env.BUCKET_NAME,
           Key: key,
         });
-        const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
         pdfData.push({ fileName: key, url });
       } catch (error) {

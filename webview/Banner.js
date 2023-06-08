@@ -1,5 +1,8 @@
 const pool = require("../config/pool");
 const generateNumericValue = require("../generator/NumericId");
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+
 
 exports.createBanner=async(req,res)=>{
 
@@ -13,7 +16,7 @@ exports.createBanner=async(req,res)=>{
 
         const name=file[0].originalname
 
-        const path=file[0].key
+        const path=file[0].location
 
         connection=await pool.connect()
 
@@ -111,3 +114,53 @@ return res.status(200).send({message:'Successfully Updated!.'})
         }
     }
 }
+
+
+
+
+
+
+exports.getBanner = async (req, res) => {
+    let connection;
+      
+    try {
+      const { bannerId } = req.params;
+  
+      connection = await pool.connect();
+  
+      const check = 'SELECT * FROM banner WHERE banner_id = $1';
+      const result = await connection.query(check, [bannerId]);
+  
+      if (result.rowCount === 0) {
+        return res.status(404).send({ message: 'Banner not found!' });
+      }
+  
+      const path = result.rows[0].banner_path;
+      const key = 'banner/' + path.substring(path.lastIndexOf('/') + 1);
+  
+      // Generate a signed URL for the S3 object
+      const s3Client = new S3Client({
+        region: process.env.BUCKET_REGION,
+        credentials: {
+          accessKeyId: process.env.ACCESS_KEY,
+          secretAccessKey: process.env.SECRET_ACCESS_KEY,
+        },
+      });
+  
+      const command = new GetObjectCommand({
+        Bucket: process.env.BUCKET_NAME,
+        Key: key,
+      });
+  
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  
+      return res.json({url:signedUrl});
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send({ message: 'Internal Server Error!' });
+    } finally {
+      if (connection) {
+        await connection.release();
+      }
+    }
+  };

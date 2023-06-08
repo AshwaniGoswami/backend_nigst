@@ -156,6 +156,51 @@ exports.viewScheduledCourses = async (req, res) => {
   }
 };
 
+exports.viewScheduledCoursesByFaculty=async(req,res)=>{
+
+let connection
+
+try {
+  
+    const {faculty}=req.params
+
+  
+    const checkCourse = `SELECT c.title,  to_char(cs.running_date,'YYYY/MM/DD') as runningdate ,cs.course_id  as courseid,to_char(cs.date_comencement,'YYYY/MM/DD') as datecomencement,cs.course_capacity as coursecapacity,to_char(cs.date_completion,'YYYY/MM/DD') as datecompletion,cs.batch_no as batch,cs.course_status,to_char(cs.scheduled_at, 'YYYY/MM/DD') as schedulingdate,cs.course_scheduler_id as scheduling_id,CONCAT(cs.currency, ' ', cs.fee) AS fee FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id WHERE c.faculty = $1`
+
+ 
+    connection=await pool.connect()
+
+    const courseResult=await connection.query(checkCourse,[faculty])
+    
+    if (courseResult.rowCount===0) {
+
+      return res.status(404).send({message:'No Courses Found!.'})
+
+    }
+
+    return res.status(200).json({courses:courseResult.rows})
+
+} 
+catch (error) {
+  
+  console.error(error)
+
+  return res.status(500).send({message:'Internal Server Error!.'})
+
+}
+
+finally{
+
+  if (connection) {
+    
+      await connection.release()
+
+  }
+}
+
+}
+
+
 
 
 exports.courseCreation = async (req, res) => {
