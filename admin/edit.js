@@ -232,3 +232,32 @@ exports.editAnnouncementForPosting=async(req,res)=>{
  }
   }
 }
+
+
+exports.updateFacultyDetails=async(req,res)=>{
+
+  let connection
+
+  try {
+    const {dob,phone,education,designation,facultyid}=req.body
+    connection=await pool.connect()
+     const check= 'SELECT email FROM faculty WHERE faculty_id=$1'
+     const result=await connection.query(check,[facultyid])
+     if (result.rowCount===0) {
+      return res.status(404).send({message:'Faculty Member Not Exists!.'})
+     }
+     const updateQ='UPDATE faculty SET dob=$1,phone=$2,education=$3,designation=$4 WHERE faculty_id=$5'
+     const data=[dob,phone,education,designation,facultyid]
+     await connection.query(updateQ,data)
+     return res.status(200).send({message:'Successfully Updated!.'})
+  } catch (error) {
+    console.error(error)
+    return res.status(500).send({message:'Internal Server Error!.'})
+  }
+finally{
+  if (connection) {
+    await connection.release()
+  }
+}
+
+}

@@ -9,13 +9,7 @@ const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { v4: uuidv4 } = require('uuid');
 
 
-const s3Client = new S3Client({
-  region: process.env.BUCKET_REGION,
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  },
-});
+
 
 exports.facultyCreation = async (req, res) => {
 
@@ -836,9 +830,15 @@ exports.reportSubmission = async (req, res) => {
 exports.displayReport = async (req, res) => {
 
   let client
-
+  
   try {
-
+    const s3Client = new S3Client({
+      region: process.env.BUCKET_REGION,
+      credentials: {
+        accessKeyId: process.env.ACCESS_KEY,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      },
+    });
     const { scheduleId } = req.params
 
     client = await pool.connect()

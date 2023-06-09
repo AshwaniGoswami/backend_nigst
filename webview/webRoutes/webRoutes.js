@@ -13,5 +13,5 @@ router.get('/view',viewAllPDFs)
 router.get('/view_archive',viewArchiveToWebsite)
 router.get('/view_archive/:aid',viewArchivePDFAnnouncement)
 router.post('/create_banner',bannerUpload,createBanner)
-router.get('/view_banner/:bannerId',getBanner)
+router.get('/view_banner',getBanner)
 module.exports=router

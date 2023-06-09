@@ -10,7 +10,7 @@ exports.createBanner=async(req,res)=>{
 
     try {
 
-        const {alt,url,section}=req.body 
+        const {alt,url}=req.body 
 
         const file=req.files.image
 
@@ -34,9 +34,9 @@ exports.createBanner=async(req,res)=>{
         result=await connection.query(check01,[BID])
 
     }
-        const check=`INSERT INTO banner (name,alt,banner_path,url,section,banner_id) VALUES($1,$2,$3,$4,$5,$6)`
+        const check=`INSERT INTO banner (name,alt,banner_path,url,banner_id) VALUES($1,$2,$3,$4,$5)`
 
-        const data=[name,alt,path,url,section,BID]
+        const data=[name,alt,path,url,BID]
       
         await connection.query(check,data)
 
@@ -69,7 +69,7 @@ exports.editBanner=async(req,res)=>{
         
 client=await pool.connect()
 
-const {bid,alt,url,section}=req.body
+const {bid,alt,url}=req.body
 
 const image=req.files.image 
 
@@ -90,9 +90,9 @@ if (result.rowCount===0) {
  
 const date= new Date()
 
-const data=[name,alt,url,section,path,date]
+const data=[name,alt,url,path,date]
 
-const updateQ='UPDATE banner SET name=$1,alt=$2,url=$3,section=$4,path=$5,date=$6 WHERE banner_id=$7'
+const updateQ='UPDATE banner SET name=$1,alt=$2,url=$3,path=$4,date=$5 WHERE banner_id=$6'
 
 await client.query(updateQ,data)
 
@@ -119,25 +119,24 @@ return res.status(200).send({message:'Successfully Updated!.'})
 
 
 
-
 exports.getBanner = async (req, res) => {
-    let connection;
-      
-    try {
-      const { bannerId } = req.params;
-  
-      connection = await pool.connect();
-  
-      const check = 'SELECT * FROM banner WHERE banner_id = $1';
-      const result = await connection.query(check, [bannerId]);
-  
-      if (result.rowCount === 0) {
-        return res.status(404).send({ message: 'Banner not found!' });
-      }
-  
-      const path = result.rows[0].banner_path;
-      const key = 'banner/' + path.substring(path.lastIndexOf('/') + 1);
-  
+  let connection;
+
+  try {
+    connection = await pool.connect();
+
+    const check = 'SELECT alt,banner_path,url FROM banner ORDER BY date DESC LIMIT 2';
+    const result = await connection.query(check);
+
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'Banner not found!' });
+    }
+
+    const banners = [];
+    for (const row of result.rows) {
+      const fileUrl = row.banner_path;
+      const key = 'banner/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+
       // Generate a signed URL for the S3 object
       const s3Client = new S3Client({
         region: process.env.BUCKET_REGION,
@@ -146,21 +145,30 @@ exports.getBanner = async (req, res) => {
           secretAccessKey: process.env.SECRET_ACCESS_KEY,
         },
       });
-  
+
       const command = new GetObjectCommand({
         Bucket: process.env.BUCKET_NAME,
         Key: key,
       });
-  
-      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-  
-      return res.json({url:signedUrl});
-    } catch (error) {
-      console.error(error);
-      return res.status(500).send({ message: 'Internal Server Error!' });
-    } finally {
-      if (connection) {
-        await connection.release();
-      }
+
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
+
+      const bannerData = {
+        signedUrl,
+        url: row.url,
+        alt: row.alt,
+      };
+      banners.push(bannerData);
     }
-  };
+
+    return res.json({ banners });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
+  }
+};
+

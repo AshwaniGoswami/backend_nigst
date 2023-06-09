@@ -464,7 +464,6 @@ CREATE TABLE IF NOT EXISTS banner(
   banner_path varchar(255),
   banner_id varchar(255) NOT NULL UNIQUE,
   url varchar(255),
-  section varchar(255) UNIQUE,
   date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )`)
 
