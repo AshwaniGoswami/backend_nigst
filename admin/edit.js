@@ -23,10 +23,10 @@ exports.updateAdminVerificationStatus = async (req, res) => {
     const updateQuery = 'UPDATE users SET admin_verified = $1 WHERE email = $2';
     await client.query(updateQuery, [status, email]);
 
-   return res.status(200).send({ message: 'Admin verification status updated successfully' });
+    return res.status(200).send({ message: 'Admin verification status updated successfully' });
   } catch (error) {
     console.error(error);
-   return res.status(500).send({ message: 'Something went wrong' });
+    return res.status(500).send({ message: 'Something went wrong' });
   } finally {
     if (client) {
       await client.release();
@@ -70,16 +70,16 @@ exports.activeInactive = async (req, res) => {
     const check = 'SELECT * FROM faculty WHERE email=$1';
     const result = await client.query(check, [email]);
     if (result.rowCount === 0) {
-     return res.status(404).send({ message: 'Nothing to show!.' });
+      return res.status(404).send({ message: 'Nothing to show!.' });
     } else {
       const updation = 'UPDATE faculty SET status= $1 WHERE email=$2';
       const data = [change, email];
       await client.query(updation, data);
-     return res.status(200).send({ message: 'Access Changed!.' });
+      return res.status(200).send({ message: 'Access Changed!.' });
     }
   } catch (error) {
     console.error(error);
-   return res.status(500).send({ message: 'Internal Server Error.' });
+    return res.status(500).send({ message: 'Internal Server Error.' });
   } finally {
     if (client) {
       await client.release();
@@ -125,7 +125,7 @@ exports.activeInactive = async (req, res) => {
 //             const cancelCheck='INSERT INTO  course_scheduler_archive (name,course_id,course_capacity,date_comencement,date_completion,currency,fee,batch_no.course_status,running_date,course_scheduler_id,scheduled_at) SELECT (name,course_id,course_capacity,date_comencement,date_completion,currency,fee,batch_no.course_status,running_date,course_scheduler_id,scheduled_at) FROM course_scheduler WHERE course_id=$1'
 //             const cancelResult=await client.query(cancelCheck,[courseID])
 
-           
+
 //             return res.send({ message: 'This feature not implemented yet.' });
 //           } else if (newStatus === 'postponed') {
 //             const newDate01 = '9999/02/03';
@@ -157,7 +157,7 @@ exports.activeInactive = async (req, res) => {
 //             }
 //             const moveStudents='INSERT INTO archive_enrolment (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id) SELECT (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id)  FROM enrolment WHERE scheduling_id=$1'
 //             await client.query(moveStudents,[cancelResult.rows[0].course_scheduler_id])
-           
+
 //             return res.send({ message: 'This feature not implemented yet.' });
 //           } else if (newStatus === 'postponed') {
 //             const newDate = '9999/02/03';
@@ -236,7 +236,7 @@ exports.updateScheduling = async (req, res) => {
 
       return res.status(404).send({ message: 'Record Not Exists!.' })
 
-    } 
+    }
     else {
 
       const statusCheck = result.rows[0].course_status
@@ -257,7 +257,7 @@ exports.updateScheduling = async (req, res) => {
 
           }
 
-           else {
+          else {
 
             await client.query('COMMIT')
 
@@ -272,53 +272,35 @@ exports.updateScheduling = async (req, res) => {
 
         case 'created':
           if (newStatus === 'canceled') {
-            const deleteOrgRecords = `
-              DELETE FROM organization_course_assi
-              WHERE scheduling_id IN (
-                SELECT course_scheduler_id
-                FROM course_scheduler
-                WHERE course_id = $1 AND batch_no = $2 AND course_status = $3
-              )
-            `
-          
+            const deleteOrgRecords = `DELETE FROM organization_course_assi WHERE scheduling_id IN (SELECT course_scheduler_id FROM course_scheduler WHERE course_id = $1 AND batch_no = $2 AND course_status = $3 )  `
+
             const deleteRecord = 'DELETE FROM course_scheduler WHERE course_id = $1 AND batch_no = $2 AND course_status = $3'
-          
-            const departmentCheck = `
-              SELECT department_id
-              FROM course_scheduler
-              WHERE course_id = $1 AND batch_no = $2 AND course_status = $3
-            `
-          
+
+            const departmentCheck = `SELECT department_id FROM course_scheduler
+              WHERE course_id = $1 AND batch_no = $2 AND course_status = $3`
+
             const departmentResult = await client.query(departmentCheck, [courseID, batch, status])
-          
+
             if (departmentResult.rows.length === 0) {
 
               await client.query(deleteRecord, [courseID, batch, status])
 
             } else {
 
-              const deleteDepartment = `
-                DELETE FROM organization_course_assi
-                WHERE scheduling_id IN (
-                  SELECT course_scheduler_id
-                  FROM course_scheduler
-                  WHERE course_id = $1 AND batch_no = $2 AND course_status = $3
-                )
-                AND department_id = $4
-              `
-          
+              const deleteDepartment = `DELETE FROM organization_course_assi WHERE scheduling_id IN ( SELECT course_scheduler_id FROM course_scheduler WHERE course_id = $1 AND batch_no = $2 AND course_status = $3) AND department_id = $4`
+
               await client.query(deleteDepartment, [courseID, batch, status, departmentID])
 
               await client.query(deleteRecord, [courseID, batch, status])
 
             }
-          
+
             await client.query('COMMIT')
 
             return res.send({ message: 'Successfully Changed.' })
 
           }
-          
+
 
 
           else if (newStatus === 'postponed') {
@@ -337,7 +319,7 @@ exports.updateScheduling = async (req, res) => {
 
           }
 
-           else if (newStatus === 'scheduled') {
+          else if (newStatus === 'scheduled') {
 
             const updateCreatedS = 'UPDATE course_scheduler SET course_status=$1 WHERE course_status=$2 AND batch_no=$3 AND course_id=$4'
 
@@ -348,7 +330,7 @@ exports.updateScheduling = async (req, res) => {
             return res.status(200).send({ message: 'Successfully Changed!.' })
 
           }
-           else {
+          else {
 
             await client.query('COMMIT')
 
@@ -365,26 +347,26 @@ exports.updateScheduling = async (req, res) => {
             await client.query(update01, data1)
 
             await client.query('COMMIT')
-          
+
             return res.status(200).send({ message: 'Successfully Changed!.' })
 
-          } 
+          }
           else if (newStatus === 'canceled') {
 
             const cancelCheck = 'SELECT course_scheduler_id FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3'
 
             const cancelResult = await client.query(cancelCheck, [courseID, batch, status])
-          
+
             if (cancelResult.rowCount > 0) {
 
               const courseSchedulerID = cancelResult.rows[0].course_scheduler_id
-          
-              
+
+
               const checkCourseAssi = 'SELECT * FROM organization_course_assi WHERE scheduling_id=$1'
 
               const courseAssiResult = await client.query(checkCourseAssi, [courseSchedulerID])
 
-          
+
               if (courseAssiResult.rowCount > 0) {
 
                 const deleteCourseAssi = 'DELETE FROM organization_course_assi WHERE scheduling_id=$1'
@@ -392,42 +374,42 @@ exports.updateScheduling = async (req, res) => {
                 await client.query(deleteCourseAssi, [courseSchedulerID])
 
               }
-          
-           
+
+
               const getEnrol = 'SELECT * FROM enrolment WHERE scheduling_id=$1'
 
               const enrolResult = await client.query(getEnrol, [courseSchedulerID])
 
-          
+
               if (enrolResult.rowCount > 0) {
 
                 const moveStudents = 'INSERT INTO archive_enrolment (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id) SELECT scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id FROM enrolment WHERE scheduling_id=$1'
 
                 await client.query(moveStudents, [courseSchedulerID])
 
-          
+
                 const deleteEnrolment = 'DELETE FROM enrolment WHERE scheduling_id=$1'
 
                 await client.query(deleteEnrolment, [courseSchedulerID])
 
               }
-          
+
               const deleteRecord = 'DELETE FROM course_scheduler WHERE course_scheduler_id=$1'
 
               await client.query(deleteRecord, [courseSchedulerID])
-          
+
               await client.query('COMMIT')
 
               return res.send({ message: 'Successfully Changed.' })
 
             }
-          
+
             await client.query('ROLLBACK')
 
             return res.status(400).send({ message: 'No matching course found in the scheduler.' })
 
           }
-           else if (newStatus === 'postponed') {
+          else if (newStatus === 'postponed') {
 
             const newDate = '9999/02/03'
 
@@ -441,125 +423,125 @@ exports.updateScheduling = async (req, res) => {
 
             return res.status(200).send({ message: 'Successfully Changed!.' })
 
-          } 
+          }
           else {
 
             await client.query('COMMIT')
-            
+
             return res.send({ message: 'Not allowed to update this course to completed or created' })
 
           }
 
         case 'postponed':
-          
-        if (newStatus === 'created') {
-        
-          if (!newCompletionDate || !newComencementDate || !newRunningDate) {
-        
-            await client.query('ROLLBACK')
-        
-            return res.status(400).send({ message: 'newCompletionDate, newComencementDate, and newRunningDate are required.' })
+
+          if (newStatus === 'created') {
+
+            if (!newCompletionDate || !newComencementDate || !newRunningDate) {
+
+              await client.query('ROLLBACK')
+
+              return res.status(400).send({ message: 'newCompletionDate, newComencementDate, and newRunningDate are required.' })
 
             }
 
-             const schedulingDate=new Date()
-            
-             const newComencementDateParts = newComencementDate.split("/")
-            
-             const newRunningDateParts = newRunningDate.split("/")
-            
-             const newCompletionDateParts = newCompletionDate.split("/")
+            const schedulingDate = new Date()
 
-             const newComencementDateObj = new Date(parseInt(newComencementDateParts[0]), parseInt(newComencementDateParts[1]) - 1, parseInt(newComencementDateParts[2]))
-             
-             const newRunningDateObj = new Date(parseInt(newRunningDateParts[0]), parseInt(newRunningDateParts[1]) - 1, parseInt(newRunningDateParts[2]))
+            const newComencementDateParts = newComencementDate.split("/")
 
-             const newCompletionDateObj = new Date(parseInt(newCompletionDateParts[0]), parseInt(newCompletionDateParts[1]) - 1, parseInt(newCompletionDateParts[2]))
+            const newRunningDateParts = newRunningDate.split("/")
 
-          const dates = [newComencementDateObj, newRunningDateObj, newCompletionDateObj];
+            const newCompletionDateParts = newCompletionDate.split("/")
 
-           
+            const newComencementDateObj = new Date(parseInt(newComencementDateParts[0]), parseInt(newComencementDateParts[1]) - 1, parseInt(newComencementDateParts[2]))
 
-           if (dates.some(date => date < schedulingDate)) {
-             
-            await client.query('ROLLBACK')
-            
-            return res.status(400).send({
+            const newRunningDateObj = new Date(parseInt(newRunningDateParts[0]), parseInt(newRunningDateParts[1]) - 1, parseInt(newRunningDateParts[2]))
+
+            const newCompletionDateObj = new Date(parseInt(newCompletionDateParts[0]), parseInt(newCompletionDateParts[1]) - 1, parseInt(newCompletionDateParts[2]))
+
+            const dates = [newComencementDateObj, newRunningDateObj, newCompletionDateObj];
+
+
+
+            if (dates.some(date => date < schedulingDate)) {
+
+              await client.query('ROLLBACK')
+
+              return res.status(400).send({
                 message: 'newCompletionDate, newComencementDate, and newRunningDate must be later than the current date.',
               })
-            
+
             }
 
             const updatePostponedC = 'UPDATE course_scheduler SET course_status=$1,date_comencement=$2,date_completion=$3,running_date=$4,scheduled_at=$5 WHERE course_status=$6 AND batch_no=$7 AND course_id=$8'
-            
-            const dataS1 = [newStatus, newComencementDate, newCompletionDate, newRunningDate,schedulingDate, statusCheck, batch, courseID]
+
+            const dataS1 = [newStatus, newComencementDate, newCompletionDate, newRunningDate, schedulingDate, statusCheck, batch, courseID]
 
             await client.query(updatePostponedC, dataS1)
-            
+
             await client.query('COMMIT')
 
             return res.status(200).send({ message: 'Successfully Changed!.' })
-          
+
           }
           else if (newStatus === 'canceled') {
-          
+
             const cancelCheck = 'SELECT course_scheduler_id FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3'
-          
+
             const cancelResult = await client.query(cancelCheck, [courseID, batch, status])
-          
+
             if (cancelResult.rowCount > 0) {
 
               const courseSchedulerID = cancelResult.rows[0].course_scheduler_id
-          
+
               const checkCourseAssi = 'SELECT * FROM organization_course_assi WHERE scheduling_id=$1'
-          
+
               const courseAssiResult = await client.query(checkCourseAssi, [courseSchedulerID])
-          
+
               if (courseAssiResult.rowCount > 0) {
 
-                
+
                 const deleteCourseAssi = 'DELETE FROM organization_course_assi WHERE scheduling_id=$1'
 
                 await client.query(deleteCourseAssi, [courseSchedulerID])
 
               }
-          
-              
+
+
               const getEnrol = 'SELECT * FROM enrolment WHERE scheduling_id=$1'
-              
+
               const enrolResult = await client.query(getEnrol, [courseSchedulerID])
-          
+
               if (enrolResult.rowCount > 0) {
 
-                
+
                 const moveStudents = 'INSERT INTO archive_enrolment (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id) SELECT scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id FROM enrolment WHERE scheduling_id=$1'
 
                 await client.query(moveStudents, [courseSchedulerID])
-          
+
                 const deleteEnrolment = 'DELETE FROM enrolment WHERE scheduling_id=$1'
-          
+
                 await client.query(deleteEnrolment, [courseSchedulerID])
-          
+
               }
-          
+
               const deleteRecord = 'DELETE FROM course_scheduler WHERE course_scheduler_id=$1'
-          
+
               await client.query(deleteRecord, [courseSchedulerID])
-          
+
               await client.query('COMMIT')
 
               return res.send({ message: 'Successfully Changed.' })
-            
+
             }
-          
+
             await client.query('ROLLBACK')
 
             return res.status(400).send({ message: 'No matching course found in the scheduler.' })
 
           }
-          
-          
-           else {
+
+
+          else {
 
             await client.query('ROLLBACK')
 
@@ -576,7 +558,7 @@ exports.updateScheduling = async (req, res) => {
       }
     }
   }
-   catch (error) {
+  catch (error) {
 
     console.error(error)
 
@@ -584,7 +566,7 @@ exports.updateScheduling = async (req, res) => {
 
     return res.status(500).send({ message: 'Internal Server Error!.' })
 
-  } 
+  }
   finally {
 
     if (client) {
@@ -598,79 +580,79 @@ exports.updateScheduling = async (req, res) => {
 }
 
 
-exports.editAnnouncementForPosting=async(req,res)=>{
+exports.editAnnouncementForPosting = async (req, res) => {
 
   let connection
 
   try {
-  
-    const {id}=req.body
-  
-    connection=await pool.connect()
 
-    const check='SELECT * FROM announcement WHERE a_id=$1'
+    const { id } = req.body
 
-    const result=await connection.query(check,[id])
+    connection = await pool.connect()
 
-    if (result.rowCount===0) {
-    
-      return res.status(404).send({message:'This Announcement Not Exists!.'})
-    
+    const check = 'SELECT * FROM announcement WHERE a_id=$1'
+
+    const result = await connection.query(check, [id])
+
+    if (result.rowCount === 0) {
+
+      return res.status(404).send({ message: 'This Announcement Not Exists!.' })
+
     }
 
-     const postedDate= new Date()
-     
-    const editQ= 'UPDATE announcement SET status=$1, posted_at=$2 WHERE a_id=$3'
+    const postedDate = new Date()
 
-    const data=[true,postedDate,id]
+    const editQ = 'UPDATE announcement SET status=$1, posted_at=$2 WHERE a_id=$3'
 
-    await connection.query(editQ,data)
+    const data = [true, postedDate, id]
 
-    return res.status(200).send({message:'Successfully Updated!.'})
-    
+    await connection.query(editQ, data)
+
+    return res.status(200).send({ message: 'Successfully Updated!.' })
+
   }
-   catch (error) {
-    
+  catch (error) {
+
     console.error(error)
-    
-    return res.status(500).send({message:'Internal Server Error!.'})
+
+    return res.status(500).send({ message: 'Internal Server Error!.' })
 
   }
-  finally{
- 
-    if (connection) {
-  
-  await connection.release()
+  finally {
 
- }
+    if (connection) {
+
+      await connection.release()
+
+    }
   }
 }
 
 
-exports.updateFacultyDetails=async(req,res)=>{
+exports.updateFacultyDetails = async (req, res) => {
 
   let connection
 
   try {
-    const {dob,phone,education,designation,facultyid}=req.body
-    connection=await pool.connect()
-     const check= 'SELECT email FROM faculty WHERE faculty_id=$1'
-     const result=await connection.query(check,[facultyid])
-     if (result.rowCount===0) {
-      return res.status(404).send({message:'Faculty Member Not Exists!.'})
-     }
-     const updateQ='UPDATE faculty SET dob=$1,phone=$2,education=$3,designation=$4 WHERE faculty_id=$5'
-     const data=[dob,phone,education,designation,facultyid]
-     await connection.query(updateQ,data)
-     return res.status(200).send({message:'Successfully Updated!.'})
+    const { dob, phone, education, designation, facultyid } = req.body
+    connection = await pool.connect()
+    const check = 'SELECT email FROM faculty WHERE faculty_id=$1'
+    const result = await connection.query(check, [facultyid])
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'Faculty Member Not Exists!.' })
+    }
+    const updateQ = 'UPDATE faculty SET dob=$1,phone=$2,education=$3,designation=$4 WHERE faculty_id=$5'
+    const data = [dob, phone, education, designation, facultyid]
+    await connection.query(updateQ, data)
+    return res.status(200).send({ message: 'Successfully Updated!.' })
   } catch (error) {
     console.error(error)
-    return res.status(500).send({message:'Internal Server Error!.'})
+    return res.status(500).send({ message: 'Internal Server Error!.' })
   }
-finally{
-  if (connection) {
-    await connection.release()
+  finally {
+    if (connection) {
+      await connection.release()
+    }
   }
-}
 
 }
