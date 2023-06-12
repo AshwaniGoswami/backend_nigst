@@ -271,23 +271,56 @@ exports.updateScheduling = async (req, res) => {
           return res.send({ message: "It can't be changed" })
 
         case 'created':
-
           if (newStatus === 'canceled') {
+            const deleteOrgRecords = `
+              DELETE FROM organization_course_assi
+              WHERE scheduling_id IN (
+                SELECT course_scheduler_id
+                FROM course_scheduler
+                WHERE course_id = $1 AND batch_no = $2 AND course_status = $3
+              )
+            `
+          
+            const deleteRecord = 'DELETE FROM course_scheduler WHERE course_id = $1 AND batch_no = $2 AND course_status = $3'
+          
+            const departmentCheck = `
+              SELECT department_id
+              FROM course_scheduler
+              WHERE course_id = $1 AND batch_no = $2 AND course_status = $3
+            `
+          
+            const departmentResult = await client.query(departmentCheck, [courseID, batch, status])
+          
+            if (departmentResult.rows.length === 0) {
 
-            const cancelCheck = 'INSERT INTO course_scheduler_archive (name,course_id,course_capacity,date_comencement,date_completion,currency,fee,batch_no,course_status,running_date,course_scheduler_id,scheduled_at) SELECT name,course_id,course_capacity,date_comencement,date_completion,currency,fee,batch_no,course_status,running_date,course_scheduler_id,scheduled_at FROM course_scheduler WHERE course_id=$1'
+              await client.query(deleteRecord, [courseID, batch, status])
 
+            } else {
 
-            const cancelResult = await client.query(cancelCheck, [courseID])
+              const deleteDepartment = `
+                DELETE FROM organization_course_assi
+                WHERE scheduling_id IN (
+                  SELECT course_scheduler_id
+                  FROM course_scheduler
+                  WHERE course_id = $1 AND batch_no = $2 AND course_status = $3
+                )
+                AND department_id = $4
+              `
+          
+              await client.query(deleteDepartment, [courseID, batch, status, departmentID])
 
-            const deleteRecord = 'DELETE FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3'
+              await client.query(deleteRecord, [courseID, batch, status])
 
-            await client.query(deleteRecord, [courseID, batch, status])
-
+            }
+          
             await client.query('COMMIT')
 
             return res.send({ message: 'Successfully Changed.' })
 
-          } 
+          }
+          
+
+
           else if (newStatus === 'postponed') {
 
             const newDate01 = '9999/02/03'
@@ -303,6 +336,7 @@ exports.updateScheduling = async (req, res) => {
             return res.status(200).send({ message: 'Successfully Changed!.' })
 
           }
+
            else if (newStatus === 'scheduled') {
 
             const updateCreatedS = 'UPDATE course_scheduler SET course_status=$1 WHERE course_status=$2 AND batch_no=$3 AND course_id=$4'
@@ -336,101 +370,232 @@ exports.updateScheduling = async (req, res) => {
 
           } 
           else if (newStatus === 'canceled') {
-            const cancelCheck = 'INSERT INTO course_scheduler_archive (name,course_id,course_capacity,date_comencement,date_completion,currency,fee,batch_no,course_status,running_date,course_scheduler_id,scheduled_at) SELECT name,course_id,course_capacity,date_comencement,date_completion,currency,fee,batch_no,course_status,running_date,course_scheduler_id,scheduled_at FROM course_scheduler WHERE course_id=$1';
 
+            const cancelCheck = 'SELECT course_scheduler_id FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3'
 
+            const cancelResult = await client.query(cancelCheck, [courseID, batch, status])
+          
+            if (cancelResult.rowCount > 0) {
 
-            const cancelResult = await client.query(cancelCheck, [courseID]);
-            const deleteRecord = 'DELETE FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3';
-            await client.query(deleteRecord, [courseID, batch, status]);
-            const getEnrol = 'SELECT * FROM enrolment WHERE scheduling_id=$1';
-            const enrolResult = await client.query(getEnrol, [cancelResult.rows[0].course_scheduler_id]);
+              const courseSchedulerID = cancelResult.rows[0].course_scheduler_id
+          
+              
+              const checkCourseAssi = 'SELECT * FROM organization_course_assi WHERE scheduling_id=$1'
 
-            if (enrolResult.rowCount > 0) {
-              const moveStudents = 'INSERT INTO archive_enrolment (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id) SELECT (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id)  FROM enrolment WHERE scheduling_id=$1';
-              await client.query(moveStudents, [cancelResult.rows[0].course_scheduler_id]);
+              const courseAssiResult = await client.query(checkCourseAssi, [courseSchedulerID])
+
+          
+              if (courseAssiResult.rowCount > 0) {
+
+                const deleteCourseAssi = 'DELETE FROM organization_course_assi WHERE scheduling_id=$1'
+
+                await client.query(deleteCourseAssi, [courseSchedulerID])
+
+              }
+          
+           
+              const getEnrol = 'SELECT * FROM enrolment WHERE scheduling_id=$1'
+
+              const enrolResult = await client.query(getEnrol, [courseSchedulerID])
+
+          
+              if (enrolResult.rowCount > 0) {
+
+                const moveStudents = 'INSERT INTO archive_enrolment (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id) SELECT scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id FROM enrolment WHERE scheduling_id=$1'
+
+                await client.query(moveStudents, [courseSchedulerID])
+
+          
+                const deleteEnrolment = 'DELETE FROM enrolment WHERE scheduling_id=$1'
+
+                await client.query(deleteEnrolment, [courseSchedulerID])
+
+              }
+          
+              const deleteRecord = 'DELETE FROM course_scheduler WHERE course_scheduler_id=$1'
+
+              await client.query(deleteRecord, [courseSchedulerID])
+          
+              await client.query('COMMIT')
+
+              return res.send({ message: 'Successfully Changed.' })
+
             }
+          
+            await client.query('ROLLBACK')
 
-            await client.query('COMMIT');
-            return res.send({ message: 'Successfully Changed.' });
-          } else if (newStatus === 'postponed') {
-            const newDate = '9999/02/03';
-            const update02 = 'UPDATE course_scheduler SET course_status=$1,date_comencement=$2,date_completion=$3,running_date=$4 WHERE course_status=$5 AND batch_no=$6 AND course_id=$7';
-            const dataS = [newStatus, newDate, newDate, newDate, statusCheck, batch, courseID];
-            await client.query(update02, dataS);
-            await client.query('COMMIT');
-            return res.status(200).send({ message: 'Successfully Changed!.' });
-          } else {
-            await client.query('COMMIT');
-            return res.send({ message: 'Not allowed to update this course to completed or created' });
+            return res.status(400).send({ message: 'No matching course found in the scheduler.' })
+
           }
-        case 'postponed':
-          if (newStatus === 'created') {
-            if (!newCompletionDate || !newComencementDate || !newRunningDate) {
-              await client.query('ROLLBACK'); 
-              return res.status(400).send({ message: 'newCompletionDate, newComencementDate, and newRunningDate are required.' });
-            }
-             const schedulingDate=new Date()
-             const newComencementDateParts = newComencementDate.split("/");
-             const newRunningDateParts = newRunningDate.split("/");
-             const newCompletionDateParts = newCompletionDate.split("/");
+           else if (newStatus === 'postponed') {
 
-             const newComencementDateObj = new Date(parseInt(newComencementDateParts[0]), parseInt(newComencementDateParts[1]) - 1, parseInt(newComencementDateParts[2]));
-             const newRunningDateObj = new Date(parseInt(newRunningDateParts[0]), parseInt(newRunningDateParts[1]) - 1, parseInt(newRunningDateParts[2]));
-             const newCompletionDateObj = new Date(parseInt(newCompletionDateParts[0]), parseInt(newCompletionDateParts[1]) - 1, parseInt(newCompletionDateParts[2]));
+            const newDate = '9999/02/03'
+
+            const update02 = 'UPDATE course_scheduler SET course_status=$1,date_comencement=$2,date_completion=$3,running_date=$4 WHERE course_status=$5 AND batch_no=$6 AND course_id=$7'
+
+            const dataS = [newStatus, newDate, newDate, newDate, statusCheck, batch, courseID]
+
+            await client.query(update02, dataS)
+
+            await client.query('COMMIT')
+
+            return res.status(200).send({ message: 'Successfully Changed!.' })
+
+          } 
+          else {
+
+            await client.query('COMMIT')
+            
+            return res.send({ message: 'Not allowed to update this course to completed or created' })
+
+          }
+
+        case 'postponed':
+          
+        if (newStatus === 'created') {
+        
+          if (!newCompletionDate || !newComencementDate || !newRunningDate) {
+        
+            await client.query('ROLLBACK')
+        
+            return res.status(400).send({ message: 'newCompletionDate, newComencementDate, and newRunningDate are required.' })
+
+            }
+
+             const schedulingDate=new Date()
+            
+             const newComencementDateParts = newComencementDate.split("/")
+            
+             const newRunningDateParts = newRunningDate.split("/")
+            
+             const newCompletionDateParts = newCompletionDate.split("/")
+
+             const newComencementDateObj = new Date(parseInt(newComencementDateParts[0]), parseInt(newComencementDateParts[1]) - 1, parseInt(newComencementDateParts[2]))
+             
+             const newRunningDateObj = new Date(parseInt(newRunningDateParts[0]), parseInt(newRunningDateParts[1]) - 1, parseInt(newRunningDateParts[2]))
+
+             const newCompletionDateObj = new Date(parseInt(newCompletionDateParts[0]), parseInt(newCompletionDateParts[1]) - 1, parseInt(newCompletionDateParts[2]))
 
           const dates = [newComencementDateObj, newRunningDateObj, newCompletionDateObj];
 
            
 
            if (dates.some(date => date < schedulingDate)) {
-              await client.query('ROLLBACK');
-              return res.status(400).send({
+             
+            await client.query('ROLLBACK')
+            
+            return res.status(400).send({
                 message: 'newCompletionDate, newComencementDate, and newRunningDate must be later than the current date.',
-              });
-            }
-            const updatePostponedC = 'UPDATE course_scheduler SET course_status=$1,date_comencement=$2,date_completion=$3,running_date=$4,scheduled_at=$5 WHERE course_status=$6 AND batch_no=$7 AND course_id=$8';
-            const dataS1 = [newStatus, newComencementDate, newCompletionDate, newRunningDate,schedulingDate, statusCheck, batch, courseID];
-            await client.query(updatePostponedC, dataS1);
-            await client.query('COMMIT'); 
-            return res.status(200).send({ message: 'Successfully Changed!.' });
-          } else if (newStatus === 'canceled') {
-            const cancelCheck = 'INSERT INTO course_scheduler_archive (name,course_id,course_capacity,date_comencement,date_completion,currency,fee,batch_no,course_status,running_date,course_scheduler_id,scheduled_at) SELECT name,course_id,course_capacity,date_comencement,date_completion,currency,fee,batch_no,course_status,running_date,course_scheduler_id,scheduled_at FROM course_scheduler WHERE course_id=$1';
-
-
-            const cancelResult = await client.query(cancelCheck, [courseID]);
-            const deleteRecord = 'DELETE FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3';
-            await client.query(deleteRecord, [courseID, batch, status]);
-            const getEnrol = 'SELECT * FROM enrolment WHERE scheduling_id=$1';
-            const enrolResult = await client.query(getEnrol, [cancelResult.rows[0].course_scheduler_id]);
-
-            if (enrolResult.rowCount > 0) {
-              const moveStudents = 'INSERT INTO archive_enrolment (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id) SELECT (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id)  FROM enrolment WHERE scheduling_id=$1';
-              await client.query(moveStudents, [cancelResult.rows[0].course_scheduler_id]);
+              })
+            
             }
 
-            await client.query('COMMIT'); 
-            return res.send({ message: 'Successfully Changed.' });
-          } else {
-            await client.query('ROLLBACK'); 
-            return res.send({ message: 'You are not allowed to change to this status' });
+            const updatePostponedC = 'UPDATE course_scheduler SET course_status=$1,date_comencement=$2,date_completion=$3,running_date=$4,scheduled_at=$5 WHERE course_status=$6 AND batch_no=$7 AND course_id=$8'
+            
+            const dataS1 = [newStatus, newComencementDate, newCompletionDate, newRunningDate,schedulingDate, statusCheck, batch, courseID]
+
+            await client.query(updatePostponedC, dataS1)
+            
+            await client.query('COMMIT')
+
+            return res.status(200).send({ message: 'Successfully Changed!.' })
+          
           }
+          else if (newStatus === 'canceled') {
+          
+            const cancelCheck = 'SELECT course_scheduler_id FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3'
+          
+            const cancelResult = await client.query(cancelCheck, [courseID, batch, status])
+          
+            if (cancelResult.rowCount > 0) {
+
+              const courseSchedulerID = cancelResult.rows[0].course_scheduler_id
+          
+              const checkCourseAssi = 'SELECT * FROM organization_course_assi WHERE scheduling_id=$1'
+          
+              const courseAssiResult = await client.query(checkCourseAssi, [courseSchedulerID])
+          
+              if (courseAssiResult.rowCount > 0) {
+
+                
+                const deleteCourseAssi = 'DELETE FROM organization_course_assi WHERE scheduling_id=$1'
+
+                await client.query(deleteCourseAssi, [courseSchedulerID])
+
+              }
+          
+              
+              const getEnrol = 'SELECT * FROM enrolment WHERE scheduling_id=$1'
+              
+              const enrolResult = await client.query(getEnrol, [courseSchedulerID])
+          
+              if (enrolResult.rowCount > 0) {
+
+                
+                const moveStudents = 'INSERT INTO archive_enrolment (scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id) SELECT scheduling_id,student_id,course_paid_status,enrolment_status,nigst_approval,enrolment_date,enrolment_id FROM enrolment WHERE scheduling_id=$1'
+
+                await client.query(moveStudents, [courseSchedulerID])
+          
+                const deleteEnrolment = 'DELETE FROM enrolment WHERE scheduling_id=$1'
+          
+                await client.query(deleteEnrolment, [courseSchedulerID])
+          
+              }
+          
+              const deleteRecord = 'DELETE FROM course_scheduler WHERE course_scheduler_id=$1'
+          
+              await client.query(deleteRecord, [courseSchedulerID])
+          
+              await client.query('COMMIT')
+
+              return res.send({ message: 'Successfully Changed.' })
+            
+            }
+          
+            await client.query('ROLLBACK')
+
+            return res.status(400).send({ message: 'No matching course found in the scheduler.' })
+
+          }
+          
+          
+           else {
+
+            await client.query('ROLLBACK')
+
+            return res.send({ message: 'You are not allowed to change to this status' })
+
+          }
+
         default:
-          await client.query('ROLLBACK'); 
-          return res.send({ message: 'Something went wrong!.' });
+
+          await client.query('ROLLBACK')
+
+          return res.send({ message: 'Something went wrong!.' })
+
       }
     }
-  } catch (error) {
-    console.error(error);
-    await client.query('ROLLBACK'); 
-    return res.status(500).send({ message: 'Internal Server Error!.' });
-  } finally {
+  }
+   catch (error) {
+
+    console.error(error)
+
+    await client.query('ROLLBACK')
+
+    return res.status(500).send({ message: 'Internal Server Error!.' })
+
+  } 
+  finally {
+
     if (client) {
-      await client.query('END'); 
-      await client.release();
+
+      await client.query('END')
+
+      await client.release()
+
     }
   }
-};
+}
 
 
 exports.editAnnouncementForPosting=async(req,res)=>{
