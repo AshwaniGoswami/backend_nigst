@@ -343,8 +343,27 @@ exports.viewCourseByFaculty = async (req, res) => {
   try {
 
     const { faculty } = req.params
-
-    const check = `SELECT title, course_id, description, (course_duration_weeks || ' Weeks ' || course_duration_days || ' Days') AS duration, course_code, course_category, course_no, course_officer, course_director, course_mode, course_type, to_char(created_at, 'YYYY/MM/DD') as createdAt FROM courses WHERE faculty = $1`
+    const check = `
+    SELECT
+      c.title,
+      c.course_id,
+      c.description,
+      (course_duration_weeks || ' Weeks ' || course_duration_days || ' Days') AS duration,
+      c.course_code,
+      c.course_category,
+      c.course_no,
+      CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS course_officer_name,
+      c.course_director,
+      c.course_mode,
+      c.course_type,
+      to_char(c.created_at, 'YYYY/MM/DD') AS createdAt
+    FROM
+      courses c
+      INNER JOIN faculty f ON f.faculty_id = c.course_officer
+    WHERE
+      c.faculty = $1
+  `;
+  
 
     client = await pool.connect()
 
