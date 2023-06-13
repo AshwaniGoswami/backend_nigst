@@ -352,7 +352,7 @@ exports.viewCourseByFaculty = async (req, res) => {
       c.course_code,
       c.course_category,
       c.course_no,
-      CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS course_officer_name,
+      CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS course_officer,
       c.course_director,
       c.course_mode,
       c.course_type,
