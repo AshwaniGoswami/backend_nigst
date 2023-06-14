@@ -225,7 +225,7 @@ exports.facultyLogin = async (req, res) => {
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, tokenOptions)
 
 
-    return res.status(200).json({ token, type: 'faculty', faculty: user.faculty, id: user.faculty_id })
+    return res.status(200).json({ token, type: 'faculty', faculty: user.faculty, id: user.faculty_id,name:user.name })
 
   }
   catch (error) {
