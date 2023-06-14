@@ -175,7 +175,7 @@ exports.facultyLogin = async (req, res) => {
     client = await pool.connect()
 
 
-    const userQuery = 'SELECT * FROM faculty WHERE email = $1'
+    const userQuery =` SELECT faculty,faculty_id,email,admin_verified,CONCAT(first_name, ' ', middle_name, ' ', last_name) as name FROM faculty WHERE email = $1`
 
     const userResult = await client.query(userQuery, [email])
 
