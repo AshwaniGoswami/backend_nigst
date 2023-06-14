@@ -608,6 +608,68 @@ exports.viewPdf = async (req, res) => {
   }
 }
 
+exports.viewArchivePdf = async (req, res) => {
+ 
+  let client
+ 
+  try {
+ 
+    const { tender_number } = req.params
+ 
+    client = await pool.connect()
+
+    const query = "SELECT attachment FROM archive_tender WHERE tender_ref_no = $1"
+    
+    const result = await client.query(query, [tender_number])
+
+
+    if (result.rowCount === 0) {
+
+      return res.status(404).send({ error: `Tender not found.` })
+    
+    }
+
+    const fileUrl = result.rows[0].attachment
+
+    const key = 'tender/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: key,
+    })
+
+    const response = await s3Client.send(getObjectCommand)
+
+    if (!response.Body) {
+
+      return res.status(404).send({ error: `File not found.` })
+   
+    }
+
+    res.setHeader("Content-Type", "application/pdf")
+
+    res.setHeader("Content-Disposition", "inline; filename=tender.pdf")
+
+    response.Body.pipe(res)
+
+  } 
+  catch (error) {
+  
+    console.error(error)
+  
+    return res.status(500).send({ error: "Something went wrong." })
+  
+  }
+   finally {
+  
+    if (client) {
+
+    await  client.release()
+    
+  }
+  }
+}
+
 
 
 
