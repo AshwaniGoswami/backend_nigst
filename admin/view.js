@@ -144,7 +144,7 @@ exports.viewArchiveAnnouncementToAdmin = async (req, res) => {
 
     client = await pool.connect()
 
-    const check = `SELECT title,description,url,pdf_path,status, to_char(created_at,'YYYY/MM/DD')as createdat,to_char(posted_at,'YYYY/MM/DD')as postedat,to_char(archive_at,'YYYY/MM/DD')as archivedat,a_id as aid FROM archive_announcement`
+    const check = `SELECT title,description,url,pdf_path,status, to_char(created_at,'DD/MM/YYYY')as createdat,to_char(posted_at,'DD/MM/YYYY')as postedat,to_char(archive_at,'DD/MM/YYYY')as archivedat,a_id as aid FROM archive_announcement`
 
     const result = await client.query(check)
 
@@ -356,7 +356,7 @@ exports.viewCourseByFaculty = async (req, res) => {
       c.course_director,
       c.course_mode,
       c.course_type,
-      to_char(c.created_at, 'YYYY/MM/DD') AS createdAt
+      to_char(c.created_at, 'DD/MM/YYYY') AS createdAt
     FROM
       courses c
       INNER JOIN faculty f ON f.faculty_id = c.course_officer

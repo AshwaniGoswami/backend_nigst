@@ -242,7 +242,7 @@ exports.viewdepartAssi = async (req, res) => {
   let connection
   try {
      connection = await pool.connect();
-    const result = await connection.query('SELECT * FROM organization_course_assi');
+    const result = await connection.query(`SELECT organization_name,course_id,organization_course_id,code,course_no,batch_no,scheduling_id,to_char(date_commencement,'DD/MM/YYYY') as date_commencement,to_char(date_completion,'DD/MM/YYYY') as date_completion,to_char(date_assigned,'DD/MM/YYYY') as date_assigned FROM organization_course_assi`);
     if (result.rowCount===0) {
       return res.status(404).send({message:'No Records to Display!.'})
     }
