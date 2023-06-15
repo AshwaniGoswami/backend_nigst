@@ -276,7 +276,7 @@ exports.updateScheduling = async (req, res) => {
 
             const deleteRecord = 'DELETE FROM course_scheduler WHERE course_id = $1 AND batch_no = $2 AND course_status = $3'
 
-            const departmentCheck = `SELECT department_id FROM course_scheduler
+            const departmentCheck = `SELECT * FROM course_scheduler
               WHERE course_id = $1 AND batch_no = $2 AND course_status = $3`
 
             const departmentResult = await client.query(departmentCheck, [courseID, batch, status])
@@ -287,9 +287,9 @@ exports.updateScheduling = async (req, res) => {
 
             } else {
 
-              const deleteDepartment = `DELETE FROM organization_course_assi WHERE scheduling_id IN ( SELECT course_scheduler_id FROM course_scheduler WHERE course_id = $1 AND batch_no = $2 AND course_status = $3) AND department_id = $4`
+              const deleteDepartment = `DELETE FROM organization_course_assi WHERE scheduling_id IN ( SELECT course_scheduler_id FROM course_scheduler WHERE course_id = $1 AND batch_no = $2 AND course_status = $3) `
 
-              await client.query(deleteDepartment, [courseID, batch, status, departmentID])
+              await client.query(deleteDepartment, [courseID, batch, status])
 
               await client.query(deleteRecord, [courseID, batch, status])
 

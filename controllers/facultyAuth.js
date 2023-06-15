@@ -1009,3 +1009,79 @@ exports.sendIDForReport = async (req, res) => {
     }
   }
 }
+
+
+// exports.sendIDForReport = async (req, res) => {
+
+//   let connection
+
+//   try {
+
+//     const { faculty,officer } = req.params
+
+//     connection = await pool.connect()
+
+
+//     const check = 'SELECT title as name, course_id  FROM courses WHERE faculty = $1 AND course_officer=$2'
+
+//     const result01 = await connection.query(check, [faculty,officer])
+
+//     if (result01.rowCount === 0) {
+
+//       return res.status(404).send({ message: `No Course Found with faculty: ${faculty}, that is assigned to officer: ${officer}` })
+
+//     }
+//     else {
+
+//       const courses = result01.rows
+
+//       const coursePromises = courses.map(async (course) => {
+
+//         const id = course.course_id
+
+//         const check01 = 'SELECT name, course_scheduler_id as schedulerId from course_scheduler WHERE course_id = $1 AND course_status = $2'
+
+//         const data = [id, 'completed']
+
+//         const result02 = await connection.query(check01, data)
+
+//         if (result02.rowCount > 0) {
+
+//           return result02.rows
+
+//         }
+//       })
+
+//       const courseResults = await Promise.all(coursePromises)
+
+//       const finalData = courseResults.filter(Boolean)
+
+
+//       if (finalData.length === 0) {
+
+//         return res.status(404).send({ message: 'No completed courses found for this faculty.' })
+
+//       }
+//       else {
+
+//         return res.status(200).send({ courses: finalData.flat() })
+
+//       }
+//     }
+//   }
+//   catch (error) {
+
+//     console.error(error)
+
+//     return res.status(500).send({ message: 'Internal Server Error!' })
+
+//   }
+//   finally {
+
+//     if (connection) {
+
+//       await connection.release()
+
+//     }
+//   }
+// 2 }
