@@ -907,31 +907,38 @@ exports.filterReportsByFaculty = async (req, res) => {
 
     const reports = await client.query(filterQuery, [faculty])
 
+
     if (reports.rowCount === 0) {
 
-      return res.status(404).send({ message: 'No Reports Found!.' })
+      return res.status(404).send({ message: 'No Reports Found!' })
 
     }
 
-    return res.status(200).send({ reports: reports.rows })
+    const newReports = await Promise.all(
 
-  }
-  catch (error) {
+      reports.rows.map(async (data) => {
 
-    console.error(error)
+        const checkQuery = 'SELECT c.course_code, c.course_no, c.title, rs.* FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id INNER JOIN report_submission rs ON rs.schedule_id = cs.course_scheduler_id WHERE course_scheduler_id = $1'
 
-    return res.status(500).send({ message: 'Internal Server Error!' })
+        const scheduleId = data.schedule_id
 
-  }
-  finally {
+        const result = await client.query(checkQuery, [scheduleId])
+        
+        return result.rows[0]
+      })
+    );
 
+    return res.status(200).send({ newReports });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
     if (client) {
-
-      await client.release()
-
+      await client.release();
     }
   }
-}
+};
+
 
 
 
@@ -963,7 +970,7 @@ exports.sendIDForReport = async (req, res) => {
 
         const id = course.course_id
 
-        const check01 = 'SELECT name, course_scheduler_id as schedulerId from course_scheduler WHERE course_id = $1 AND course_status = $2'
+        const check01 = 'SELECT name, course_scheduler_id as schedulerId,batch_no as batch from course_scheduler WHERE course_id = $1 AND course_status = $2'
 
         const data = [id, 'completed']
 

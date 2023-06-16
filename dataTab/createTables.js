@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS admin (
       await client.query(`
       CREATE TABLE IF NOT EXISTS organizations (
         id SERIAL PRIMARY KEY,
-        organization VARCHAR(255) NOT NULL UNIQUE,
+        organization VARCHAR(255) NOT NULL,
         type VARCHAR(255) NOT NULL,
         category VARCHAR(255) NOT NULL,
         ministry VARCHAR(255),
