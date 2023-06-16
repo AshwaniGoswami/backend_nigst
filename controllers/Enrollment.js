@@ -506,62 +506,20 @@ exports.viewCanceledEnrollmentOfStudent = async (req, res) => {
 
 exports.viewCoursesForEnrollment = async (req, res) => {
 
-  let client
-
-  try {
-
-    const { name,studentID } = req.body
-
-
-
-    const check = `SELECT DISTINCT u.organization, u.student_id, oca.course_id, c.course_category as category, c.course_code as code,c.course_mode as mode,c.course_type as type,c.description as courseDescription,c.title as courseName,c.course_officer as officer,c.faculty as faculty, oca.course_no, oca.batch_no, oca.scheduling_id,to_char(oca.date_commencement,'DD/MM/YYYY') as commencementDate, to_char(oca.date_completion,'DD/MM/YYYY'), s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id JOIN courses c ON oca.course_id = c.course_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization`
-
-
-    client = await pool.connect()
-
-
-    const result = await client.query(check, [name, studentID])
-
-
-    if (result.rowCount === 0) {
-
-      return res.status(404).send({ message: 'No Records Found!.' })
-
-    } 
-    else {
-
-      return res.status(200).send({ course: result.rows })
-      
-    }
-  }
-
-   catch (error) {
-
-    console.error(error)
-
-    return res.status(500).send({ message: 'Internal Server Error!.' })
-
-  } 
-  finally {
-
-    if (client) {
-
-     await client.release()
-
-    }
-  }
-}
-
-exports.viewModifiedCoursesForEnrollment = async (req, res) => {
   let client;
 
   try {
     const { name, studentID } = req.body;
     let check;
     let queryParams;
-
-    const organizationQuery = 'SELECT type FROM organizations WHERE organization = $1';
     client = await pool.connect();
+    const check01='SELECT * FROM users WHERE student_id=$1'
+    const userResult=await client.query(check01,[studentID])
+    if (userResult.rowCount===0) {
+      return res.status(404).send({message:'Student Not Exists!.'})
+    }
+    const organizationQuery = 'SELECT type FROM organizations WHERE organization = $1';
+   
     const organizationResult = await client.query(organizationQuery, [name]);
     if (organizationResult.rowCount === 0) {
       return res.status(404).send({ message: 'Organization not found.' });
@@ -613,3 +571,5 @@ exports.viewModifiedCoursesForEnrollment = async (req, res) => {
     }
   }
 };
+
+
