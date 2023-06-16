@@ -918,7 +918,7 @@ exports.filterReportsByFaculty = async (req, res) => {
 
       reports.rows.map(async (data) => {
 
-        const checkQuery = 'SELECT c.course_code, c.course_no, c.title, rs.* FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id INNER JOIN report_submission rs ON rs.schedule_id = cs.course_scheduler_id WHERE course_scheduler_id = $1'
+        const checkQuery =` SELECT c.course_code, c.course_no, c.title, rs.remarks,rs.report_path as report,rs.faculty,rs.schedule_id,to_char(rs.submission_date,'DD/MM/YYYY') as submissiondate,CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS report_submitter FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id INNER JOIN report_submission rs ON rs.schedule_id = cs.course_scheduler_id INNER JOIN faculty f ON f.faculty_id=rs.faculty_id  WHERE course_scheduler_id = $1`
 
         const scheduleId = data.schedule_id
 
