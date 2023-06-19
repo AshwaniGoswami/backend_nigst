@@ -152,6 +152,66 @@ exports.organizationCourseAssi = async (req, res) => {
 
 
 
+exports.removeOrganizationCourse = async (req, res) => {
+
+  let client
+
+  try {
+    const { organization, schedulingID } = req.body
+
+    client = await pool.connect()
+
+    await client.query('BEGIN')
+
+
+    const checkQuery = 'SELECT * FROM organization_course_assi WHERE organization_name = $1 AND scheduling_id = $2'
+
+    const checkResult = await client.query(checkQuery, [organization, schedulingID])
+
+
+    if (checkResult.rowCount === 0) {
+
+      return res.status(404).send({ message: 'Assigned Course Not Found!' })
+
+    }
+
+    const deleteQuery1 = 'DELETE FROM organization_course_assi WHERE organization_name = $1 AND scheduling_id = $2'
+
+    await client.query(deleteQuery1, [organization, schedulingID])
+
+
+    const deleteQuery2 = 'DELETE FROM enrolment WHERE scheduling_id = $1 AND student_id IN (SELECT student_id FROM users WHERE organization = $2)'
+
+    const deleteResult = await client.query(deleteQuery2, [schedulingID, organization])
+
+
+    await client.query('COMMIT')
+
+    return res.status(200).send({ message: 'Enrollment records deleted successfully.' })
+
+  } 
+  catch (error) {
+
+    console.error(error)
+
+    await client.query('ROLLBACK')
+
+    return res.status(500).send({ message: 'Internal Server Error!' })
+
+  } 
+  finally {
+
+    if (client) {
+
+      client.release()
+
+    }
+  }
+}
+
+
+
+
 
 exports.otherCategory = async (req, res) => {
   let client;
