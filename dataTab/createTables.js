@@ -498,6 +498,26 @@ CREATE TABLE IF NOT EXISTS banner(
   date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )`)
 
+await client.query(`
+CREATE TABLE IF NOT EXISTS header(
+  id SERIAL PRIMARY KEY,
+  h_id varchar(255),
+  h_name varchar(255),
+  h_path varchar(255),
+  date TIMESTAMP DEFAULT NOW()
+)
+`)
+
+await client.query(`
+CREATE TABLE IF NOT EXISTS soi_project(
+ id SERIAL PRIMARY KEY,
+ p_id varchar(255),
+ p_name varchar(255),
+ p_description text,
+ path varchar(255),
+ date TIMESTAMP DEFAULT NOW()
+)`)
+
   console.log('Tables created successfully')
   }
 
