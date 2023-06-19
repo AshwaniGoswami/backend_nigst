@@ -306,7 +306,9 @@ await client.query
 await client.query(`
 CREATE TABLE IF NOT EXISTS album_category (
   id SERIAL PRIMARY KEY,
-  category_name varchar(255) NOT NULL UNIQUE,
+  category_id varchar(255) NOT NULL UNIQUE,
+  category_name varchar(255) NOT NULL,
+  visibility boolean DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW()
   )`)
 
@@ -464,9 +466,41 @@ CREATE TABLE IF NOT EXISTS banner(
   banner_path varchar(255),
   banner_id varchar(255) NOT NULL UNIQUE,
   url varchar(255),
-  section varchar(255) UNIQUE,
   date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )`)
+
+await client.query(`
+CREATE TABLE IF NOT EXISTS footer(
+  id SERIAL PRIMARY KEY,
+  name varchar(255),
+  link  varchar(255),
+  type varchar(255) NOT NULL,
+  footer_id varchar(255) NOT NULL UNIQUE,
+  phone varchar(255),
+  email varchar(255),
+  address text,
+  date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)`)
+
+await client.query(`
+CREATE TABLE IF NOT EXISTS soi_project(
+ id SERIAL PRIMARY KEY,
+ p_id varchar(255),
+ p_name varchar(255),
+ p_description text,
+ path varchar(255),
+ date TIMESTAMP DEFAULT NOW()
+)`)
+
+await client.query(`
+CREATE TABLE IF NOT EXISTS header(
+  id SERIAL PRIMARY KEY,
+  h_id varchar(255),
+  h_name varchar(255),
+  h_path varchar(255),
+  date TIMESTAMP DEFAULT NOW()
+)
+`)
 
   console.log('Tables created successfully')
   }

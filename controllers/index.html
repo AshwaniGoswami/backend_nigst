@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Image Upload Test</title>
+  </head>
+  <body>
+    <h1>Image Upload Test</h1>
+    <form action="http://localhost:4000/viewweb/create_album" method="POST" enctype="multipart/form-data">
+      <label for="image">Select Images:</label>
+      <input type="file" name="image" id="image" accept="image/*" multiple required />
+      <br />
+      <label for="Cname">Category Name:</label>
+      <input type="text" name="Cname" id="Cname" required />
+      <br />
+      <button type="submit">Upload Images</button>
+    </form>
+
+    <h2>Uploaded Images:</h2>
+    <div id="imageContainer"></div>
+
+    <script>
+      // Function to display uploaded images
+      function displayImages(images) {
+        const imageContainer = document.getElementById("imageContainer");
+        imageContainer.innerHTML = "";
+
+        images.forEach((image) => {
+          const imgElement = document.createElement("img");
+          imgElement.src = image;
+          imgElement.style.maxWidth = "300px";
+          imgElement.style.margin = "10px";
+          imageContainer.appendChild(imgElement);
+        });
+      }
+
+      // Fetch uploaded images from the server
+      async function fetchImages() {
+        try {
+          const response = await fetch("/viewAlbumCategory");
+          const data = await response.json();
+          const images = data.data.map((item) => item.path);
+          displayImages(images);
+        } catch (error) {
+          console.error("Error fetching images:", error);
+        }
+      }
+
+      // Call fetchImages function on page load
+      fetchImages();
+    </script>
+  </body>
+</html>
