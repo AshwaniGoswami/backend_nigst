@@ -63,6 +63,58 @@ exports.tenderCreation = async (req, res) => {
 }
 
 
+exports.editTender=async(req,res)=>{
+
+  let client 
+
+  try {
+       
+       const {title, description, startDate, endDate,tenderRefNo}=req.body
+
+       const file = req.files.pdf
+
+     client=await pool.connect()
+
+     const check01='SELECT * FROM tender WHERE tender_ref_no=$1'
+
+     const result=await client.query(check01,[tenderRefNo])
+
+     if (result.rowCount===0) {
+      
+      return res.status(404).send({message:'Tender Not Exists!.'})
+
+     }
+if (!file || !file[0]) {
+  const updateQ='UPDATE tender SET title=$1,description=$2,start_date=$3,end_date=$4 WHERE tender_ref_no=$5 '
+
+  await client.query(updateQ,[title,description,startDate,endDate,tenderRefNo])
+
+  return res.status(200).send({message:'Tender Updated Successfully.'})
+
+}
+     const updateQ='UPDATE tender SET title=$1,description=$2,start_date=$3,end_date=$4,attachment=$5 WHERE tender_ref_no=$6 '
+
+     await client.query(updateQ,[title,description,startDate,endDate,file[0].location,tenderRefNo])
+
+     return res.status(200).send({message:'Tender Updated Successfully.'})
+
+  } 
+  catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+  }
+finally {
+  
+  if (client) {
+    
+    await client.release()
+
+  }
+}
+}
+
 exports.addCorrigendum = async (req, res) => {
 
   let client
