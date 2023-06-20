@@ -646,7 +646,60 @@ exports.facultyPositionAssi = async (req, res) => {
   }
 }
 
+exports.facultyPositionReAssign=async(req,res)=>{
 
+  let connection
+
+  try {
+
+    const {facultyId,newPosition,newPositionId,faculty}=req.body
+
+    connection=await pool.connect()
+
+    const check='SELECT * FROM faculty_position_assi WHERE faculty_id=$1'
+    
+    const result=await connection.query(check,[facultyId])
+
+    if (result.rowCount===0) {
+      
+      return res.status(400).send({message:'Faculty Member Not Exists!.'})
+    }
+    
+    const checkPosition = 'SELECT * FROM faculty_position WHERE faculty_pos = $1'
+
+    const resultPosition = await connection.query(checkPosition, [newPosition])
+
+    if (resultPosition.rowCount === 0) {
+
+      return res.status(400).send({ message: 'Faculty position does not exist.' })
+
+    }
+    const updateQuery='UPDATE faculty_position_assi SET faculty_pos=$1,position_assi_id=$2,faculty_admin=$3,updated_At=$4 WHERE faculty_id=$5'
+    
+    const time= new Date()
+    const data=[newPosition,newPositionId,faculty,time,facultyId]
+
+    await connection.query(updateQuery,data)
+
+    return res.status(200).send({message:'Successfully Updated!.'})
+
+  } 
+  catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+  finally{
+
+    if (connection) {
+
+      await connection.release()
+
+    }
+  }
+}
 
 exports.viewFacultyPositionAssi = async (req, res) => {
   let client;
