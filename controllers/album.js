@@ -2,7 +2,7 @@ const pool = require("../config/pool");
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
-
+// ============================create=========================
 exports.createAlbum=async(req,res)=>{
     let connection
     
