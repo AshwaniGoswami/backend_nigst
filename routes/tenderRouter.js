@@ -3,7 +3,7 @@ const { tenderCreation, archiveTender, retrieveTender, viewTender, getTenderNo, 
 const { tenderpdf, corrigendum } = require("../middleware/faculty")
 const router = express.Router()
 router.post('/create',tenderpdf,tenderCreation)
-router.patch('/edit',editTender)
+router.patch('/edit',tenderpdf,editTender)
 router.patch('/archive',archiveTender)
 router.post('/retrieve',retrieveTender)
 router.get('/view',viewTender)
