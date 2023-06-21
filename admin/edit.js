@@ -288,7 +288,8 @@ exports.updateScheduling = async (req, res) => {
             } else {
 
               const deleteDepartment = `DELETE FROM organization_course_assi WHERE scheduling_id IN ( SELECT course_scheduler_id FROM course_scheduler WHERE course_id = $1 AND batch_no = $2 AND course_status = $3) `
-
+              const moveCourseScheduler = 'INSERT INTO course_scheduler_archive SELECT * FROM course_scheduler WHERE course_scheduler_id=$1'
+              await client.query(moveCourseScheduler, [departmentCheck.rows[0].course_scheduler_id])
               await client.query(deleteDepartment, [courseID, batch, status])
 
               await client.query(deleteRecord, [courseID, batch, status])
@@ -353,7 +354,7 @@ exports.updateScheduling = async (req, res) => {
           }
           else if (newStatus === 'canceled') {
 
-            const cancelCheck = 'SELECT course_scheduler_id FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3'
+            const cancelCheck = 'SELECT * FROM course_scheduler WHERE course_id=$1 AND batch_no=$2 AND course_status=$3'
 
             const cancelResult = await client.query(cancelCheck, [courseID, batch, status])
 
@@ -393,7 +394,8 @@ exports.updateScheduling = async (req, res) => {
                 await client.query(deleteEnrolment, [courseSchedulerID])
 
               }
-
+const moveCourseScheduler = 'INSERT INTO course_scheduler_archive SELECT * FROM course_scheduler WHERE course_scheduler_id=$1'
+    await client.query(moveCourseScheduler, [courseSchedulerID])
               const deleteRecord = 'DELETE FROM course_scheduler WHERE course_scheduler_id=$1'
 
               await client.query(deleteRecord, [courseSchedulerID])
@@ -523,7 +525,8 @@ exports.updateScheduling = async (req, res) => {
                 await client.query(deleteEnrolment, [courseSchedulerID])
 
               }
-
+              const moveCourseScheduler = 'INSERT INTO course_scheduler_archive SELECT * FROM course_scheduler WHERE course_scheduler_id=$1'
+              await client.query(moveCourseScheduler, [courseSchedulerID])
               const deleteRecord = 'DELETE FROM course_scheduler WHERE course_scheduler_id=$1'
 
               await client.query(deleteRecord, [courseSchedulerID])
