@@ -32,7 +32,7 @@ router.post('/create_project',SOI_PROJECT_UPLOAD,createProject)
 router.get('/view_project',viewProject)
 router.patch('/update_project',updateSoiProject)
 router.delete('/delete_project',deleteProject)
-router.patch('/view_album',viewAlbum)
+router.get('/view_album',viewAlbum)
 router.post('/create_header',headerUpload,HeaderCreate)
 router.get('/view_header',viewHeader)
 module.exports=router
