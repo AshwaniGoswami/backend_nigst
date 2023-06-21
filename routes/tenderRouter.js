@@ -1,5 +1,5 @@
 const express=require("express")
-const { tenderCreation, archiveTender, retrieveTender, viewTender, getTenderNo, downloadPdf, viewPdf, addCorrigendum, viewCorriPdf, viewArchiveTender, viewArchivePdf, editTender,  } = require("../controllers/tender")
+const { tenderCreation, archiveTender, retrieveTender, viewTender, getTenderNo, downloadPdf, viewPdf, addCorrigendum, viewCorriPdf, viewArchiveTender, viewArchivePdf, editTender, deleteArchiveTender,  } = require("../controllers/tender")
 const { tenderpdf, corrigendum } = require("../middleware/faculty")
 const router = express.Router()
 router.post('/create',tenderpdf,tenderCreation)
@@ -14,4 +14,5 @@ router.get('/vpdf/:tender_number',viewPdf)
 router.get('/view_archive',viewArchiveTender)
 router.get('/view_archive/:tender_number',viewArchivePdf)
 router.get('/dpdf/:id',downloadPdf)
+router.delete('/delete_archive',deleteArchiveTender)
 module.exports=router

@@ -354,7 +354,45 @@ exports.archiveTender = async (req, res) => {
   }
 }
 
+exports.deleteArchiveTender = async (req, res) => {
 
+  let connection
+
+  try {
+    const { tenderNumber } = req.body
+
+    connection = await pool.connect()
+
+    await connection.query('BEGIN')
+
+    const check = 'SELECT * FROM archive_tender WHERE tender_ref_no=$1'
+    const result01 = await connection.query(check, [tenderNumber])
+
+    if (result01.rowCount === 0) {
+      return res.status(404).send({ message: 'Archived tender does not exist.' })
+    }
+
+    const deleteCorrri = 'DELETE FROM archive_corrigendum WHERE tender_ref_no=$1'
+    await connection.query(deleteCorrri, [tenderNumber])
+
+    const deleteArchive = 'DELETE FROM archive_tender WHERE tender_ref_no=$1'
+    await connection.query(deleteArchive, [tenderNumber])
+
+    await connection.query('COMMIT')
+
+    return res.status(200).send({ message: 'Successfully deleted.' })
+  } catch (error) {
+    console.error(error)
+
+    await connection.query('ROLLBACK')
+
+    return res.status(500).send({ message: 'Internal Server Error.' })
+  } finally {
+    if (connection) {
+      await connection.release()
+    }
+  }
+}
 
 
 exports.retrieveTender = async (req, res) => { 
