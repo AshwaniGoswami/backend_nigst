@@ -664,7 +664,7 @@ exports.viewCancelledCourses=async(req,res)=>{
 
   try {
     connection=await pool.connect()
-    const queryCheck='SELECT cs.*, c.title FROM course_scheduler_archive cs INNER JOIN courses c ON cs.course_id = c.course_id '
+    const queryCheck='SELECT cs.*, c.description FROM course_scheduler_archive cs INNER JOIN courses c ON cs.course_id = c.course_id '
      const result=await connection.query(queryCheck)
     if (result.rowCount===0) {
       return res.status(404).send({message:'No Courses Found!.'})
