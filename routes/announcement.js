@@ -4,10 +4,12 @@ const { createAnnouncement, archiveAnnouncement, retrieveAnnouncement } = requir
 const { uploadAnnouncement } = require('../middleware/faculty')
 const { viewAnnouncementToAdmin } = require('../admin/view')
 const { editAnnouncementForPosting } = require('../admin/edit')
+const { deleteArchiveAnnouncement } = require('../webview/announcement')
 const router = express.Router()
 router.post('/create',uploadAnnouncement,createAnnouncement)
 router.post('/archive',archiveAnnouncement)
 router.post('/retrieve',retrieveAnnouncement)
 router.get('/view',viewAnnouncementToAdmin)
 router.patch('/edit',editAnnouncementForPosting)
+router.delete('/delete',deleteArchiveAnnouncement)
 module.exports=router

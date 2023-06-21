@@ -437,3 +437,50 @@ const status=true
     }
   }
 }
+
+
+exports.deleteArchiveAnnouncement=async(req,res)=>{
+
+  let connection
+
+  try {
+    
+      const {aid}=req.body
+
+    connection=await pool.connect()
+
+
+    const checkQuery='SELECT * FROM archive_announcement WHERE a_id=$1'
+
+    const result= await connection.query(checkQuery,[aid])
+
+    if (result.rowCount===0) {
+      
+      return res.status(404).send({message:'Announcement Not Found!.'})
+    
+    }
+
+    const deleteQuery='DELETE  FROM archive_announcement WHERE a_id=$1'
+
+    await connection.query(deleteQuery,[aid])
+
+    return res.status(200).send({message:'Successfully Deleted.'})
+  
+  }
+   catch (error) {
+    
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+
+  finally{
+
+    if (connection) {
+      
+      await connection.release()
+
+    }
+  }
+}
