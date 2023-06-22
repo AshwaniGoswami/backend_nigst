@@ -85,7 +85,8 @@ exports.editTender=async(req,res)=>{
 
      }
 if (!file || !file[0]) {
-  const updateQ='UPDATE tender SET title=$1,description=$2,start_date=$3,end_date=$4 WHERE tender_ref_no=$5 '
+
+  const updateQ='UPDATE tender SET title=$1,description=$2,start_date=$3,end_date=$4 WHERE tender_ref_no=$5'
 
   await client.query(updateQ,[title,description,startDate,endDate,tenderRefNo])
 

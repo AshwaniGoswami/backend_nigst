@@ -663,9 +663,30 @@ exports.viewCancelledCourses=async(req,res)=>{
   let connection
 
   try {
+    const {faculty}=req.params
     connection=await pool.connect()
-    const queryCheck='SELECT cs.*, c.description FROM course_scheduler_archive cs INNER JOIN courses c ON cs.course_id = c.course_id '
-     const result=await connection.query(queryCheck)
+    const queryCheck = `
+    SELECT
+      cs.name,
+      cs.course_id AS courseid,
+      cs.course_capacity AS capacity,
+      TO_CHAR(cs.date_comencement, 'DD/MM/YYYY') AS enrollmentdate,
+      TO_CHAR(cs.date_completion, 'DD/MM/YYYY') AS completiondate,
+      TO_CHAR(cs.running_date, 'DD/MM/YYYY') AS runningdate,
+      cs.batch_no AS batch,
+      TO_CHAR(cs.archived_at, 'DD/MM/YYYY') AS cancelleddate,
+      cs.course_scheduler_id AS schedulerid,
+      cs.currency || ' ' || cs.fee AS fee,
+      c.description,
+      c.faculty
+    FROM
+      course_scheduler_archive cs
+      INNER JOIN courses c ON cs.course_id = c.course_id
+    WHERE
+      c.faculty = $1
+  `;
+  
+     const result=await connection.query(queryCheck,[faculty])
     if (result.rowCount===0) {
       return res.status(404).send({message:'No Courses Found!.'})
     }

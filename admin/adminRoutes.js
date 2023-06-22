@@ -25,7 +25,7 @@ router.get('/filter',filter)
 router.patch('/archive_ann',archiveAnnouncement)
 router.get('/show_archive_admin',viewArchiveAnnouncementToAdmin)
 router.patch('/update_faculty',updateFacultyDetails)
-router.get('/view_cancelled',viewCancelledCourses)
+router.get('/view_cancelled/:faculty',viewCancelledCourses)
 
 
 module.exports=router
