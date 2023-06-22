@@ -187,7 +187,7 @@ exports.removeOrganizationCourse = async (req, res) => {
 
     await client.query('COMMIT')
 
-    return res.status(200).send({ message: 'Organization removed successfully.' })
+    return res.status(200).send({ message: 'Course removed successfully.' })
 
   } 
   catch (error) {
