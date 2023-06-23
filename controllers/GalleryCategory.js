@@ -26,7 +26,7 @@ try{
 
     // Commit the transaction
     await connection.query('COMMIT');
-    return res.status(500).send('Category created successfully!');
+    return res.status(201).send('Category created successfully!');
 } catch (error) {
   console.error('Error creating category', error);
    // Rollback the transaction in case of an error
