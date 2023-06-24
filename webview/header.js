@@ -16,7 +16,7 @@ exports.HeaderCreate = async (req, res) => {
     const checkExistence = "SELECT * FROM header WHERE h_name=$1";
     const result = await connection.query(checkExistence, [Hname]);
     if (result.rowCount > 0) {
-      return res.status(500).send({ message: "Data Already Exists!" });
+      return res.status(409).send({ message: "Data Already Exists!" });
     }
 
     let HID = 'H-' + generateNumericValue(7);
@@ -32,7 +32,7 @@ exports.HeaderCreate = async (req, res) => {
     const data = [HID, Hname, Hpath];
     const result2 = await connection.query(check1, data);
 
-    return res.send({ message: 'Successfully Created' });
+    return res.status(201).send({ message: 'Successfully Created' });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Internal server error!' });
@@ -105,7 +105,7 @@ exports.updateHeader = async (req, res) => {
     connection = await pool.connect();
 
     const updateHeader = await connection.query(updateH, [Hname, HID]);
-    return res.send({ message: "Successfully Updated!" });
+    return res.status(200).send({ message: "Successfully Updated!" });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: "Internal server error!" });

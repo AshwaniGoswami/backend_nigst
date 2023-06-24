@@ -7,7 +7,7 @@ const { FooterCreate, viewFooter, updateFooter, deleteFooter } = require('../foo
 const { createAlbumCategory, viewAlbumCategory, updateAlbumCategory } = require('../../controllers/GalleryCategory')
 const { createAlbum, viewAlbum } = require('../../controllers/album')
 const { createProject, viewProject, updateSoiProject, deleteProject } = require('../../controllers/soi_project')
-const { HeaderCreate, viewHeader } = require('../header')
+const { HeaderCreate, viewHeader, updateHeader } = require('../header')
 
 const router = express.Router()
 
@@ -35,4 +35,5 @@ router.delete('/delete_project',deleteProject)
 router.get('/view_album',viewAlbum)
 router.post('/create_header',headerUpload,HeaderCreate)
 router.get('/view_header',viewHeader)
+router.patch('/update_header',updateHeader)
 module.exports=router

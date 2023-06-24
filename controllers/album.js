@@ -28,7 +28,7 @@ exports.createAlbum=async(req,res)=>{
     params.push({name:Aname,path:Apath})
     }
 
-    return res.status(201).send({ message: 'Images uploaded successfully' })
+    return res.status(200).send({ message: 'Images uploaded successfully' })
 
   } 
   catch (error) {
@@ -92,7 +92,7 @@ exports.viewAlbum = async (req, res) => {
       return res.status(404).send({ error: 'Image not found.' });
     }
 
-    return res.send({ data: imageData });
+    return res.status(200).send({ data: imageData });
   } catch (error) {
     console.log(error);
     return res.status(500).send({ message: 'Internal server error!' });

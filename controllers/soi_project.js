@@ -1,6 +1,6 @@
 const pool = require("../config/pool");
 const generateNumericValue = require("../generator/NumericId");
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, GetObjectCommand,DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 // =============create===============================
@@ -13,7 +13,7 @@ exports.createProject=async(req,res)=>{
         connection=await pool.connect()
         
         if (!Pname || !Pdescription) {
-            return res.send({ message: "Please enter all the data" });
+            return res.status(400).send({ message: "Please enter all the data" });
         }
         connection=await pool.connect()
         const checkExxistence="SELECT * from soi_project WHERE p_name=$1"
@@ -32,11 +32,11 @@ exports.createProject=async(req,res)=>{
         const check1='INSERT INTO  soi_project(p_id,p_name,p_description,path) VALUES ($1, $2, $3, $4)'
         const data1=[PID,Pname,Pdescription,path]
         const result1=await connection.query(check1,data1)
-        return res.status(500).send('created successfully!');
+        return res.status(200).send('created successfully!');
         // const query=
     } catch (error) {
         console.error(error);
-        return res.status(500).send('Error creating!');
+        return res.status(400).send('Error creating!');
     }
     finally{
         if (connection) {
@@ -109,7 +109,7 @@ exports.updateSoiProject=async(req,res)=>{
       connection=await pool.connect()
   
       const updateProjectSOI=await connection.query(updateProject,[Pname,Pdescription,Pid])
-      return res.send({message:"Successfully Updated!"})
+      return res.status(200).send({message:"Successfully Updated!"})
     } catch (error) {
       console.error(error)
       return res.status(500).send({message:"Internal server error!"})
@@ -121,34 +121,52 @@ exports.updateSoiProject=async(req,res)=>{
     }
   }
 
-//   =============================delete=======================
+// =============================delete=======================
 
-exports.deleteProject=async(req,res)=>{
-    let connection
-    try{
-        const {Pid}=req.body
-        if (!Pid) {
-            return res.send({ message: "Please provide the Project ID" });
-          }
-          connection=await pool.connect()
-          const ExistanceProject_ID="SELECT * FROM soi_project WHERE p_id=$1"
-          const result=await connection.query(ExistanceProject_ID,[Pid]);
-          if(result.rowCount==0)
-          return res.send({message:"Project ID does not exist!"})
-          
-          
-          const delProject="DELETE FROM soi_project WHERE p_id=$1"
-          const dProject=await connection.query(delProject,[Pid])
-          return res.send({message: "Successfully Deleted!"})
+exports.deleteProject = async (req, res) => {
+  let connection;
+  try {
+    const { Pid } = req.body;
+    if (!Pid) {
+      return res.status(400).send({ message: "Please provide the Project ID" });
+    }
+    connection = await pool.connect();
+    const ExistanceProject_ID = "SELECT * FROM soi_project WHERE p_id=$1";
+    const result = await connection.query(ExistanceProject_ID, [Pid]);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: "Project ID does not exist!" });
     }
 
-    catch (error) {
-        console.error(error)
-        return res.status(500).send({message:'Internal Server Eroor!.'})
-    }
-finally{
+    // Retrieve the file path from the database
+    const filePathQuery = "SELECT path FROM soi_project WHERE p_id=$1";
+    const filePathResult = await connection.query(filePathQuery, [Pid]);
+    const filePath = filePathResult.rows[0].path;
+
+    const delProject = "DELETE FROM soi_project WHERE p_id=$1";
+    await connection.query(delProject, [Pid]);
+
+    // Delete file from S3
+    const s3Client = new S3Client({
+      region: process.env.BUCKET_REGION,
+      credentials: {
+        accessKeyId: process.env.ACCESS_KEY,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      },
+    });
+    const key = filePath.substring(filePath.lastIndexOf('/') + 1);
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: key,
+    });
+    await s3Client.send(deleteCommand);
+
+    return res.status(200).send({ message: "Successfully Deleted!" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: "Internal server error!" });
+  } finally {
     if (connection) {
-        await connection.release()
+      await connection.release();
     }
-}
-}
+  }
+};

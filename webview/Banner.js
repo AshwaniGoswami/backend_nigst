@@ -40,7 +40,7 @@ exports.createBanner=async(req,res)=>{
       
         await connection.query(check,data)
 
-return res.send({message:'This is still in testing!.'})
+return res.status(102).send({message:'This is still in testing!.'})
 
     } 
     catch (error) {
@@ -154,7 +154,7 @@ exports.getBanner = async (req, res) => {
   
       const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
   
-      return res.json({url:signedUrl});
+      return res.status(200).json({url:signedUrl});
     } catch (error) {
       console.error(error);
       return res.status(500).send({ message: 'Internal Server Error!' });

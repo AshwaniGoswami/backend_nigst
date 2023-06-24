@@ -8,7 +8,7 @@ try{
  const{Cname}=req.body;
  connection=await pool.connect()
  if (!Cname) {
-  return res.send({ message: "Please enter all the data" });
+  return res.status(400).send({ message: "Please enter all the data" });
 }
   // Start a transaction
   await connection.query('BEGIN');
@@ -26,12 +26,12 @@ try{
 
     // Commit the transaction
     await connection.query('COMMIT');
-    return res.status(500).send('Category created successfully!');
+    return res.status(201).send('Category created successfully!');
 } catch (error) {
   console.error('Error creating category', error);
    // Rollback the transaction in case of an error
    await connection.query('ROLLBACK');
-  return res.status(500).send('Error creating category!');
+  return res.status(400).send('Error creating category!');
 }
 finally{
   if (connection) {
@@ -47,7 +47,7 @@ try{
  const allAlbum_categoey="SELECT category_id,category_name FROM album_category"
  connection=await pool.connect()
  const allAL=await connection.query(allAlbum_categoey)
- return res.send({data:allAL.rows})
+ return res.status(200).send({data:allAL.rows})
 
 }
 catch(error){
@@ -70,7 +70,7 @@ exports.updateAlbumCategory=async(req,res)=>{
     connection=await pool.connect()
 
     const updateALCat=await connection.query(updateAlbumCat,[Cname,Cid])
-    return res.send({message:"Successfully Updated!"})
+    return res.status(200).send({message:"Successfully Updated!"})
   } catch (error) {
     console.error(error)
     return res.status(500).send({message:"Internal server error!"})
