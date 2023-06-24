@@ -51,7 +51,7 @@ exports.createAlbum=async(req,res)=>{
 exports.viewAlbum = async (req, res) => {
   let connection;
   try {
-    const AllAlbumView = "SELECT name, path, category_name from album ";
+    const AllAlbumView = "SELECT name, path, album.category_name from album INNER JOIN album_category ON album.category_name=album_category.category_name WHERE album_category.visibility=true";
     connection = await pool.connect();
     const allAlbum = await connection.query(AllAlbumView);
     if (allAlbum.rowCount === 0) {
