@@ -494,7 +494,7 @@ exports.sendBatchAndInfo = async (req, res) => {
 
     if (result.rowCount === 0) {
 
-      return res.status(404).send({ message: 'No Course Found!' })
+      return res.status(404).send({ message: 'No Course Found or Course Not Scheduled for Assigning!' })
 
     }
     else {

@@ -30,7 +30,7 @@ try{
 } catch (error) {
   console.error('Error creating category', error);
    // Rollback the transaction in case of an error
-   await connection.query('ROLLBACK');
+   await connection.query('ROLLBACK');B   
   return res.status(500).send('Error creating category!');
 }
 finally{
@@ -65,12 +65,14 @@ finally{
 exports.updateAlbumCategory=async(req,res)=>{
   let connection
   try {
-    const{Cid,Cname}=req.body
-    const updateAlbumCat="UPDATE album_category SET category_name=$1 WHERE category_id=$2"
+    const{Cid,Cvisible}=req.body
+    const updateAlbumCat="UPDATE album_category SET visibility=$1 WHERE category_id=$2"
     connection=await pool.connect()
-
-    const updateALCat=await connection.query(updateAlbumCat,[Cname,Cid])
-    return res.send({message:"Successfully Updated!"})
+    if(Cvisible===true || Cvisible===false){
+    const updateALCat=await connection.query(updateAlbumCat,[Cvisible,Cid])
+    return res.status(200).send({message:"Successfully Updated!"})
+  }
+  return res.status(401).send({message:"Visibility cannot be string"})
   } catch (error) {
     console.error(error)
     return res.status(500).send({message:"Internal server error!"})
@@ -78,10 +80,9 @@ exports.updateAlbumCategory=async(req,res)=>{
   finally{
     if(connection){
       await connection.release()
-    }
-  }
+    }
+  }
 }
-
 
 
 

@@ -545,10 +545,12 @@ exports.viewCoursesForEnrollment = async (req, res) => {
       c.course_mode AS mode,
       c.course_type AS type,
       c.description AS courseDescription,
+      c.course_duration_weeks || ' weeks ' || c.course_duration_days || ' days' AS duration,
       c.title AS courseName,
-      c.course_officer AS officer,
+      f.first_name || ' ' || f.middle_name || ' ' || f.last_name AS officer,
       c.faculty AS faculty,
       s.batch_no,
+      s.course_capacity as capacity,
       s.course_scheduler_id,
       TO_CHAR(s.date_comencement, 'DD/MM/YYYY') AS commencementDate,
       TO_CHAR(s.date_completion, 'DD/MM/YYYY') AS completionDate,
@@ -556,7 +558,7 @@ exports.viewCoursesForEnrollment = async (req, res) => {
     FROM
       courses c
       JOIN course_scheduler s ON c.course_id = s.course_id
-    
+     JOIN faculty f ON c.course_officer=f.faculty_id
     ORDER BY
       c.course_id
     `
@@ -565,7 +567,26 @@ exports.viewCoursesForEnrollment = async (req, res) => {
 
     } 
     else {
-      check = `SELECT DISTINCT u.organization, u.student_id, oca.course_id, c.course_category as category, c.course_code as code, c.course_mode as mode, c.course_type as type, c.description as courseDescription, c.title as courseName, c.course_officer as officer, c.faculty as faculty, oca.course_no, oca.batch_no, oca.scheduling_id, to_char(oca.date_commencement, 'DD/MM/YYYY') as commencementDate, to_char(oca.date_completion, 'DD/MM/YYYY'), s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id JOIN courses c ON oca.course_id = c.course_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization`
+      check = `SELECT DISTINCT
+       u.organization,
+        u.student_id,
+         oca.course_id,
+          c.course_category as category,
+           c.course_code as code, 
+           c.course_mode as mode,
+            c.course_type as type, 
+            c.description as courseDescription,
+             c.title as courseName,
+             f.first_name || ' ' || f.middle_name || ' ' || f.last_name AS officer,
+             c.course_duration_weeks || ' weeks ' || c.course_duration_days || ' days' AS duration,
+             c.faculty as faculty,
+               oca.course_no,
+                oca.batch_no,
+                 oca.scheduling_id, 
+                 to_char(oca.date_commencement, 'DD/MM/YYYY') as commencementDate,
+                  to_char(oca.date_completion, 'DD/MM/YYYY') as completiondate,
+                  s.course_capacity as capacity,
+                   s.course_status FROM users u JOIN organization_course_assi oca ON u.organization = oca.organization_name JOIN course_scheduler s ON oca.scheduling_id = s.course_scheduler_id JOIN courses c ON oca.course_id = c.course_id  JOIN faculty f ON c.course_officer=f.faculty_id WHERE u.organization = $1 AND u.student_id = $2 ORDER BY u.organization`
 
       queryParams = [name, studentID]
 

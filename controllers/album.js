@@ -63,92 +63,57 @@ exports.createAlbum = async (req, res) => {
 // =====================view==========================
 
 exports.viewAlbum = async (req, res) => {
-
-  let connection
-
+  let connection;
   try {
-
-    const AllAlbumView = "SELECT name, path, category_name from album "
-
-    connection = await pool.connect()
-
-    const allAlbum = await connection.query(AllAlbumView)
-
+    const AllAlbumView = "SELECT name, path, album.category_name from album INNER JOIN album_category ON album.category_name=album_category.category_name WHERE album_category.visibility=true";
+    connection = await pool.connect();
+    const allAlbum = await connection.query(AllAlbumView);
     if (allAlbum.rowCount === 0) {
-
-      return res.status(404).send({ message: 'No image Found' })
-
+      return res.status(404).send({ message: 'No image Found' });
     }
-    const attachments = allAlbum.rows.map(row => row.path).filter(Boolean)
-
-    const imageData = []
-
+    const attachments = allAlbum.rows.map(row => row.path).filter(Boolean);
+    const imageData = [];
 
     for (const row of allAlbum.rows) {
-
-      const attachment = row.path
-
-      const fileUrl = attachment
-
-      const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
-
+      const attachment = row.path;
+      const fileUrl = attachment;
+      const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
       try {
-
         const s3Client = new S3Client({
           region: process.env.BUCKET_REGION,
           credentials: {
             accessKeyId: process.env.ACCESS_KEY,
             secretAccessKey: process.env.SECRET_ACCESS_KEY,
           },
-        })
-
+        });
 
         const command = new GetObjectCommand({
           Bucket: process.env.BUCKET_NAME,
           Key: key,
-        })
-
-        const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 })
-
+        });
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
         imageData.push({
           fileName: url,
           categoryName: row.category_name,
           name: row.name,
-        })
-
-      }
-      catch (error) {
-
-        console.error(`Error retrieving file '${key}': ${error}`)
-
+        });
+      } catch (error) {
+        console.error(`Error retrieving file '${key}': ${error}`);
       }
     }
-
     if (imageData.length === 0) {
-
-      return res.status(404).send({ error: 'Image not found.' })
-
+      return res.status(404).send({ error: 'Image not found.' });
     }
 
-    return res.send({ data: imageData })
-
-  }
-  catch (error) {
-
-    console.log(error)
-
-    return res.status(500).send({ message: 'Internal server error!' })
-
-  }
-  finally {
-
+    return res.status(200).send({ data: imageData });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ message: 'Internal server error!' });
+  } finally {
     if (connection) {
-
-      await connection.release()
-
-    }
-  }
-}
-
+      await connection.release();
+    }
+  }
+};
 
