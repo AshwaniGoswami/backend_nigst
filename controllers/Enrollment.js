@@ -551,6 +551,7 @@ exports.viewCoursesForEnrollment = async (req, res) => {
       c.faculty AS faculty,
       c.eligibility,
       s.batch_no,
+      c.course_no ,
       s.course_capacity as capacity,
       s.course_scheduler_id,
       TO_CHAR(s.date_comencement, 'DD/MM/YYYY') AS commencementDate,
