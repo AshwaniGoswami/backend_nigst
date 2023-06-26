@@ -255,7 +255,81 @@ exports.viewCorriPdf = async (req, res) => {
   }
 }
 
+exports.viewArchiveCorriPdf = async (req, res) => {
 
+
+  let client
+
+  try {
+
+    const { corrigendumID } = req.params
+
+
+    client = await pool.connect()
+
+    const query = 'SELECT attachment FROM archive_corrigendum WHERE corri_id = $1'
+
+    const result = await client.query(query, [corrigendumID])
+
+    if (result.rowCount === 0) {
+
+      return res.status(404).send({ error: `PDF not found.` })
+
+    }
+
+    const fileUrl = result.rows[0].attachment
+
+    const corrigendumKey = 'tender/corrigendum/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: corrigendumKey,
+    })
+
+    let response
+
+    try {
+
+      response = await s3Client.send(getObjectCommand)
+
+    } 
+    catch (error) {
+
+      return res.status(404).send({ error: `Attachment file does not exist.` })
+
+    }
+
+    if (!response.Body) {
+
+      return res.status(404).send({ error: `Attachment file does not exist.` })
+
+    }
+
+    res.setHeader('Content-Type', 'application/pdf')
+
+    res.setHeader('Content-Disposition', `attachment; filename=${fileUrl}`)
+
+
+    response.Body.pipe(res)
+
+  }
+   catch (error) {
+
+    console.error(error)
+
+   return res.status(500).send({ error: 'Something went wrong.' })
+
+  }
+
+   finally {
+
+    if (client) {
+
+     await client.release()
+
+    }
+  }
+}
 
 
 exports.archiveTender = async (req, res) => {
