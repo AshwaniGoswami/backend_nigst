@@ -102,44 +102,41 @@ exports.viewProject = async (req, res) => {
 
 // ===================update============================
 exports.updateSoiProject = async (req, res) => {
-  let connection;
+  let client;
   try {
     const { Pname, Pdescription, Pid } = req.body;
-    const check = 'SELECT * FROM soi_project WHERE p_id = $1';
-    const getProject = 'SELECT * FROM soi_project WHERE p_id = $1';
-    const updateProject =
+    console.log(Pid)
+    const checkQuery = 'SELECT * FROM soi_project WHERE p_id = $1';
+    const updateQuery =
       'UPDATE soi_project SET p_name = $1, p_description = $2 WHERE p_id = $3';
 
-    connection = await pool.connect();
+    client = await pool.connect();
 
-    const result = await connection.query(check, [Pid]);
-    if (result.rowCount === 0) {
+    const checkResult = await client.query(checkQuery, [Pid]);
+    if (checkResult.rowCount === 0) {
       return res.status(404).send({ message: 'This Project Does Not Exist!' });
     }
 
-    const projectData = await connection.query(getProject, [Pid]);
-    const { p_name: currentPname, p_description: currentPdescription } =
-      projectData.rows[0];
+    const projectData = checkResult.rows[0];
+    const { p_name: currentPname, p_description: currentPdescription } = projectData;
 
     const updatedPname = Pname || currentPname;
     const updatedPdescription = Pdescription || currentPdescription;
 
-    const updateProjectSOI = await connection.query(updateProject, [
-      updatedPname,
-      updatedPdescription,
-      Pid,
-    ]);
+    await client.query(updateQuery, [updatedPname, updatedPdescription, Pid]);
 
     return res.status(200).send({ message: 'Successfully Updated!' });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: 'Internal server error!' });
   } finally {
-    if (connection) {
-      await connection.release();
+    if (client) {
+      client.release();
     }
   }
 };
+
+
 
 
 // =============================delete=======================
