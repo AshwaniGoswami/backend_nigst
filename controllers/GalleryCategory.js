@@ -80,10 +80,53 @@ exports.updateAlbumCategory=async(req,res)=>{
   finally{
     if(connection){
       await connection.release()
-    }
-  }
+}
+}
 }
 
+
+exports.deleteAlbumCategory = async (req, res) => {
+  let connection;
+  try {
+    const {cname } = req.body;
+    connection = await pool.connect();
+
+    // Start a transaction
+    await connection.query('BEGIN');
+
+    // Check if Cname exists in album_category table
+    const checkQuery = 'SELECT * FROM album_category WHERE category_name = $1';
+    const checkResult = await connection.query(checkQuery, [cname]);
+
+    if (checkResult.rowCount === 0) {
+      // Rollback the transaction
+      await connection.query('ROLLBACK');
+      return res.status(404).send({ message: `Category with name ${cname} does not exist.` });
+    }
+
+    // Delete data from album table
+    const deleteAlbumQuery = 'DELETE FROM album WHERE category_name=$1';
+    await connection.query(deleteAlbumQuery, [cname]);
+
+    // Delete data from album_category table
+    const deleteCategoryQuery = 'DELETE FROM album_category WHERE category_name = $1';
+    await connection.query(deleteCategoryQuery, [cname]);
+
+    // Commit the transaction
+    await connection.query('COMMIT');
+
+    return res.status(200).send({ message: `Successfully deleted category ${cname} and associated albums.` });
+  } catch (error) {
+    console.error(error);
+    // Rollback the transaction in case of an error
+    await connection.query('ROLLBACK');
+    return res.status(500).send({ message: 'Internal server error!' });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
+  }
+};
 
 
 

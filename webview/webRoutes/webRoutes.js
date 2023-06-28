@@ -5,7 +5,7 @@ const { createBanner, getBanner } = require('../Banner')
 const { bannerUpload, galleryUpload, SOI_PROJECT_UPLOAD, headerUpload } = require('../../middleware/faculty')
 
 const { FooterCreate, viewFooter, updateFooter, deleteFooter } = require('../footer')
-const { createAlbumCategory, viewAlbumCategory, updateAlbumCategory } = require('../../controllers/GalleryCategory')
+const { createAlbumCategory, viewAlbumCategory, updateAlbumCategory, deleteAlbumCategory } = require('../../controllers/GalleryCategory')
 const { createAlbum, viewAlbum } = require('../../controllers/album')
 const { createProject, viewProject, updateSoiProject, deleteProject } = require('../../controllers/soi_project')
 const { HeaderCreate, viewHeader } = require('../header')
@@ -24,7 +24,7 @@ router.get('/view_banner', getBanner)
 
 
 
-
+router.delete('/delete_album_category',deleteAlbumCategory)
 router.post('/footer_create', FooterCreate)
 router.get('/footer_view', viewFooter)
 router.patch('/footer_update', updateFooter)
