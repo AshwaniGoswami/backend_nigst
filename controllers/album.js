@@ -1,53 +1,49 @@
-const pool = require("../config/pool");
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const pool = require("../config/pool")
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3")
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
+const { v4: uuidv4 } = require('uuid');
 
-// ============================create=========================
-exports.createAlbum=async(req,res)=>{
-    let connection
-    
-    try {
-      const{Cname}=req.body
-      const image=req.files.image
-      const params=[]
-      let Apath=''
-      let Aname=''
-      connection = await pool.connect() 
+exports.createAlbum = async (req, res) => {
+  let connection;
 
-      for (let i = 0; i < image.length; i++) {
-        Aname = image[i].originalname;
-        Apath = image[i].location;
-      
+  try {
+    const { Cname } = req.body;
+    const images = req.files.image;
 
+    const params = [];
 
-    const query = 'INSERT INTO album (category_name,name,path) VALUES ($1, $2, $3)'
+    connection = await pool.connect();
 
-    const values = [Cname,Aname,Apath]
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
 
-    const result = await connection.query(query, values)
-    params.push({name:Aname,path:Apath})
+      const randomName = uuidv4();
+
+      const Aname = `${randomName}${image.mimetype.replace('/', '.')}`;
+      const Apath = image.location;
+
+      const query = 'INSERT INTO album (category_name, name, path) VALUES ($1, $2, $3)';
+      const values = [Cname, Aname, Apath];
+
+      await connection.query(query, values);
+
+      params.push({ name: Aname, path: Apath });
     }
 
-    return res.status(200).send({ message: 'Images uploaded successfully' })
-
-  } 
-  catch (error) {
-
-    console.error(error)
-
-    return res.status(500).send({ error: 'Something went wrong' })
-
-  } 
-  finally {
-
+    return res.status(201).send({ message: 'Images uploaded successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: 'Something went wrong' });
+  } finally {
     if (connection) {
-
-    await  connection.release()
-
+      await connection.release();
     }
   }
-}
+};
+
+
 // =====================view==========================
+
 exports.viewAlbum = async (req, res) => {
   let connection;
   try {
@@ -81,7 +77,7 @@ exports.viewAlbum = async (req, res) => {
 
         imageData.push({
           fileName: url,
-          categoryName: row.category_name,
+          categories: row.category_name,
           name: row.name,
         });
       } catch (error) {
@@ -99,12 +95,7 @@ exports.viewAlbum = async (req, res) => {
   } finally {
     if (connection) {
       await connection.release();
-    }
-  }
+    }
+  }
 };
-
-
-
-
-
 
