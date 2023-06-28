@@ -44,7 +44,7 @@ while (result.rowCount > 0) {
       INSERT INTO course_category (course_category_name, category_id)
       VALUES ($1, $2)
     `
-    const values = [name, category_id]
+    const values = [name, categoryId]
 
      await client.query(query, values)
     
