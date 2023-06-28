@@ -30,13 +30,14 @@ exports.courseCategoryCreation = async (req, res) => {
       return res.status(409).json({ message: "Course category already exists" })
     
     }
-    let categoryId = 'C-'+generateShortId(5)
+    let categoryId = 'C-' + generateShortId(5);
+let result = await client.query(checkId, [categoryId]);
 
-     let result=await client.query(checkId,[categoryId])
- 
-    while (result.rowCount>0) {
-      result=await client.query(checkId,[categoryId])
-    }
+while (result.rowCount > 0) {
+  categoryId = 'C-' + generateShortId(5);
+  result = await client.query(checkId, [categoryId]);
+}
+
     
 
     const query = `
