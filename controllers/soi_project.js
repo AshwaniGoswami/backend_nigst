@@ -50,7 +50,7 @@ exports.createProject=async(req,res)=>{
 exports.viewProject = async (req, res) => {
   let connection;
   try {
-    const allViewProject = "SELECT p_name as name, p_description, path,p_id as pid FROM soi_project";
+    const allViewProject = "SELECT p_name as name, p_description, path,p_id as pid FROM soi_project LIMIT 10";
     connection = await pool.connect();
     const allProject = await connection.query(allViewProject);
     if (allProject.rowCount === 0) {

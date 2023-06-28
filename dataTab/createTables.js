@@ -515,7 +515,17 @@ CREATE TABLE IF NOT EXISTS soi_project(
  p_id varchar(255),
  p_name varchar(255),
  p_description text,
+ visibility BOOLEAN DEFAULT FALSE,
  path varchar(255),
+ date TIMESTAMP DEFAULT NOW()
+)`)
+
+await client.query(`
+CREATE TABLE IF NOT EXISTS office(
+ id SERIAL PRIMARY KEY,
+ o_id varchar(255),
+ office_name varchar(255),
+ office_email varchar(255) NOT NULL,
  date TIMESTAMP DEFAULT NOW()
 )`)
 
