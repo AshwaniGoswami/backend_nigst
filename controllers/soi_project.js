@@ -50,16 +50,16 @@ exports.createProject=async(req,res)=>{
 exports.viewProject = async (req, res) => {
   let connection;
   try {
-    const allViewProject = "SELECT p_name as name, p_description, path FROM soi_project";
+    const allViewProject = "SELECT p_id, p_name as name, p_description, path FROM soi_project";
     connection = await pool.connect();
     const allProject = await connection.query(allViewProject);
     if (allProject.rowCount === 0) {
-      return res.status(404).send({ message: 'No image Found' });
+      return res.status(404).send({ message: 'No image found' });
     }
     const imageData = [];
 
     for (const row of allProject.rows) {
-      const { name, path } = row;
+      const { p_id, name, path } = row;
       const fileUrl = path;
       const key = 'soi_project/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
 
@@ -78,7 +78,7 @@ exports.viewProject = async (req, res) => {
         });
         const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
-        imageData.push({ name, url });
+        imageData.push({ p_id, name, url });
       } catch (error) {
         console.error(`Error retrieving file '${key}': ${error}`);
       }
@@ -100,21 +100,24 @@ exports.viewProject = async (req, res) => {
 
 
 
+
 // ===================update============================
 exports.updateSoiProject=async(req,res)=>{
     let connection
     try {
-      const{Pname,Pdescription,Pid}=req.body
-      const updateProject="UPDATE soi_project SET p_name=$1,p_description=$2 WHERE p_id=$3"
+      const{Pname,Pdescription,Pid,Pvisible}=req.body
+      const updateProject="UPDATE soi_project SET p_name=$1,p_description=$2,visibility=$3 WHERE p_id=$4"
       connection=await pool.connect()
-  
-      const updateProjectSOI=await connection.query(updateProject,[Pname,Pdescription,Pid])
+      if(Pvisible===true || Pvisible===false){
+      const updateProjectSOI=await connection.query(updateProject,[Pname,Pdescription,Pvisible,Pid])
       return res.status(200).send({message:"Successfully Updated!"})
+      }
+      return res.status(401).send({message:"Visibiity cannot be string"});
     } catch (error) {
       console.error(error)
       return res.status(500).send({message:"Internal server error!"})
     }
-    finally{
+    finally{ 
       if(connection){
         await connection.release()
       }
@@ -131,21 +134,16 @@ exports.deleteProject = async (req, res) => {
       return res.status(400).send({ message: "Please provide the Project ID" });
     }
     connection = await pool.connect();
-    const ExistanceProject_ID = "SELECT * FROM soi_project WHERE p_id=$1";
-    const result = await connection.query(ExistanceProject_ID, [Pid]);
+    const deleteProjectQuery = "DELETE FROM soi_project WHERE p_id=$1 RETURNING path";
+    const result = await connection.query(deleteProjectQuery, [Pid]);
     if (result.rowCount === 0) {
       return res.status(404).send({ message: "Project ID does not exist!" });
     }
 
     // Retrieve the file path from the database
-    const filePathQuery = "SELECT path FROM soi_project WHERE p_id=$1";
-    const filePathResult = await connection.query(filePathQuery, [Pid]);
-    const filePath = filePathResult.rows[0].path;
+    const filePath = result.rows[0].path;
 
-    const delProject = "DELETE FROM soi_project WHERE p_id=$1";
-    await connection.query(delProject, [Pid]);
-
-    // Delete file from S3
+    // Delete file from AWS S3
     const s3Client = new S3Client({
       region: process.env.BUCKET_REGION,
       credentials: {
@@ -153,14 +151,14 @@ exports.deleteProject = async (req, res) => {
         secretAccessKey: process.env.SECRET_ACCESS_KEY,
       },
     });
-    const key = filePath.substring(filePath.lastIndexOf('/') + 1);
+    const key = filePath.substring(filePath.lastIndexOf("/") + 1);
     const deleteCommand = new DeleteObjectCommand({
       Bucket: process.env.BUCKET_NAME,
       Key: key,
     });
     await s3Client.send(deleteCommand);
 
-    return res.status(200).send({ message: "Successfully Deleted!" });
+    return res.status(200).send({ message: "Successfully Deleted from AWS S3!" });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ message: "Internal server error!" });
@@ -170,3 +168,4 @@ exports.deleteProject = async (req, res) => {
     }
   }
 };
+
