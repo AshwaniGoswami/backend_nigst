@@ -1,64 +1,46 @@
 const pool = require("../config/pool")
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3")
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
-
+const { v4: uuidv4 } = require('uuid');
 
 exports.createAlbum = async (req, res) => {
-
-  let connection
+  let connection;
 
   try {
+    const { Cname } = req.body;
+    const images = req.files.image;
 
-    const { Cname } = req.body
+    const params = [];
 
-    const image = req.files.image
+    connection = await pool.connect();
 
-    const params = []
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
 
-    let Apath = ''
+      const randomName = uuidv4();
 
-    let Aname = ''
+      const Aname = `${randomName}${image.mimetype.replace('/', '.')}`;
+      const Apath = image.location;
 
-    connection = await pool.connect()
+      const query = 'INSERT INTO album (category_name, name, path) VALUES ($1, $2, $3)';
+      const values = [Cname, Aname, Apath];
 
-    for (let i = 0; i < image.length; i++) {
+      await connection.query(query, values);
 
-      Aname = image[i].originalname
-
-      Apath = image[i].location
-
-
-
-
-      const query = 'INSERT INTO album (category_name,name,path) VALUES ($1, $2, $3)'
-
-      const values = [Cname, Aname, Apath]
-
-      const result = await connection.query(query, values)
-
-      params.push({ name: Aname, path: Apath })
-
+      params.push({ name: Aname, path: Apath });
     }
 
-    return res.status(201).send({ message: 'Images uploaded successfully' })
-
-  }
-  catch (error) {
-
-    console.error(error)
-
-    return res.status(500).send({ error: 'Something went wrong' })
-
-  }
-  finally {
-
+    return res.status(201).send({ message: 'Images uploaded successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: 'Something went wrong' });
+  } finally {
     if (connection) {
-
-      await connection.release()
-
+      await connection.release();
     }
   }
-}
+};
+
 
 // =====================view==========================
 
