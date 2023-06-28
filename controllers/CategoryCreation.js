@@ -26,7 +26,7 @@ exports.courseCategoryCreation = async (req, res) => {
 
     if (checkResult.rowCount > 0) {
     
-      return res.status(409).json({ error: "Course category already exists" })
+      return res.status(409).json({ message: "Course category already exists" })
     
     }
 
@@ -54,7 +54,7 @@ exports.courseCategoryCreation = async (req, res) => {
   
     console.error(err)
   
-    return res.status(500).json({ error: "Internal server error" })
+    return res.status(500).json({ message: "Internal server error" })
   
   }
    finally {
