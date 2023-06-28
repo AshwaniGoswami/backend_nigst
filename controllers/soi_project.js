@@ -59,7 +59,7 @@ exports.viewProject = async (req, res) => {
     const imageData = [];
 
     for (const row of allProject.rows) {
-      const { name, path,pid } = row;
+      const { name, p_description,path,pid } = row;
       const fileUrl = path;
       const key = 'soi_project/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
 
@@ -78,7 +78,7 @@ exports.viewProject = async (req, res) => {
         });
         const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
-        imageData.push({ name, url,pid });
+        imageData.push({ name, url,pid,p_description });
       } catch (error) {
         console.error(`Error retrieving file '${key}': ${error}`);
       }
@@ -101,25 +101,46 @@ exports.viewProject = async (req, res) => {
 
 
 // ===================update============================
-exports.updateSoiProject=async(req,res)=>{
-    let connection
-    try {
-      const{Pname,Pdescription,Pid}=req.body
-      const updateProject="UPDATE soi_project SET p_name=$1,p_description=$2 WHERE p_id=$3"
-      connection=await pool.connect()
-  
-      const updateProjectSOI=await connection.query(updateProject,[Pname,Pdescription,Pid])
-      return res.status(200).send({message:"Successfully Updated!"})
-    } catch (error) {
-      console.error(error)
-      return res.status(500).send({message:"Internal server error!"})
+exports.updateSoiProject = async (req, res) => {
+  let connection;
+  try {
+    const { Pname, Pdescription, Pid } = req.body;
+    const check = 'SELECT * FROM soi_project WHERE p_id = $1';
+    const getProject = 'SELECT * FROM soi_project WHERE p_id = $1';
+    const updateProject =
+      'UPDATE soi_project SET p_name = $1, p_description = $2 WHERE p_id = $3';
+
+    connection = await pool.connect();
+
+    const result = await connection.query(check, [Pid]);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'This Project Does Not Exist!' });
     }
-    finally{
-      if(connection){
-        await connection.release()
-      }
+
+    const projectData = await connection.query(getProject, [Pid]);
+    const { p_name: currentPname, p_description: currentPdescription } =
+      projectData.rows[0];
+
+    const updatedPname = Pname || currentPname;
+    const updatedPdescription = Pdescription || currentPdescription;
+
+    const updateProjectSOI = await connection.query(updateProject, [
+      updatedPname,
+      updatedPdescription,
+      Pid,
+    ]);
+
+    return res.status(200).send({ message: 'Successfully Updated!' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal server error!' });
+  } finally {
+    if (connection) {
+      await connection.release();
     }
   }
+};
+
 
 // =============================delete=======================
 
