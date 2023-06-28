@@ -191,7 +191,7 @@ function createUploadMiddleware(destination) {
         return cb('Error: Images, Videos, and PDFs Only!');
       }
     },
-  }).fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }, { name: 'pdf', maxCount: 1 }, { name: 'file', maxCount: 1 }]);
+  }).fields([{ name: 'image', maxCount: 20 }, { name: 'video', maxCount: 1 }, { name: 'pdf', maxCount: 1 }, { name: 'file', maxCount: 1 }]);
 
   return function (req, res, next) {
     // Set destination directory in request object
