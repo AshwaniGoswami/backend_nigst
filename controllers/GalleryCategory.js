@@ -106,7 +106,7 @@ exports.deleteAlbumCategory = async (req, res) => {
     }
 
     // Delete data from album table
-    const deleteAlbumQuery = 'DELETE FROM album WHERE category_name IN (SELECT  FROM album_category WHERE category_name = $1)';
+    const deleteAlbumQuery = 'DELETE FROM album WHERE category_name=$1';
     await connection.query(deleteAlbumQuery, [cname]);
 
     // Delete data from album_category table
