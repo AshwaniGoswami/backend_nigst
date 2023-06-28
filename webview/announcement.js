@@ -13,7 +13,7 @@ exports.viewWebAnnouncement = async (req, res) => {
   let client
   try {
     client = await pool.connect()
-    const check = `SELECT title,description,to_char(posted_at,'YYYY/MM/DD') as posteddate  FROM announcement   WHERE status=$1  ORDER BY posted_at DESC LIMIT 6`
+    const check = `SELECT title,description,to_char(posted_at,'YYYY/MM/DD') as posteddate,url  FROM announcement   WHERE status=$1  ORDER BY posted_at DESC LIMIT 6`
     const visible = true
     const result = await client.query(check, [visible])
     if (result.rowCount === 0) {
