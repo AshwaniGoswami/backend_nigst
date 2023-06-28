@@ -59,7 +59,7 @@ exports.viewProject = async (req, res) => {
     const imageData = [];
 
     for (const row of allProject.rows) {
-      const { name, path } = row;
+      const { name, path,pid } = row;
       const fileUrl = path;
       const key = 'soi_project/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
 
@@ -78,7 +78,7 @@ exports.viewProject = async (req, res) => {
         });
         const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
-        imageData.push({ name, url });
+        imageData.push({ name, url,pid });
       } catch (error) {
         console.error(`Error retrieving file '${key}': ${error}`);
       }
