@@ -1,6 +1,69 @@
 const pool = require("../config/pool");
+const generateNumericValue = require("../generator/NumericId");
 const sendMail = require("../mailing_Service/mailconfig");
 
+
+exports.createOffice = async (req, res) => {
+
+  let connection
+
+  try {
+
+    const { name, email } = req.body
+
+    const check = 'SELECT * FROM office WHERE office_name = $1'
+
+    connection = await pool.connect()
+
+    const result = await connection.query(check, [name])
+
+    if (result.rowCount > 0) {
+
+      return res.status(400).json({ message: 'This name already exists!' })
+
+    }
+
+    let oid = 'O-' + generateNumericValue(5)
+
+    const check2 = 'SELECT * FROM office WHERE o_id = $1'
+
+    let result01 = await connection.query(check2, [oid])
+
+    while (result01.rowCount > 0) {
+
+      oid = 'O-' + generateNumericValue(5)
+
+      result01 = await connection.query(check2, [oid])
+
+    }
+
+    const insertQuery = 'INSERT INTO office (o_id, office_name, office_email, date) VALUES ($1, $2, $3, $4)'
+
+    const date = new Date()
+
+    const data = [oid, name, email, date]
+
+    await connection.query(insertQuery, data)
+
+    return res.status(201).json({ message: 'Successfully created.' })
+
+  }
+   catch (error) {
+
+    console.error(error)
+
+    return res.status(500).json({ message: 'Internal Server Error' })
+
+  } 
+  finally {
+
+    if (connection) {
+
+      await connection.release()
+
+    }
+  }
+}
 
 exports.postContact = async (req, res) => {
   let client;
@@ -13,56 +76,105 @@ exports.postContact = async (req, res) => {
     const queryParams = [name, email, phone, subject, description];
     await client.query(queryText, queryParams);
 
-    let admin = '';
-    switch (subject) {
-      case 'Admission Enquiry':
-        admin = process.env.office_1;
-        break;
-      case 'Feedback':
-        admin = process.env.office_2;
-        break;
-      case 'Grievances':
-        admin = process.env.office_3;
-        break;
-      case 'Right to Information':
-        admin = process.env.office_4;
-        break;
-      default:
-        throw new Error('Invalid subject');
+    const officeQuery = 'SELECT office_email FROM office WHERE office_name = $1';
+    const officeResult = await client.query(officeQuery, [subject]);
+    if (officeResult.rows.length === 0) {
+      return res.status(404).json({ message: 'This subject does not exist.' });
     }
+    const admin = officeResult.rows[0].office_email;
 
     sendMail(
       admin,
       `${subject} Query`,
-      `${name} wants to contact with you on the topic: ${subject}. Their email is: ${email}. Please clear their query.`
+      `${name} wants to contact you on the topic: ${subject}. Their email is: ${email}. Please address their query.`
+    );
+
+    sendMail(
+      email,
+      `${subject} Query Submitted`,
+      `Hello ${name}, your query on the topic ${subject} has been successfully submitted. We will contact you soon.`
     );
 
     await client.query('COMMIT');
-  return  res.json({ message: 'Successfully sent feedback' });
+    return res.status(200).send('Successfully sent feedback');
   } catch (error) {
+    console.error(error);
     await client.query('ROLLBACK');
-  return  res.json(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
   } finally {
     if (client) {
       await client.release();
     }
   }
 };
+
+
+
 exports.viewContact = async(req,res)=>{
+
   let connection
+
   try{
-     connection = await pool.connect();
-    const query = "SELECT * FROM contact_form";
-    const result = await connection.query(query);
-   return res.send( { details: result.rows });
+
+     connection = await pool.connect()
+
+    const query = "SELECT * FROM contact_form"
+
+    const result = await connection.query(query)
+
+   return res.send( { details: result.rows })
+
    
-  }catch (error) {
+  }
+  catch (error) {
+
     console.error(error)
-    return res.status(500).send({ message: 'Something went wrong!' });
+
+    return res.status(500).send({ message: 'Internal Server Error!' })
+
   }
   finally{
+
     if (connection) {
+
       await connection.release()
+
+    }
+  }
+}
+
+exports.sendOffice=async(req,res)=>{
+
+  let client
+
+  try {
+    
+    client=await pool.connect()
+    
+    const check='SELECT office_name as office FROM office'
+
+    const result=await client.query(check)
+
+    if (result.rowCount===0) {
+      return res.status(404).json({message:'No Data To Display!.'})
+    }
+
+    return res.status(200).json({office:result.rows})
+
+  } 
+  catch (error) {
+    
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+
+  finally{
+
+    if (client) {
+      
+      await client.release()
     }
   }
 }
