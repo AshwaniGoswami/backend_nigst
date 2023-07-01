@@ -1,5 +1,5 @@
 const pool = require("../config/pool")
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3")
+const { S3Client, GetObjectCommand,DeleteObjectCommand } = require("@aws-sdk/client-s3")
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { generate } = require("generate-password");
 const { v4: uuidv4 } = require('uuid');
@@ -178,3 +178,56 @@ exports.viewAlbumByCategory=async(req,res)=>{
   }
 }
 
+
+
+exports.deleteAlbum = async (req, res) => {
+  let client;
+
+  try {
+    const { aid } = req.body;
+
+    if (!aid) {
+      return res.status(400).json({ message: 'Missing album ID (aid).' });
+    }
+
+    client = await pool.connect();
+
+    const selectQuery = 'SELECT * FROM album WHERE a_id = $1';
+    const selectResult = await client.query(selectQuery, [aid]);
+
+    if (selectResult.rowCount === 0) {
+      return res.status(404).json({ message: 'Album not found.' });
+    }
+
+    const deleteQuery = 'DELETE FROM album WHERE a_id = $1';
+    await client.query(deleteQuery, [aid]);
+
+    const attachment = selectResult.rows[0].path;
+    const fileUrl = attachment;
+    const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+
+    const s3Client = new S3Client({
+      region: process.env.BUCKET_REGION,
+      credentials: {
+        accessKeyId: process.env.ACCESS_KEY,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      },
+    });
+
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: key,
+    });
+
+    await s3Client.send(deleteCommand);
+
+    return res.status(200).json({ message: 'Album and corresponding image deleted successfully.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+};

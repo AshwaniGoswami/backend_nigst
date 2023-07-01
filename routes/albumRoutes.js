@@ -1,5 +1,5 @@
 const express=require("express")
-const { viewAlbumByCategory } = require("../controllers/album")
+const { viewAlbumByCategory, deleteAlbum } = require("../controllers/album")
 // const {  getPhotosByCategory, uploadPhoto } = require("../controllers/galleryController")
 // const { galleryUpload } = require("../middleware/faculty")
 const router=express.Router()
@@ -8,5 +8,6 @@ const router=express.Router()
 // router.get('/album/:category',getPhotosByCategory)
 
 router.patch('/album_view_category',viewAlbumByCategory)
+router.delete('/delete_album',deleteAlbum)
 
 module.exports=router
