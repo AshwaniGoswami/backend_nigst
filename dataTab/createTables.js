@@ -336,6 +336,7 @@ CREATE TABLE IF NOT EXISTS album (
   category_name varchar(255) NOT NULL REFERENCES album_category(category_name),
   name VARCHAR(255),
   path varchar(255),
+  a_id varchar(255) NOT NULL UNIQUE,
   created_at TIMESTAMP DEFAULT NOW()
   )`)
 
