@@ -1,7 +1,9 @@
 const pool = require("../config/pool")
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3")
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
+const { S3Client, GetObjectCommand,DeleteObjectCommand } = require("@aws-sdk/client-s3")
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { generate } = require("generate-password");
 const { v4: uuidv4 } = require('uuid');
+const generateNumericValue = require("../generator/NumericId");
 
 exports.createAlbum = async (req, res) => {
   let connection;
@@ -19,15 +21,26 @@ exports.createAlbum = async (req, res) => {
 
       const randomName = uuidv4();
 
-      const Aname = `${randomName}${image.mimetype.replace('/', '.')}`;
+      const Aname = `${randomName}.${image.mimetype.split('/')[1]}`;
       const Apath = image.location;
 
-      const query = 'INSERT INTO album (category_name, name, path) VALUES ($1, $2, $3)';
-      const values = [Cname, Aname, Apath];
+      const check = 'SELECT * FROM album WHERE a_id = $1';
+      let aid = 'A-' + generateNumericValue(8);
+
+      let result = await connection.query(check, [aid]);
+
+      while (result.rowCount > 0) {
+        aid = 'A-' + generateNumericValue(8);
+        result = await connection.query(check, [aid]);
+      }
+
+      const query =
+        'INSERT INTO album (category_name, name, path, a_id) VALUES ($1, $2, $3, $4)';
+      const values = [Cname, Aname, Apath, aid];
 
       await connection.query(query, values);
 
-      params.push({ name: Aname, path: Apath });
+      params.push({ name: Aname, path: Apath, aid: aid });
     }
 
     return res.status(201).send({ message: 'Images uploaded successfully' });
@@ -40,7 +53,6 @@ exports.createAlbum = async (req, res) => {
     }
   }
 };
-
 
 // =====================view==========================
 
@@ -95,7 +107,127 @@ exports.viewAlbum = async (req, res) => {
   } finally {
     if (connection) {
       await connection.release();
-    }
-  }
-};
+}
+}
+}
 
+exports.viewAlbumByCategory=async(req,res)=>{
+  let client
+
+  try {
+    
+    const {category}=req.body
+
+    const check='SELECT * FROM album WHERE category_name=$1'
+    
+    client=await pool.connect()
+
+    const result=await client.query(check,[category])
+
+    if (result.rowCount===0) {
+      
+      return res.status(404).json({message:'No Images Found!.'})
+    }
+
+    let images=[]
+
+    for (const row of result.rows) {
+      const attachment = row.path;
+      const fileUrl = attachment;
+      const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+      try {
+        const s3Client = new S3Client({
+          region: process.env.BUCKET_REGION,
+          credentials: {
+            accessKeyId: process.env.ACCESS_KEY,
+            secretAccessKey: process.env.SECRET_ACCESS_KEY,
+          },
+        });
+
+        const command = new GetObjectCommand({
+          Bucket: process.env.BUCKET_NAME,
+          Key: key,
+        });
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
+
+        images.push({
+          fileName: url,
+          aid: row.a_id,
+        })
+      } catch (error) {
+        console.error(`Error retrieving file '${key}': ${error}`)
+      }
+    }
+    return res.status(200).send({ images: images });
+
+  } 
+  catch (error) {
+    
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+  finally{
+
+    if (client) {
+
+      await client.release()
+
+    }
+  }
+}
+
+
+
+exports.deleteAlbum = async (req, res) => {
+  let client;
+
+  try {
+    const { aid } = req.body;
+
+    if (!aid) {
+      return res.status(400).json({ message: 'Missing album ID (aid).' });
+    }
+
+    client = await pool.connect();
+
+    const selectQuery = 'SELECT * FROM album WHERE a_id = $1';
+    const selectResult = await client.query(selectQuery, [aid]);
+
+    if (selectResult.rowCount === 0) {
+      return res.status(404).json({ message: 'Album not found.' });
+    }
+
+    const deleteQuery = 'DELETE FROM album WHERE a_id = $1';
+    await client.query(deleteQuery, [aid]);
+
+    const attachment = selectResult.rows[0].path;
+    const fileUrl = attachment;
+    const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+
+    const s3Client = new S3Client({
+      region: process.env.BUCKET_REGION,
+      credentials: {
+        accessKeyId: process.env.ACCESS_KEY,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      },
+    });
+
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: key,
+    });
+
+    await s3Client.send(deleteCommand);
+
+    return res.status(200).json({ message: 'Album and corresponding image deleted successfully.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal Server Error.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+};
