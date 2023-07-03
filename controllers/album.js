@@ -117,7 +117,6 @@ exports.viewAlbumByCategory=async(req,res)=>{
   try {
     
     const {category}=req.body
-    console.log(req.body)
     const check='SELECT * FROM album WHERE category_name=$1'
     
     client=await pool.connect()
