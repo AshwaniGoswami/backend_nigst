@@ -6,7 +6,7 @@ const { bannerUpload, galleryUpload, SOI_PROJECT_UPLOAD, headerUpload } = requir
 
 const { FooterCreate, viewFooter, updateFooter, deleteFooter } = require('../footer')
 const { createAlbumCategory, viewAlbumCategory, updateAlbumCategory, deleteAlbumCategory } = require('../../controllers/GalleryCategory')
-const { createAlbum, viewAlbum, viewAlbumByCategory } = require('../../controllers/album')
+const { createAlbum, viewAlbum } = require('../../controllers/album')
 const { createProject, viewProject, updateSoiProject, deleteProject } = require('../../controllers/soi_project')
 const { HeaderCreate, viewHeader } = require('../header')
 
@@ -22,7 +22,6 @@ router.get('/view_archive/:aid', viewArchivePDFAnnouncement)
 router.post('/create_banner', bannerUpload, createBanner)
 router.get('/view_banner', getBanner)
 
-router.patch('/album_view_category',viewAlbumByCategory)
 
 
 router.delete('/delete_album_category',deleteAlbumCategory)
