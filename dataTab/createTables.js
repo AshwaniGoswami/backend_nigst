@@ -517,6 +517,7 @@ CREATE TABLE IF NOT EXISTS soi_project(
  p_name varchar(255),
  p_description text,
  visibility BOOLEAN DEFAULT FALSE,
+ url varchar(255) NOT NULL,
  path varchar(255),
  date TIMESTAMP DEFAULT NOW()
 )`)
