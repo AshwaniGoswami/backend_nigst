@@ -4,11 +4,11 @@ const { viewWebAnnouncement, viewAllWebAnnouncement, viewPDFAnnouncement, viewAl
 const { createBanner, getBanner } = require('../Banner')
 const { bannerUpload, galleryUpload, SOI_PROJECT_UPLOAD, headerUpload } = require('../../middleware/faculty')
 
-const { FooterCreate, viewFooter, updateFooter, deleteFooter } = require('../footer')
+const { FooterCreate, viewFooter, updateFooter, deleteFooter, updateVisible } = require('../footer')
 const { createAlbumCategory, viewAlbumCategory, updateAlbumCategory, deleteAlbumCategory } = require('../../controllers/GalleryCategory')
 const { createAlbum, viewAlbum } = require('../../controllers/album')
 const { createProject, viewProject, updateSoiProject, deleteProject } = require('../../controllers/soi_project')
-const { HeaderCreate, viewHeader } = require('../header')
+const { HeaderCreate, viewHeader, updateVisibility } = require('../header')
 
 const router = express.Router()
 
@@ -40,4 +40,6 @@ router.delete('/delete_project', deleteProject)
 router.get('/view_album', viewAlbum)
 router.post('/create_header', headerUpload, HeaderCreate)
 router.get('/view_header', viewHeader)
+router.patch('/update_visible_footer',updateVisible)
+router.patch('/update_visible_header',updateVisibility)
 module.exports = router
