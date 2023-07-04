@@ -55,7 +55,7 @@ exports.createProject = async (req, res) => {
 exports.viewProject = async (req, res) => {
   let connection;
   try {
-    const allViewProject = "SELECT p_name as name, p_description, path,url, p_id as pid FROM soi_project";
+    const allViewProject = "SELECT p_name as name, p_description, path,url,visibility, p_id as pid FROM soi_project";
     connection = await pool.connect();
     const allProject = await connection.query(allViewProject);
     if (allProject.rowCount === 0) {
@@ -64,7 +64,7 @@ exports.viewProject = async (req, res) => {
     const imageData = [];
 
     for (const row of allProject.rows) {
-      const { name, p_description,path,pid } = row;
+      const { name, p_description,path,pid,visibility } = row;
       const fileUrl = path;
       const key = 'soi_project/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
 
@@ -83,7 +83,7 @@ exports.viewProject = async (req, res) => {
         });
         const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
-        imageData.push({ name, url,pid,p_description });
+        imageData.push({ name, url,pid,p_description,visibility });
       } catch (error) {
         console.error(`Error retrieving file '${key}': ${error}`);
       }
