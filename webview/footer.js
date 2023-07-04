@@ -28,7 +28,7 @@ try {
     const check=`INSERT INTO  footer (name,link,type,footer_id,phone,email,address) VALUES($1,$2,$3,$4,$5,$6,$7)`
     const data=[name,link,type,FID,phone,email,address]
     const result1=await connection.query(check,data)
-    return res.send({message:'Successfully Created!'})
+    return res.status(201).send({message:'Successfully Created!'})
 } catch (error) {
     console.error(error)
     return res.status(500).send({message:'Internal Server error!'})
@@ -49,7 +49,7 @@ exports.viewFooter=async(req,res)=>{
     
     
     const alFooter=await connection.query(allFooter)
-    return res.send({data:alFooter.rows})
+    return res.status(200).send({data:alFooter.rows})
     }
     catch (error) {
         console.error(error)
@@ -67,12 +67,36 @@ exports.updateFooter=async(req,res)=>{
     let connection
     try{
         const {footer_id,name,link,type,phone,email,address}=req.body
-        const updateFoot="UPDATE footer SET name=$1,link=$2,type=$3,phone=$4,email=$5,address=$6 WHERE footer_id=$7"
+        const updateFoot="UPDATE footer SET name=$1,link=$2,type=$3,phone=$4,email=$5,address=$6  WHERE footer_id=$7"
         connection=await pool.connect()
     
     
-    const uFooter=await connection.query(updateFoot,[name,link,type,phone,email,addressfooter_id])
-    return res.send({message: "Successfully Updated!"})
+    const uFooter=await connection.query(updateFoot,[name,link,type,phone,email,address, footer_id])
+    return res.status(200).send({message: "Successfully Updated!"})
+    }
+
+    catch (error) {
+        console.error(error)
+        return res.status(500).send({message:'Internal Server Eroor!.'})
+    }
+finally{
+    if (connection) {
+        await connection.release()
+    }
+}
+}
+
+
+exports.updateVisible=async(req,res)=>{
+    let connection
+    try{
+        const {Fid,Fvisible}=req.body
+        const updateFoot="UPDATE footer SET visibile=$1 WHERE footer_id=$2"
+        connection=await pool.connect()
+    
+    
+    const uFooter=await connection.query(updateFoot,[Fvisible, Fid])
+    return res.status(200).send({message: "Successfully Updated!"})
     }
 
     catch (error) {
@@ -92,18 +116,18 @@ exports.deleteFooter=async(req,res)=>{
     try{
         const {footer_id}=req.body
         if (!footer_id) {
-            return res.send({ message: "Please provide the footer_id" });
+            return res.status(400).send({ message: "Please provide the footer_id" });
           }
           connection=await pool.connect()
           const ExistanceFooter_id="SELECT * FROM footer WHERE footer_id=$1"
           const result=await connection.query(ExistanceFooter_id,[footer_id]);
           if(result.rowCount==0)
-          return res.send({message:"footer_id does not exist!"})
+          return res.status(404).send({message:"footer_id does not exist!"})
           
           
           const delFoot="DELETE FROM footer WHERE footer_id=$1"
           const dFooter=await connection.query(delFoot,[footer_id])
-          return res.send({message: "Successfully Deleted!"})
+          return res.status(200).send({message: "Successfully Deleted!"})
     }
 
     catch (error) {
