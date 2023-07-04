@@ -124,7 +124,7 @@ exports.updateSoiProject = async (req, res) => {
     }
 
     const projectData = checkResult.rows[0];
-    const { p_name: currentPname, p_description: currentPdescription,visiblity:visiblity } = projectData;
+    const { p_name: currentPname, p_description: currentPdescription,visiblity:currentvisiblity } = projectData;
 
     const updatedPname = Pname || currentPname;
     const updatedPdescription = Pdescription || currentPdescription;
