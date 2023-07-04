@@ -106,6 +106,7 @@ exports.viewProject = async (req, res) => {
 
 
 // ===================update============================
+
 exports.updateSoiProject = async (req, res) => {
   let client;
   try {
