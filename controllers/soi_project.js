@@ -7,50 +7,48 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 exports.createProject = async (req, res) => {
   let connection;
   try {
-    const { Pname, Pdescription } = req.body;
+    const { Pname, Pdescription, Purl } = req.body;
     const image = req.files.image;
     const path = image[0].location;
+
     connection = await pool.connect();
 
     if (!Pname || !Pdescription) {
       return res.status(400).send({ message: "Please enter all the data" });
     }
 
-    const projectCountQuery = "SELECT COUNT(*) FROM soi_project";
-    const projectCountResult = await connection.query(projectCountQuery);
-    const projectCount = projectCountResult.rows[0].count;
-    if (projectCount >= 10) {
-      return res.status(400).send({ message: "Maximum project limit(10) reached" });
-    }
+    const checkExistence = "SELECT * FROM soi_project WHERE p_name = $1";
+    const result2 = await connection.query(checkExistence, [Pname]);
 
-    const checkExxistence = "SELECT * FROM soi_project WHERE p_name = $1";
-    const result2 = await connection.query(checkExxistence, [Pname]);
     if (result2.rowCount > 0) {
-      return res.status(500).send({ message: "Data already exists" });
+      return res.status(500).send({ message: 'Data Already Exists!' });
     }
 
-    let PID = "P-" + generateNumericValue(7);
-    const check = "SELECT * FROM soi_project WHERE p_id = $1";
+    let PID = 'P-' + generateNumericValue(7);
+    const check = 'SELECT * FROM soi_project WHERE p_id = $1';
     let result = await connection.query(check, [PID]);
+
     while (result.rowCount > 0) {
-      PID = "P-" + generateNumericValue(7);
+      PID = 'P-' + generateNumericValue(7);
       result = await connection.query(check, [PID]);
     }
 
-    const check1 =
-      "INSERT INTO soi_project (p_id, p_name, p_description, path) VALUES ($1, $2, $3, $4)";
-    const data1 = [PID, Pname, Pdescription, path];
-    const result1 = await connection.query(check1, data1);
-    return res.status(200).send("Created successfully!");
+    const insertQuery = 'INSERT INTO soi_project (p_id, p_name, p_description, path, url) VALUES ($1, $2, $3, $4, $5)';
+    const data = [PID, Pname, Pdescription, path, Purl];
+    const result1 = await connection.query(insertQuery, data);
+
+    return res.status(200).send({ message: 'Project created successfully!' });
   } catch (error) {
     console.error(error);
-    return res.status(400).send("Error creating project!");
+    return res.status(400).send({ message: 'Error creating project!' });
   } finally {
     if (connection) {
       await connection.release();
     }
   }
 };
+
+
 
 // ====================get all data======================
 
