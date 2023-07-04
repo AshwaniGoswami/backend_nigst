@@ -7,7 +7,7 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 exports.createProject=async(req,res)=>{
     let connection
     try {
-        const{Pname,Pdescription}=req.body;
+        const{Pname,Pdescription,Purl}=req.body;
         const image=req.files.image
         const path=image[0].location
         connection=await pool.connect()
@@ -29,7 +29,7 @@ exports.createProject=async(req,res)=>{
             PID='P-'+ generateNumericValue(7)
             result=await connection.query(check,[PID])
         }
-        const check1='INSERT INTO  soi_project(p_id,p_name,p_description,path) VALUES ($1, $2, $3, $4)'
+        const check1='INSERT INTO  soi_project(p_id,p_name,p_description,path,url) VALUES ($1, $2, $3, $4,$5)'
         const data1=[PID,Pname,Pdescription,path]
         const result1=await connection.query(check1,data1)
         return res.status(200).send('created successfully!');
@@ -50,7 +50,7 @@ exports.createProject=async(req,res)=>{
 exports.viewProject = async (req, res) => {
   let connection;
   try {
-    const allViewProject = "SELECT p_name as name, p_description, path,p_id as pid FROM soi_project";
+    const allViewProject = "SELECT p_name as name, p_description, path,url, p_id as pid FROM soi_project";
     connection = await pool.connect();
     const allProject = await connection.query(allViewProject);
     if (allProject.rowCount === 0) {
@@ -104,10 +104,10 @@ exports.viewProject = async (req, res) => {
 exports.updateSoiProject = async (req, res) => {
   let client;
   try {
-    const { Pname, Pdescription, Pid, Pvisible } = req.body;
+    const { Pname, Pdescription, Pid, Pvisible ,Purl} = req.body;
     const checkQuery = 'SELECT * FROM soi_project WHERE p_id = $1';
     const updateQuery =
-      'UPDATE soi_project SET p_name = $1, p_description = $2,visibility=$3 WHERE p_id = $4';
+      'UPDATE soi_project SET p_name = $1, p_description = $2,url=$3,visibility=$4 WHERE p_id = $5';
 
     client = await pool.connect();
 
@@ -122,7 +122,7 @@ exports.updateSoiProject = async (req, res) => {
     const updatedPname = Pname || currentPname;
     const updatedPdescription = Pdescription || currentPdescription;
 
-    await client.query(updateQuery, [updatedPname, updatedPdescription,Pvisible, Pid ]);
+    await client.query(updateQuery, [updatedPname, updatedPdescription,Pvisible,Purl, Pid ]);
 
     return res.status(200).send({ message: 'Successfully Updated!' });
   } catch (error) {

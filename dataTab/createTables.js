@@ -490,6 +490,7 @@ CREATE TABLE IF NOT EXISTS soi_project(
  p_name varchar(255),
  p_description text,
  path varchar(255),
+ url varchar(255),
  visibility boolean DEFAULT false,
  date TIMESTAMP DEFAULT NOW()
 )`)
