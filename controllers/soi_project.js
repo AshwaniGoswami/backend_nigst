@@ -104,10 +104,10 @@ exports.viewProject = async (req, res) => {
 exports.updateSoiProject = async (req, res) => {
   let client;
   try {
-    const { Pname, Pdescription, Pid } = req.body;
+    const { Pname, Pdescription, Pid, Pvisible } = req.body;
     const checkQuery = 'SELECT * FROM soi_project WHERE p_id = $1';
     const updateQuery =
-      'UPDATE soi_project SET p_name = $1, p_description = $2 WHERE p_id = $3';
+      'UPDATE soi_project SET p_name = $1, p_description = $2,visibility=$3 WHERE p_id = $4';
 
     client = await pool.connect();
 
@@ -122,7 +122,7 @@ exports.updateSoiProject = async (req, res) => {
     const updatedPname = Pname || currentPname;
     const updatedPdescription = Pdescription || currentPdescription;
 
-    await client.query(updateQuery, [updatedPname, updatedPdescription, Pid]);
+    await client.query(updateQuery, [updatedPname, updatedPdescription,Pvisible, Pid ]);
 
     return res.status(200).send({ message: 'Successfully Updated!' });
   } catch (error) {
