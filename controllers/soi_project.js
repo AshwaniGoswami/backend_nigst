@@ -111,7 +111,7 @@ exports.viewProject = async (req, res) => {
 exports.updateSoiProject = async (req, res) => {
   let client;
   try {
-    const { Pname, Pdescription, Pid } = req.body;
+    const { Pname, Pdescription, Pid,visiblity } = req.body;
     const checkQuery = 'SELECT * FROM soi_project WHERE p_id = $1';
     const updateQuery =
       'UPDATE soi_project SET p_name = $1, p_description = $2 WHERE p_id = $3';
@@ -124,7 +124,7 @@ exports.updateSoiProject = async (req, res) => {
     }
 
     const projectData = checkResult.rows[0];
-    const { p_name: currentPname, p_description: currentPdescription } = projectData;
+    const { p_name: currentPname, p_description: currentPdescription,visiblity:visiblity } = projectData;
 
     const updatedPname = Pname || currentPname;
     const updatedPdescription = Pdescription || currentPdescription;
