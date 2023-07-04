@@ -479,6 +479,7 @@ CREATE TABLE IF NOT EXISTS footer(
   phone varchar(255),
   email varchar(255),
   address text,
+  visibile boolean DEFAULT false,
   date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )`)
 
@@ -499,6 +500,7 @@ CREATE TABLE IF NOT EXISTS header(
   h_id varchar(255),
   h_name varchar(255),
   h_path varchar(255),
+  visibility boolean DEFAULT false,
   date TIMESTAMP DEFAULT NOW()
 )
 `)

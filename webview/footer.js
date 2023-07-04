@@ -67,11 +67,35 @@ exports.updateFooter=async(req,res)=>{
     let connection
     try{
         const {footer_id,name,link,type,phone,email,address}=req.body
-        const updateFoot="UPDATE footer SET name=$1,link=$2,type=$3,phone=$4,email=$5,address=$6 WHERE footer_id=$7"
+        const updateFoot="UPDATE footer SET name=$1,link=$2,type=$3,phone=$4,email=$5,address=$6  WHERE footer_id=$7"
         connection=await pool.connect()
     
     
-    const uFooter=await connection.query(updateFoot,[name,link,type,phone,email,addressfooter_id])
+    const uFooter=await connection.query(updateFoot,[name,link,type,phone,email,address, footer_id])
+    return res.status(200).send({message: "Successfully Updated!"})
+    }
+
+    catch (error) {
+        console.error(error)
+        return res.status(500).send({message:'Internal Server Eroor!.'})
+    }
+finally{
+    if (connection) {
+        await connection.release()
+    }
+}
+}
+
+
+exports.updateVisible=async(req,res)=>{
+    let connection
+    try{
+        const {Fid,Fvisible}=req.body
+        const updateFoot="UPDATE footer SET visibile=$1 WHERE footer_id=$2"
+        connection=await pool.connect()
+    
+    
+    const uFooter=await connection.query(updateFoot,[Fvisible, Fid])
     return res.status(200).send({message: "Successfully Updated!"})
     }
 

@@ -48,7 +48,7 @@ exports.HeaderCreate = async (req, res) => {
 exports.viewHeader = async (req, res) => {
   let connection;
   try {
-    const allViewHeader = "SELECT h_id,h_name,h_path FROM header";
+    const allViewHeader = "SELECT h_id,h_name,h_path,visibility FROM header";
     connection = await pool.connect();
     const allHeader = await connection.query(allViewHeader);
     if (allHeader.rowCount === 0) {
@@ -97,6 +97,7 @@ exports.viewHeader = async (req, res) => {
 };
 
 // ===================update============================
+
 exports.updateHeader = async (req, res) => {
   let connection;
   try {
@@ -105,6 +106,26 @@ exports.updateHeader = async (req, res) => {
     connection = await pool.connect();
 
     const updateHeader = await connection.query(updateH, [Hname, HID]);
+    return res.status(200).send({ message: "Successfully Updated!" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: "Internal server error!" });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
+  }
+};
+
+
+exports.updateVisibility = async (req, res) => {
+  let connection;
+  try {
+    const { HID, Hvisible } = req.body;
+    const updateH = "UPDATE header SET  visibility=$1 WHERE h_id=$2";
+    connection = await pool.connect();
+
+    const updateHeader = await connection.query(updateH, [Hvisible, HID]);
     return res.status(200).send({ message: "Successfully Updated!" });
   } catch (error) {
     console.error(error);
