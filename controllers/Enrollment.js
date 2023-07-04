@@ -557,7 +557,7 @@ exports.viewCoursesForEnrollment = async (req, res) => {
       TO_CHAR(s.date_comencement, 'DD/MM/YYYY') AS commencementDate,
       TO_CHAR(s.date_completion, 'DD/MM/YYYY') AS completionDate,
       s.course_status,
-      s.scheduling_id
+      s.course_scheduler_id
     FROM
       courses c
       JOIN course_scheduler s ON c.course_id = s.course_id
