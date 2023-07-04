@@ -40,7 +40,7 @@ exports.createBanner=async(req,res)=>{
       
         await connection.query(check,data)
 
-return res.send({message:'This is still in testing!.'})
+return res.send({message:'Successfully created!.'})
 
     } 
     catch (error) {
