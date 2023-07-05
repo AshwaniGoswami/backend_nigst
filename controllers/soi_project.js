@@ -64,7 +64,7 @@ exports.viewProject = async (req, res) => {
     const imageData = [];
 
     for (const row of allProject.rows) {
-      const { name, p_description,path,pid,visibility } = row;
+      const { name, p_description,path,pid,visibility,url } = row;
       const fileUrl = path;
       const key = 'soi_project/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
 
