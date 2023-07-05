@@ -40,7 +40,7 @@ exports.createBanner=async(req,res)=>{
       
         await connection.query(check,data)
 
-return res.send({message:'This is still in testing!.'})
+return res.send({message:'Successfully created!.'})
 
     } 
     catch (error) {
@@ -150,16 +150,25 @@ exports.getBanner = async (req, res) => {
         Bucket: process.env.BUCKET_NAME,
         Key: key,
       });
-  
-      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-  
-      return res.json({url:signedUrl});
-    } catch (error) {
-      console.error(error);
-      return res.status(500).send({ message: 'Internal Server Error!' });
-    } finally {
-      if (connection) {
-        await connection.release();
-      }
+
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
+
+      const bannerData = {
+        signedUrl,
+        url: row.url,
+        alt: row.alt,
+      };
+      banners.push(bannerData);
     }
-  };
+
+    return res.json({ banners });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
+  }
+};
+
