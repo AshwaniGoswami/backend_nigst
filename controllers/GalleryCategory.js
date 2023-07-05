@@ -100,34 +100,34 @@ exports.updateAlbumCategory=async(req,res)=>{
 exports.deleteAlbumCategory = async (req, res) => {
   let connection;
   try {
-    const {cname } = req.body;
+    const {Cid } = req.body;
     connection = await pool.connect();
 
     // Start a transaction
     await connection.query('BEGIN');
 
     // Check if Cname exists in album_category table
-    const checkQuery = 'SELECT * FROM album_category WHERE category_name = $1';
-    const checkResult = await connection.query(checkQuery, [cname]);
+    const checkQuery = 'SELECT * FROM album_category WHERE category_id = $1';
+    const checkResult = await connection.query(checkQuery, [Cid]);
 
     if (checkResult.rowCount === 0) {
       // Rollback the transaction
       await connection.query('ROLLBACK');
-      return res.status(404).send({ message: `Category with name ${cname} does not exist.` });
+      return res.status(404).send({ message: `Category with name ${Cid} does not exist.` });
     }
 
     // Delete data from album table
-    const deleteAlbumQuery = 'DELETE FROM album WHERE category_name=$1';
-    await connection.query(deleteAlbumQuery, [cname]);
+    const deleteAlbumQuery = 'DELETE FROM album WHERE category_id=$1';
+    await connection.query(deleteAlbumQuery, [Cid]);
 
     // Delete data from album_category table
-    const deleteCategoryQuery = 'DELETE FROM album_category WHERE category_name = $1';
-    await connection.query(deleteCategoryQuery, [cname]);
+    const deleteCategoryQuery = 'DELETE FROM album_category WHERE category_id = $1';
+    await connection.query(deleteCategoryQuery, [Cid]);
 
     // Commit the transaction
     await connection.query('COMMIT');
 
-    return res.status(200).send({ message: `Successfully deleted category ${cname} and associated albums.` });
+    return res.status(200).send({ message: `Successfully deleted category ${Cid} and associated albums.` });
   } catch (error) {
     console.error(error);
     // Rollback the transaction in case of an error
