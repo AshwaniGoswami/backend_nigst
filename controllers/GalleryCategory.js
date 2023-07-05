@@ -56,7 +56,7 @@ exports.createAlbumCategory = async (req, res) => {
 exports.viewAlbumCategory=async(req,res)=>{
   let connection
 try{
- const allAlbum_categoey="SELECT category_id,category_name,visibility FROM album_category"
+ const allAlbum_categoey="SELECT category_id,category_name,visibility FROM album_category order by category_name ASC"
  connection=await pool.connect()
  const allAL=await connection.query(allAlbum_categoey)
  return res.send({data:allAL.rows})
