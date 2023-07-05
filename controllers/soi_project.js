@@ -30,7 +30,7 @@ exports.createProject=async(req,res)=>{
             result=await connection.query(check,[PID])
         }
         const check1='INSERT INTO  soi_project(p_id,p_name,p_description,path,url) VALUES ($1, $2, $3, $4,$5)'
-        const data1=[PID,Pname,Pdescription,path]
+        const data1=[PID,Pname,Pdescription,path,Purl]
         const result1=await connection.query(check1,data1)
         return res.status(200).send('created successfully!');
         // const query=
