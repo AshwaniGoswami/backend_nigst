@@ -48,7 +48,7 @@ exports.HeaderCreate = async (req, res) => {
 exports.viewHeader = async (req, res) => {
   let connection;
   try {
-    const allViewHeader = "SELECT h_id,h_name,h_path,visibility FROM header";
+    const allViewHeader = "SELECT h_id,h_name,h_path,visibility FROM header order by h_name ASC";
     connection = await pool.connect();
     const allHeader = await connection.query(allViewHeader);
     if (allHeader.rowCount === 0) {

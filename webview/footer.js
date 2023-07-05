@@ -44,7 +44,7 @@ finally{
 exports.viewFooter=async(req,res)=>{
     let connection
     try{
-    const allFooter="SELECT * from footer"
+    const allFooter="SELECT * from footer order by name ASC"
     connection=await pool.connect()
     
     
