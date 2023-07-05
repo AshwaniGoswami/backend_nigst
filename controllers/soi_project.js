@@ -81,9 +81,9 @@ exports.viewProject = async (req, res) => {
           Bucket: process.env.BUCKET_NAME,
           Key: key,
         });
-        const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
+        const Purl = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
-        imageData.push({ name, url,pid,p_description,visibility });
+        imageData.push({ name, url,pid,p_description,visibility,Purl });
       } catch (error) {
         console.error(`Error retrieving file '${key}': ${error}`);
       }
@@ -115,7 +115,7 @@ exports.viewProjectForWeb = async (req, res) => {
     const imageData = [];
 
     for (const row of allProject.rows) {
-      const { name, p_description,path,pid } = row;
+      const { name, p_description,path,pid,url } = row;
       const fileUrl = path;
       const key = 'soi_project/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
 
@@ -132,9 +132,9 @@ exports.viewProjectForWeb = async (req, res) => {
           Bucket: process.env.BUCKET_NAME,
           Key: key,
         });
-        const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
+        const Purl = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
 
-        imageData.push({ name, url,pid,p_description });
+        imageData.push({ name, Purl,pid,p_description,url });
       } catch (error) {
         console.error(`Error retrieving file '${key}': ${error}`);
       }
