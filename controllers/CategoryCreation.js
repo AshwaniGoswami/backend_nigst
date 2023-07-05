@@ -19,6 +19,7 @@ exports.courseCategoryCreation = async (req, res) => {
     const { name } = req.body
 
     const checkQuery = `SELECT * FROM course_category WHERE course_category_name = $1`
+    const checkId = `SELECT * FROM course_category WHERE category_id = $1`
 
     const checkValues = [name]
 
@@ -26,35 +27,36 @@ exports.courseCategoryCreation = async (req, res) => {
 
     if (checkResult.rowCount > 0) {
     
-      return res.status(409).json({ error: "Course category already exists" })
+      return res.status(409).json({ message: "Course category already exists" })
     
     }
+    let categoryId = 'C-' + generateShortId(5);
+let result = await client.query(checkId, [categoryId]);
 
-    const categoryId = generateShortId(5)
+while (result.rowCount > 0) {
+  categoryId = 'C-' + generateShortId(5);
+  result = await client.query(checkId, [categoryId]);
+}
 
-    const courseCategoryId = name.slice(0, 5).toUpperCase()
     
-    const category_id = `${courseCategoryId}-${categoryId}`
 
     const query = `
       INSERT INTO course_category (course_category_name, category_id)
       VALUES ($1, $2)
-      RETURNING id, course_category_name, category_id
     `
-    const values = [name, category_id]
+    const values = [name, categoryId]
 
-    const result = await client.query(query, values)
+     await client.query(query, values)
     
-    const createdCourseCat = result.rows[0]
 
-    return res.status(201).json({ data: createdCourseCat })
+    return res.status(201).json({ message: 'Successfully Created' })
   
   }
    catch (err) {
   
     console.error(err)
   
-    return res.status(500).json({ error: "Internal server error" })
+    return res.status(500).json({ message: "Internal server error" })
   
   }
    finally {

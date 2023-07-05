@@ -13,7 +13,7 @@ exports.viewWebAnnouncement = async (req, res) => {
   let client
   try {
     client = await pool.connect()
-    const check = `SELECT title,description,to_char(posted_at,'YYYY/MM/DD') as posteddate  FROM announcement   WHERE status=$1  ORDER BY posted_at DESC LIMIT 6`
+    const check = `SELECT title,description,to_char(posted_at,'YYYY/MM/DD') as posteddate,url  FROM announcement   WHERE status=$1  ORDER BY posted_at DESC LIMIT 6`
     const visible = true
     const result = await client.query(check, [visible])
     if (result.rowCount === 0) {
@@ -432,6 +432,53 @@ const status=true
 
     if (connection) {
 
+      await connection.release()
+
+    }
+  }
+}
+
+
+exports.deleteArchiveAnnouncement=async(req,res)=>{
+
+  let connection
+
+  try {
+    
+      const {aid}=req.body
+
+    connection=await pool.connect()
+
+
+    const checkQuery='SELECT * FROM archive_announcement WHERE a_id=$1'
+
+    const result= await connection.query(checkQuery,[aid])
+
+    if (result.rowCount===0) {
+      
+      return res.status(404).send({message:'Announcement Not Found!.'})
+    
+    }
+
+    const deleteQuery='DELETE  FROM archive_announcement WHERE a_id=$1'
+
+    await connection.query(deleteQuery,[aid])
+
+    return res.status(200).send({message:'Successfully Deleted.'})
+  
+  }
+   catch (error) {
+    
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+
+  finally{
+
+    if (connection) {
+      
       await connection.release()
 
     }

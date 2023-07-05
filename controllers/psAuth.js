@@ -20,7 +20,7 @@ exports.login = async (req, res) => {
 
     const password = req.body.password
 
-    const userQuery = `SELECT * FROM users WHERE email = $1`
+    const userQuery = `SELECT email,student_id,organization,CONCAT(first_name, ' ', middle_name, ' ', last_name) as name,email_verified,mobile_verified,admin_verified FROM users WHERE email = $1`
 
     const userResult = await client.query(userQuery, [email])
 
@@ -85,11 +85,12 @@ exports.login = async (req, res) => {
             const veri = userResult.rows[0].email_verified
 
             const organization=userResult.rows[0].organization
+            const name=userResult.rows[0].name
 
             const token = jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' })
 
 
-            return res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id, email: userResult.rows[0].email, org: organization })
+            return res.status(200).json({ token, verification: veri, id: userResult.rows[0].student_id, email: userResult.rows[0].email, org: organization,name: name})
 
           } 
 

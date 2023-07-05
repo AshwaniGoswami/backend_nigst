@@ -63,6 +63,59 @@ exports.tenderCreation = async (req, res) => {
 }
 
 
+exports.editTender=async(req,res)=>{
+
+  let client 
+
+  try {
+       
+       const {title, description, startDate, endDate,tenderRefNo}=req.body
+
+       const file = req.files.pdf
+
+     client=await pool.connect()
+
+     const check01='SELECT * FROM tender WHERE tender_ref_no=$1'
+
+     const result=await client.query(check01,[tenderRefNo])
+
+     if (result.rowCount===0) {
+      
+      return res.status(404).send({message:'Tender Not Exists!.'})
+
+     }
+if (!file || !file[0]) {
+
+  const updateQ='UPDATE tender SET title=$1,description=$2,start_date=$3,end_date=$4 WHERE tender_ref_no=$5'
+
+  await client.query(updateQ,[title,description,startDate,endDate,tenderRefNo])
+
+  return res.status(200).send({message:'Tender Updated Successfully.'})
+
+}
+     const updateQ='UPDATE tender SET title=$1,description=$2,start_date=$3,end_date=$4,attachment=$5 WHERE tender_ref_no=$6 '
+
+     await client.query(updateQ,[title,description,startDate,endDate,file[0].location,tenderRefNo])
+
+     return res.status(200).send({message:'Tender Updated Successfully.'})
+
+  } 
+  catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+  }
+finally {
+  
+  if (client) {
+    
+    await client.release()
+
+  }
+}
+}
+
 exports.addCorrigendum = async (req, res) => {
 
   let client
@@ -202,7 +255,81 @@ exports.viewCorriPdf = async (req, res) => {
   }
 }
 
+exports.viewArchiveCorriPdf = async (req, res) => {
 
+
+  let client
+
+  try {
+
+    const { corrigendumID } = req.params
+
+
+    client = await pool.connect()
+
+    const query = 'SELECT attachment FROM archive_corrigendum WHERE corri_id = $1'
+
+    const result = await client.query(query, [corrigendumID])
+
+    if (result.rowCount === 0) {
+
+      return res.status(404).send({ error: `PDF not found.` })
+
+    }
+
+    const fileUrl = result.rows[0].attachment
+
+    const corrigendumKey = 'tender/corrigendum/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: corrigendumKey,
+    })
+
+    let response
+
+    try {
+
+      response = await s3Client.send(getObjectCommand)
+
+    } 
+    catch (error) {
+
+      return res.status(404).send({ error: `Attachment file does not exist.` })
+
+    }
+
+    if (!response.Body) {
+
+      return res.status(404).send({ error: `Attachment file does not exist.` })
+
+    }
+
+    res.setHeader('Content-Type', 'application/pdf')
+
+    res.setHeader('Content-Disposition', `attachment; filename=${fileUrl}`)
+
+
+    response.Body.pipe(res)
+
+  }
+   catch (error) {
+
+    console.error(error)
+
+   return res.status(500).send({ error: 'Something went wrong.' })
+
+  }
+
+   finally {
+
+    if (client) {
+
+     await client.release()
+
+    }
+  }
+}
 
 
 exports.archiveTender = async (req, res) => {
@@ -302,7 +429,45 @@ exports.archiveTender = async (req, res) => {
   }
 }
 
+exports.deleteArchiveTender = async (req, res) => {
 
+  let connection
+
+  try {
+    const { tenderNumber } = req.body
+
+    connection = await pool.connect()
+
+    await connection.query('BEGIN')
+
+    const check = 'SELECT * FROM archive_tender WHERE tender_ref_no=$1'
+    const result01 = await connection.query(check, [tenderNumber])
+
+    if (result01.rowCount === 0) {
+      return res.status(404).send({ message: 'Archived tender does not exist.' })
+    }
+
+    const deleteCorrri = 'DELETE FROM archive_corrigendum WHERE tender_ref_no=$1'
+    await connection.query(deleteCorrri, [tenderNumber])
+
+    const deleteArchive = 'DELETE FROM archive_tender WHERE tender_ref_no=$1'
+    await connection.query(deleteArchive, [tenderNumber])
+
+    await connection.query('COMMIT')
+
+    return res.status(200).send({ message: 'Successfully deleted.' })
+  } catch (error) {
+    console.error(error)
+
+    await connection.query('ROLLBACK')
+
+    return res.status(500).send({ message: 'Internal Server Error.' })
+  } finally {
+    if (connection) {
+      await connection.release()
+    }
+  }
+}
 
 
 exports.retrieveTender = async (req, res) => { 
@@ -557,6 +722,68 @@ exports.viewPdf = async (req, res) => {
     client = await pool.connect()
 
     const query = "SELECT attachment FROM tender WHERE tender_ref_no = $1"
+    
+    const result = await client.query(query, [tender_number])
+
+
+    if (result.rowCount === 0) {
+
+      return res.status(404).send({ error: `Tender not found.` })
+    
+    }
+
+    const fileUrl = result.rows[0].attachment
+
+    const key = 'tender/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: process.env.BUCKET_NAME,
+      Key: key,
+    })
+
+    const response = await s3Client.send(getObjectCommand)
+
+    if (!response.Body) {
+
+      return res.status(404).send({ error: `File not found.` })
+   
+    }
+
+    res.setHeader("Content-Type", "application/pdf")
+
+    res.setHeader("Content-Disposition", "inline; filename=tender.pdf")
+
+    response.Body.pipe(res)
+
+  } 
+  catch (error) {
+  
+    console.error(error)
+  
+    return res.status(500).send({ error: "Something went wrong." })
+  
+  }
+   finally {
+  
+    if (client) {
+
+    await  client.release()
+    
+  }
+  }
+}
+
+exports.viewArchivePdf = async (req, res) => {
+ 
+  let client
+ 
+  try {
+ 
+    const { tender_number } = req.params
+ 
+    client = await pool.connect()
+
+    const query = "SELECT attachment FROM archive_tender WHERE tender_ref_no = $1"
     
     const result = await client.query(query, [tender_number])
 

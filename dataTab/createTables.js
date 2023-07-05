@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS admin (
         faculty_admin varchar(255) NOT NULL REFERENCES admin(faculty),
         position_assi_id integer NOT NULL ,
         created_at TIMESTAMP DEFAULT NOW(),
+        updated_at DATE,
         CONSTRAINT unique_position_combination UNIQUE (faculty_id, faculty_pos, faculty_admin)
 
       )
@@ -133,7 +134,7 @@ CREATE TABLE IF NOT EXISTS admin (
       await client.query(`
       CREATE TABLE IF NOT EXISTS organizations (
         id SERIAL PRIMARY KEY,
-        organization VARCHAR(255) NOT NULL UNIQUE,
+        organization VARCHAR(255) NOT NULL,
         type VARCHAR(255) NOT NULL,
         category VARCHAR(255) NOT NULL,
         ministry VARCHAR(255),
@@ -199,7 +200,7 @@ await client.query(`
         course_mode varchar(30) NOT NULL, 
         course_id VARCHAR(255) NOT NULL UNIQUE,
         course_duration_weeks varchar(20) NOT NULL,
-        course_duration_days varchar(10) NOT NULL,
+        course_duration_days varchar(20) NOT NULL,
         eligibility TEXT,
         course_type varchar(255) NOT NULL,
         course_director varchar(255) NOT NULL,
@@ -216,11 +217,11 @@ await client.query(`
         id SERIAL primary key,
         name varchar(255) NOT NULL REFERENCES courses(title),
         course_id VARCHAR(255) NOT NULL REFERENCES courses(course_id),
-        course_capacity varchar(255) NOT NULL,
+        course_capacity INTEGER NOT NULL,
         date_comencement DATE NOT NULL,
         date_completion DATE NOT NULL,
         currency varchar(255) NOT NULL DEFAULT 'INR',
-        fee VARCHAR(255),
+        fee VARCHAR(255) ,
         batch_no VARCHAR(255) NOT NULL,
         course_status VARCHAR(255) NOT NULL DEFAULT 'created',
         running_date date,
@@ -230,6 +231,24 @@ await client.query(`
       )
     `)
     
+    await client.query(`
+    CREATE TABLE IF NOT EXISTS course_scheduler_archive (
+      id SERIAL primary key,
+      name varchar(255) NOT NULL ,
+      course_id VARCHAR(255) NOT NULL ,
+      course_capacity INTEGER NOT NULL,
+      date_comencement DATE NOT NULL,
+      date_completion DATE NOT NULL,
+      currency varchar(255) NOT NULL,
+      fee VARCHAR(255) ,
+      batch_no VARCHAR(255) NOT NULL,
+      course_status VARCHAR(255) NOT NULL ,
+      running_date date,
+      course_scheduler_id varchar(255) NOT NULL,
+      scheduled_at DATE ,
+      archived_at DATE DEFAULT NOW()
+    )
+  `)
   
 
 
@@ -319,6 +338,7 @@ CREATE TABLE IF NOT EXISTS album (
   category_name varchar(255) NOT NULL REFERENCES album_category(category_name),
   name VARCHAR(255),
   path varchar(255),
+  a_id varchar(255) NOT NULL UNIQUE,
   created_at TIMESTAMP DEFAULT NOW()
   )`)
 
@@ -381,7 +401,20 @@ CREATE TABLE IF NOT EXISTS album (
 
  )
  `)
+ await client.query(`
+ CREATE TABLE IF NOT EXISTS archive_enrolment(
+  id SERIAL PRIMARY KEY,
+  scheduling_id varchar(255) NOT NULL ,
+  student_id varchar(255) NOT NULL ,
+  course_paid_status BOOLEAN NOT NULL ,
+  enrolment_status varchar(255) NOT NULL,
+  nigst_approval BOOLEAN NOT NULL ,
+  enrolment_date DATE,
+  archive_date DATE DEFAULT NOW(),
+  enrolment_id varchar(255) NOT NULL
 
+ )
+ `)
  await client.query(`
  
  CREATE TABLE IF NOT EXISTS archive_enroll(

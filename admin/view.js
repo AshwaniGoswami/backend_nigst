@@ -144,7 +144,7 @@ exports.viewArchiveAnnouncementToAdmin = async (req, res) => {
 
     client = await pool.connect()
 
-    const check = `SELECT title,description,url,pdf_path,status, to_char(created_at,'YYYY/MM/DD')as createdat,to_char(posted_at,'YYYY/MM/DD')as postedat,to_char(archive_at,'YYYY/MM/DD')as archivedat,a_id as aid FROM archive_announcement`
+    const check = `SELECT title,description,url,pdf_path,status, to_char(created_at,'DD/MM/YYYY')as createdat,to_char(posted_at,'DD/MM/YYYY')as postedat,to_char(archive_at,'DD/MM/YYYY')as archivedat,a_id as aid FROM archive_announcement`
 
     const result = await client.query(check)
 
@@ -343,8 +343,27 @@ exports.viewCourseByFaculty = async (req, res) => {
   try {
 
     const { faculty } = req.params
-
-    const check = `SELECT title, course_id, description, (course_duration_weeks || ' Weeks ' || course_duration_days || ' Days') AS duration, course_code, course_category, course_no, course_officer, course_director, course_mode, course_type, to_char(created_at, 'YYYY/MM/DD') as createdAt FROM courses WHERE faculty = $1`
+    const check = `
+    SELECT
+      c.title,
+      c.course_id,
+      c.description,
+      (course_duration_weeks || ' Weeks ' || course_duration_days || ' Days') AS duration,
+      c.course_code,
+      c.course_category,
+      c.course_no,
+      CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS course_officer,
+      c.course_director,
+      c.course_mode,
+      c.course_type,
+      to_char(c.created_at, 'DD/MM/YYYY') AS createdAt
+    FROM
+      courses c
+      INNER JOIN faculty f ON f.faculty_id = c.course_officer
+    WHERE
+      c.faculty = $1
+  `;
+  
 
     client = await pool.connect()
 
@@ -635,6 +654,50 @@ exports.viewAnnouncementToAdmin = async (req, res) => {
 
       await connection.release()
 
+    }
+  }
+}
+
+
+exports.viewCancelledCourses=async(req,res)=>{
+  let connection
+
+  try {
+    const {faculty}=req.params
+    connection=await pool.connect()
+    const queryCheck = `
+    SELECT
+      cs.name,
+      cs.course_id AS courseid,
+      cs.course_capacity AS capacity,
+      TO_CHAR(cs.date_comencement, 'DD/MM/YYYY') AS enrollmentdate,
+      TO_CHAR(cs.date_completion, 'DD/MM/YYYY') AS completiondate,
+      TO_CHAR(cs.running_date, 'DD/MM/YYYY') AS runningdate,
+      cs.batch_no AS batch,
+      TO_CHAR(cs.archived_at, 'DD/MM/YYYY') AS cancelleddate,
+      cs.course_scheduler_id AS schedulerid,
+      cs.currency || ' ' || cs.fee AS fee,
+      c.description,
+      c.faculty
+    FROM
+      course_scheduler_archive cs
+      INNER JOIN courses c ON cs.course_id = c.course_id
+    WHERE
+      c.faculty = $1
+  `;
+  
+     const result=await connection.query(queryCheck,[faculty])
+    if (result.rowCount===0) {
+      return res.status(404).send({message:'No Courses Found!.'})
+    }
+    return res.status(200).send({courses:result.rows})
+  } catch (error) {
+    console.error(error)
+    return res.status(500).send({message:'Internal Server Error!.'})
+  }
+  finally{
+    if (connection) {
+      await connection.release()
     }
   }
 }

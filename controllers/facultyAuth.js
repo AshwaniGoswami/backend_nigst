@@ -9,13 +9,7 @@ const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { v4: uuidv4 } = require('uuid');
 
 
-const s3Client = new S3Client({
-  region: process.env.BUCKET_REGION,
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  },
-});
+
 
 exports.facultyCreation = async (req, res) => {
 
@@ -181,7 +175,7 @@ exports.facultyLogin = async (req, res) => {
     client = await pool.connect()
 
 
-    const userQuery = 'SELECT * FROM faculty WHERE email = $1'
+    const userQuery =` SELECT faculty,faculty_id,email,admin_verified,CONCAT(first_name, ' ', middle_name, ' ', last_name) as name FROM faculty WHERE email = $1`
 
     const userResult = await client.query(userQuery, [email])
 
@@ -231,7 +225,7 @@ exports.facultyLogin = async (req, res) => {
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, tokenOptions)
 
 
-    return res.status(200).json({ token, type: 'faculty', faculty: user.faculty, id: user.faculty_id })
+    return res.status(200).json({ token, type: 'faculty', faculty: user.faculty, id: user.faculty_id,name:user.name })
 
   }
   catch (error) {
@@ -652,7 +646,60 @@ exports.facultyPositionAssi = async (req, res) => {
   }
 }
 
+exports.facultyPositionReAssign=async(req,res)=>{
 
+  let connection
+
+  try {
+
+    const {facultyId,newPosition,newPositionId,faculty}=req.body
+
+    connection=await pool.connect()
+
+    const check='SELECT * FROM faculty_position_assi WHERE faculty_id=$1'
+    
+    const result=await connection.query(check,[facultyId])
+
+    if (result.rowCount===0) {
+      
+      return res.status(400).send({message:'Faculty Member Not Exists!.'})
+    }
+    
+    const checkPosition = 'SELECT * FROM faculty_position WHERE faculty_pos = $1'
+
+    const resultPosition = await connection.query(checkPosition, [newPosition])
+
+    if (resultPosition.rowCount === 0) {
+
+      return res.status(400).send({ message: 'Faculty position does not exist.' })
+
+    }
+    const updateQuery='UPDATE faculty_position_assi SET faculty_pos=$1,position_assi_id=$2,faculty_admin=$3,updated_At=$4 WHERE faculty_id=$5'
+    
+    const time= new Date()
+    const data=[newPosition,newPositionId,faculty,time,facultyId]
+
+    await connection.query(updateQuery,data)
+
+    return res.status(200).send({message:'Successfully Updated!.'})
+
+  } 
+  catch (error) {
+
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+  finally{
+
+    if (connection) {
+
+      await connection.release()
+
+    }
+  }
+}
 
 exports.viewFacultyPositionAssi = async (req, res) => {
   let client;
@@ -744,101 +791,164 @@ exports.viewFaculty = async (req, res) => {
 }
 
 
-exports.reportSubmission = async (req, res) => {
+// exports.reportSubmission = async (req, res) => {
 
-  let client
+//   let client
+
+//   try {
+
+//     const { facultyId, scheduleId, remarks, faculty } = req.body
+
+//     const file = req.files.pdf
+
+//     if (!file) {
+
+//       return res.status(400).send({ message: 'No file uploaded!' })
+
+//     }
+
+//     client = await pool.connect();
+
+//     const check0 = 'SELECT * FROM faculty f INNER JOIN courses c ON c.course_officer=f.faculty_id WHERE f.faculty_id=$1'
+
+//     const result0 = await client.query(check0, [facultyId])
+
+//     if (result0.rowCount === 0) {
+
+//       return res.status(404).send({ message: 'Faculty Is Not Course Officer!.' })
+
+//     }
+//     const facCheck = 'SELECT * from faculty_name WHERE name=$1'
+
+//     const facultyResult = await client.query(facCheck, [faculty])
+
+//     if (facultyResult.rowCount === 0) {
+
+//       return res.status(404).send({ message: 'This Faculty Not Exists!' })
+
+//     }
+//     const check = 'SELECT * FROM report_submission WHERE faculty_id=$1 AND schedule_id=$2'
+
+//     const result = await client.query(check, [facultyId, scheduleId])
+
+//     if (result.rowCount > 0) {
+
+//       return res.status(409).send({ message: 'Report Already Exists!' })
+
+//     }
+
+//     const check2 = 'SELECT * FROM course_scheduler WHERE course_scheduler_id=$1'
+
+
+//     const result2 = await client.query(check2, [scheduleId])
+
+//     if (result2.rowCount === 0) {
+
+//       return res.status(404).send({ message: 'No Course Found!' })
+
+//     }
+//     if (result2.rows[0].course_status !== 'completed') {
+
+//       return res.status(400).send({ message: 'You are not allowed to submit a report for a course that is not completed!' })
+
+//     }
+
+//     const reportPath = file[0].location
+
+//     const insertQuery = 'INSERT INTO report_submission (faculty_id, schedule_id, report_path,remarks,faculty) VALUES ($1, $2, $3,$4,$5)'
+
+//     await client.query(insertQuery, [facultyId, scheduleId, reportPath, remarks, faculty])
+
+
+//     return res.status(200).send({ message: 'Report submitted successfully!' })
+
+//   }
+//   catch (error) {
+
+//     console.error(error)
+
+//     return res.status(500).send({ message: 'Internal Server Error!' })
+
+//   } finally {
+
+//     if (client) {
+
+//       await client.release()
+
+//     }
+//   }
+// }
+
+exports.reportSubmission = async (req, res) => {
+  let client;
 
   try {
-
-    const { facultyId, scheduleId, remarks, faculty } = req.body
-
-    const file = req.files.pdf
+    const { facultyId, scheduleId, remarks, faculty } = req.body;
+    const file = req.files.pdf;
 
     if (!file) {
-
-      return res.status(400).send({ message: 'No file uploaded!' })
-
+      return res.status(400).send({ message: 'No file uploaded!' });
     }
 
     client = await pool.connect();
 
-    const check0 = 'SELECT * FROM faculty WHERE faculty_id=$1'
-
-    const result0 = await client.query(check0, [facultyId])
-
-    if (result0.rowCount === 0) {
-
-      return res.status(404).send({ message: 'Faculty Not Exists!.' })
-
-    }
-    const facCheck = 'SELECT * from faculty_name WHERE name=$1'
-
-    const facultyResult = await client.query(facCheck, [faculty])
-
-    if (facultyResult.rowCount === 0) {
-
-      return res.status(404).send({ message: 'This Faculty Not Exists!' })
-
-    }
-    const check = 'SELECT * FROM report_submission WHERE faculty_id=$1 AND schedule_id=$2'
-
-    const result = await client.query(check, [facultyId, scheduleId])
-
-    if (result.rowCount > 0) {
-
-      return res.status(409).send({ message: 'Report Already Exists!' })
-
-    }
-
-    const check2 = 'SELECT * FROM course_scheduler WHERE course_scheduler_id=$1'
-
-
-    const result2 = await client.query(check2, [scheduleId])
+    const [result2, facultyResult, result] = await Promise.all([
+      client.query('SELECT cs.course_id, cs.course_status, c.course_officer FROM course_scheduler cs INNER JOIN courses c ON c.course_id = cs.course_id WHERE cs.course_scheduler_id = $1', [scheduleId]),
+      client.query('SELECT * from faculty_name WHERE name = $1', [faculty]),
+      client.query('SELECT * FROM report_submission WHERE faculty_id = $1 AND schedule_id = $2', [facultyId, scheduleId])
+    ]);
 
     if (result2.rowCount === 0) {
-
-      return res.status(404).send({ message: 'No Course Found!' })
-
-    }
-    if (result2.rows[0].course_status !== 'completed') {
-
-      return res.status(400).send({ message: 'You are not allowed to submit a report for a course that is not completed!' })
-
+      return res.status(404).send({ message: 'No Course Found!' });
     }
 
-    const reportPath = file[0].location
+    const { course_id: courseId, course_status: courseStatus, course_officer: courseOfficer } = result2.rows[0];
 
-    const insertQuery = 'INSERT INTO report_submission (faculty_id, schedule_id, report_path,remarks,faculty) VALUES ($1, $2, $3,$4,$5)'
+    if (courseOfficer !== facultyId) {
+      return res.status(403).send({ message: 'You are not the Course Officer for this course!' });
+    }
 
-    await client.query(insertQuery, [facultyId, scheduleId, reportPath, remarks, faculty])
+    if (facultyResult.rowCount === 0) {
+      return res.status(404).send({ message: 'This Faculty Does Not Exist!' });
+    }
 
+    if (result.rowCount > 0) {
+      return res.status(409).send({ message: 'Report Already Exists!' });
+    }
 
-    return res.status(200).send({ message: 'Report submitted successfully!' })
+    if (courseStatus !== 'completed') {
+      return res.status(400).send({ message: 'You are not allowed to submit a report for a course that is not completed!' });
+    }
 
-  }
-  catch (error) {
+    const reportPath = file[0].location;
 
-    console.error(error)
+    await client.query('INSERT INTO report_submission (faculty_id, schedule_id, report_path, remarks, faculty) VALUES ($1, $2, $3, $4, $5)', [facultyId, scheduleId, reportPath, remarks, faculty]);
 
-    return res.status(500).send({ message: 'Internal Server Error!' })
-
+    return res.status(200).send({ message: 'Report submitted successfully!' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
   } finally {
-
     if (client) {
-
-      await client.release()
-
+      client.release();
     }
   }
-}
+};
+
 
 
 exports.displayReport = async (req, res) => {
 
   let client
-
+  
   try {
-
+    const s3Client = new S3Client({
+      region: process.env.BUCKET_REGION,
+      credentials: {
+        accessKeyId: process.env.ACCESS_KEY,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      },
+    });
     const { scheduleId } = req.params
 
     client = await pool.connect()
@@ -907,31 +1017,76 @@ exports.filterReportsByFaculty = async (req, res) => {
 
     const reports = await client.query(filterQuery, [faculty])
 
+
     if (reports.rowCount === 0) {
 
-      return res.status(404).send({ message: 'No Reports Found!.' })
+      return res.status(404).send({ message: 'No Reports Found!' })
 
     }
 
-    return res.status(200).send({ reports: reports.rows })
+    const newReports = await Promise.all(
 
-  }
-  catch (error) {
+      reports.rows.map(async (data) => {
 
-    console.error(error)
+        const checkQuery =` SELECT c.course_code, c.course_no, c.title, rs.remarks,rs.report_path as report,rs.faculty,rs.schedule_id,to_char(rs.submission_date,'DD/MM/YYYY') as submissiondate,CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS report_submitter FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id INNER JOIN report_submission rs ON rs.schedule_id = cs.course_scheduler_id INNER JOIN faculty f ON f.faculty_id=rs.faculty_id  WHERE course_scheduler_id = $1`
 
-    return res.status(500).send({ message: 'Internal Server Error!' })
+        const scheduleId = data.schedule_id
 
-  }
-  finally {
+        const result = await client.query(checkQuery, [scheduleId])
+        
+        return result.rows[0]
+      })
+    );
 
+    return res.status(200).send({ newReports });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
     if (client) {
-
-      await client.release()
-
+      await client.release();
     }
   }
-}
+};
+
+exports.filterReportsByOfficer = async (req, res) => {
+  let client;
+
+  try {
+    const { facultyId } = req.params;
+
+    client = await pool.connect();
+
+    const filterQuery = 'SELECT * FROM report_submission WHERE faculty_id = $1';
+
+    const reports = await client.query(filterQuery, [facultyId]);
+
+    if (reports.rowCount === 0) {
+      return res.status(404).send({ message: 'No Reports Found!' });
+    }
+
+    const newReports = await Promise.all(
+      reports.rows.map(async (data) => {
+        const checkQuery = `SELECT c.course_code, c.course_no, c.title, rs.remarks, rs.report_path as report, rs.faculty, rs.schedule_id, to_char(rs.submission_date, 'DD/MM/YYYY') as submissiondate, CONCAT(f.first_name, ' ', f.middle_name, ' ', f.last_name) AS report_submitter FROM courses c INNER JOIN course_scheduler cs ON c.course_id = cs.course_id INNER JOIN report_submission rs ON rs.schedule_id = cs.course_scheduler_id INNER JOIN faculty f ON f.faculty_id = rs.faculty_id WHERE course_scheduler_id = $1`;
+
+        const scheduleId = data.schedule_id;
+
+        const result = await client.query(checkQuery, [scheduleId]);
+
+        return result.rows[0];
+      })
+    );
+
+    return res.status(200).send({ newReports });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+};
 
 
 
@@ -963,7 +1118,7 @@ exports.sendIDForReport = async (req, res) => {
 
         const id = course.course_id
 
-        const check01 = 'SELECT name, course_scheduler_id as schedulerId from course_scheduler WHERE course_id = $1 AND course_status = $2'
+        const check01 = 'SELECT name, course_scheduler_id as schedulerId,batch_no as batch from course_scheduler WHERE course_id = $1 AND course_status = $2'
 
         const data = [id, 'completed']
 
@@ -1009,3 +1164,79 @@ exports.sendIDForReport = async (req, res) => {
     }
   }
 }
+
+
+// exports.sendIDForReport = async (req, res) => {
+
+//   let connection
+
+//   try {
+
+//     const { faculty,officer } = req.params
+
+//     connection = await pool.connect()
+
+
+//     const check = 'SELECT title as name, course_id  FROM courses WHERE faculty = $1 AND course_officer=$2'
+
+//     const result01 = await connection.query(check, [faculty,officer])
+
+//     if (result01.rowCount === 0) {
+
+//       return res.status(404).send({ message: `No Course Found with faculty: ${faculty}, that is assigned to officer: ${officer}` })
+
+//     }
+//     else {
+
+//       const courses = result01.rows
+
+//       const coursePromises = courses.map(async (course) => {
+
+//         const id = course.course_id
+
+//         const check01 = 'SELECT name, course_scheduler_id as schedulerId from course_scheduler WHERE course_id = $1 AND course_status = $2'
+
+//         const data = [id, 'completed']
+
+//         const result02 = await connection.query(check01, data)
+
+//         if (result02.rowCount > 0) {
+
+//           return result02.rows
+
+//         }
+//       })
+
+//       const courseResults = await Promise.all(coursePromises)
+
+//       const finalData = courseResults.filter(Boolean)
+
+
+//       if (finalData.length === 0) {
+
+//         return res.status(404).send({ message: 'No completed courses found for this faculty.' })
+
+//       }
+//       else {
+
+//         return res.status(200).send({ courses: finalData.flat() })
+
+//       }
+//     }
+//   }
+//   catch (error) {
+
+//     console.error(error)
+
+//     return res.status(500).send({ message: 'Internal Server Error!' })
+
+//   }
+//   finally {
+
+//     if (connection) {
+
+//       await connection.release()
+
+//     }
+//   }
+// 2 }
