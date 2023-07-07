@@ -10,12 +10,12 @@ exports.CreateMarquee = async (req, res) => {
 
         client = await pool.connect();
 
-        const checkCount = 'SELECT COUNT(*) FROM marquee'; // Corrected the syntax error
+        const checkCount = 'SELECT COUNT(*) FROM marquee';
 
         const countResult = await client.query(checkCount);
 
-        if (countResult.rows[0].count > 10) { // Corrected the way to access the count value
-            return res.status(400).send({ message: 'Cannot create more than 10 Marquees.' }); // Improved the error message
+        if (countResult.rows[0].count > 10) { 
+            return res.status(400).send({ message: 'Cannot create more than 10 Marquees.' }); 
         }
 
         let mid = 'M-' + generateNumericValue(8);
@@ -37,8 +37,7 @@ exports.CreateMarquee = async (req, res) => {
 
         await client.query(insertQuery, data);
 
-        return res.status(201).send({ message: 'Marquee created successfully.' }); // Improved the success message
-    } catch (error) {
+        return res.status(201).send({ message: 'Marquee created successfully.' }); 
         console.error(error);
         return res.status(500).send({ message: 'Internal Server Error!' });
     } finally {
@@ -50,13 +49,14 @@ exports.CreateMarquee = async (req, res) => {
 
 
 exports.viewMarqueeToAdmin = async (req, res) => {
+
     let connection
 
     try {
 
         connection = await pool.connect()
 
-        const check = 'SELECT * FROM marquee ORDER BY date_creation DESC'
+        const check =` SELECT marquee_id as marqueeid,marquee_status as status,info as text, url, color as backgroundcolor,text_color  as textcolor, web_visiblity as text_visiblity,to_char(date_creation,'YY/MM/DD') as creationdate FROM marquee ORDER BY date_creation DESC`
 
         const result = await connection.query(check)
 
