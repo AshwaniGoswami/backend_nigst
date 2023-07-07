@@ -511,6 +511,21 @@ CREATE TABLE IF NOT EXISTS header(
 `)
 
 await client.query(`
+CREATE TABLE IF NOT EXISTS footer(
+  id SERIAL PRIMARY KEY,
+  name varchar(255),
+  link  varchar(255),
+  type varchar(255) NOT NULL,
+  footer_id varchar(255) NOT NULL UNIQUE,
+  phone varchar(255),
+  email varchar(255),
+  address text,
+  visibile boolean DEFAULT false,
+  date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)`)
+
+
+await client.query(`
 CREATE TABLE IF NOT EXISTS soi_project(
  id SERIAL PRIMARY KEY,
  p_id varchar(255),
@@ -530,6 +545,21 @@ CREATE TABLE IF NOT EXISTS office(
  office_email varchar(255) NOT NULL,
  date DATE 
 )`)
+
+await client.query(`
+CREATE TABLE IF NOT EXISTS marquee(
+  id SERIAL PRIMARY KEY,
+  marquee_id varchar(255),
+  marquee_status BOOLEAN DEFAULT FALSE,
+  info TEXT,
+  url varchar(255),
+  color varchar(30),
+  text_color varchar(30),
+  web_visiblity BOOLEAN DEFAULT FALSE,
+  date_creation DATE
+
+)
+`)
 
   console.log('Tables created successfully')
   }

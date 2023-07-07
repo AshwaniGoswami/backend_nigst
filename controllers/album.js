@@ -81,7 +81,7 @@ exports.createAlbum = async (req, res) => {
 
     console.error(error)
 
-    return res.status(500).send({ error: 'Something went wrong' })
+    return res.status(500).send({ error: 'Error Uploading Imaage!.' })
 
   }
   finally {
@@ -103,7 +103,7 @@ exports.viewAlbum = async (req, res) => {
 
   try {
 
-    const AllAlbumView = "SELECT name, path, album.category_name from album INNER JOIN album_category ON album.category_name=album_category.category_name WHERE album_category.visibility=true"
+    const AllAlbumView = "SELECT name, path, album.category_name from album INNER JOIN album_category ON album.category_name=album_category.category_name WHERE album_category.visibility=true ORDER BY category_name ASC"
 
     connection = await pool.connect()
 
@@ -189,11 +189,13 @@ exports.viewAlbum = async (req, res) => {
 
 
 exports.viewAlbumByCategory = async (req, res) => {
+
   let client
 
   try {
 
     const { category } = req.body
+  
     const check = 'SELECT * FROM album WHERE category_name=$1'
 
     client = await pool.connect()
@@ -203,40 +205,53 @@ exports.viewAlbumByCategory = async (req, res) => {
     if (result.rowCount === 0) {
 
       return res.status(404).json({ message: 'No Images Found!.' })
+  
     }
 
     let images = []
 
     for (const row of result.rows) {
-      const attachment = row.path;
-      const fileUrl = attachment;
-      const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+  
+      const attachment = row.path
+  
+      const fileUrl = attachment
+  
+      const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+  
       try {
+  
         const s3Client = new S3Client({
           region: process.env.BUCKET_REGION,
           credentials: {
             accessKeyId: process.env.ACCESS_KEY,
             secretAccessKey: process.env.SECRET_ACCESS_KEY,
           },
-        });
+        })
 
         const command = new GetObjectCommand({
           Bucket: process.env.BUCKET_NAME,
           Key: key,
-        });
-        const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 });
+        })
+
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 36000 })
 
         images.push({
           fileName: url,
           aid: row.a_id,
         })
-      } catch (error) {
+
+      } 
+      catch (error) {
+      
         console.error(`Error retrieving file '${key}': ${error}`)
+      
       }
     }
-    return res.status(200).send({ images: images });
+
+    return res.status(200).send({ images: images })
 
   }
+
   catch (error) {
 
     console.error(error)
@@ -257,30 +272,40 @@ exports.viewAlbumByCategory = async (req, res) => {
 
 
 exports.deleteAlbum = async (req, res) => {
-  let client;
+ 
+  let client
 
   try {
-    const { aid } = req.body;
+ 
+    const { aid } = req.body
 
     if (!aid) {
-      return res.status(400).json({ message: 'Missing album ID (aid).' });
+
+      return res.status(400).json({ message: 'Missing album ID (aid).' })
+
     }
 
-    client = await pool.connect();
+    client = await pool.connect()
 
-    const selectQuery = 'SELECT * FROM album WHERE a_id = $1';
-    const selectResult = await client.query(selectQuery, [aid]);
+    const selectQuery = 'SELECT * FROM album WHERE a_id = $1'
+
+    const selectResult = await client.query(selectQuery, [aid])
 
     if (selectResult.rowCount === 0) {
-      return res.status(404).json({ message: 'Album not found.' });
+    
+      return res.status(404).json({ message: 'Album not found.' })
+    
     }
 
-    const deleteQuery = 'DELETE FROM album WHERE a_id = $1';
-    await client.query(deleteQuery, [aid]);
+    const deleteQuery = 'DELETE FROM album WHERE a_id = $1'
 
-    const attachment = selectResult.rows[0].path;
-    const fileUrl = attachment;
-    const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+    await client.query(deleteQuery, [aid])
+
+    const attachment = selectResult.rows[0].path
+
+    const fileUrl = attachment
+    
+    const key = 'gallery/' + fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
 
     const s3Client = new S3Client({
       region: process.env.BUCKET_REGION,
@@ -288,22 +313,31 @@ exports.deleteAlbum = async (req, res) => {
         accessKeyId: process.env.ACCESS_KEY,
         secretAccessKey: process.env.SECRET_ACCESS_KEY,
       },
-    });
+    })
 
     const deleteCommand = new DeleteObjectCommand({
       Bucket: process.env.BUCKET_NAME,
       Key: key,
-    });
+    })
 
-    await s3Client.send(deleteCommand);
+    await s3Client.send(deleteCommand)
 
-    return res.status(200).json({ message: 'Album and corresponding image deleted successfully.' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Internal Server Error.' });
-  } finally {
+    return res.status(200).json({ message: 'Image deleted successfully.' })
+
+  } 
+  catch (error) {
+  
+    console.error(error)
+  
+    return res.status(500).json({ message: 'Internal Server Error.' })
+  
+  } 
+  finally {
+  
     if (client) {
-      client.release();
+  
+      client.release()
+  
     }
   }
-};
+}

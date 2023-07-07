@@ -66,47 +66,70 @@ exports.createOffice = async (req, res) => {
 }
 
 exports.postContact = async (req, res) => {
-  let client;
+
+  let client
+  
   try {
-    const { name, email, phone, subject, description } = req.body;
-    client = await pool.connect();
-    await client.query('BEGIN');
 
-    const queryText = `INSERT INTO contact_form(name, email, phone, subject, description) VALUES ($1, $2, $3, $4, $5)`;
-    const queryParams = [name, email, phone, subject, description];
-    await client.query(queryText, queryParams);
+    const { name, email, phone, subject, description } = req.body
+    
+    client = await pool.connect()
 
-    const officeQuery = 'SELECT office_email FROM office WHERE office_name = $1';
-    const officeResult = await client.query(officeQuery, [subject]);
+    await client.query('BEGIN')
+
+    const queryText = `INSERT INTO contact_form(name, email, phone, subject, description) VALUES ($1, $2, $3, $4, $5)`
+
+    const queryParams = [name, email, phone, subject, description]
+    
+    await client.query(queryText, queryParams)
+
+    const officeQuery = 'SELECT office_email FROM office WHERE office_name = $1'
+
+    const officeResult = await client.query(officeQuery, [subject])
+    
     if (officeResult.rows.length === 0) {
-      return res.status(404).json({ message: 'This subject does not exist.' });
+
+      return res.status(404).json({ message: 'This subject does not exist.' })
+    
     }
-    const admin = officeResult.rows[0].office_email;
+
+    const admin = officeResult.rows[0].office_email
 
     sendMail(
       admin,
       `${subject} Query`,
       `${name} wants to contact you on the topic: ${subject}. Their email is: ${email}. Please address their query.`
-    );
+    )
 
     sendMail(
       email,
       `${subject} Query Submitted`,
       `Hello ${name}, your query on the topic ${subject} has been successfully submitted. We will contact you soon.`
-    );
+    )
 
-    await client.query('COMMIT');
-    return res.status(200).send('Successfully sent feedback');
-  } catch (error) {
-    console.error(error);
-    await client.query('ROLLBACK');
-    return res.status(500).json({ message: 'Internal Server Error' });
-  } finally {
+    await client.query('COMMIT')
+
+    return res.status(200).send('Successfully sent feedback')
+  
+  } 
+  catch (error) {
+  
+    console.error(error)
+  
+    await client.query('ROLLBACK')
+  
+    return res.status(500).json({ message: 'Internal Server Error' })
+  
+  } 
+  finally {
+
     if (client) {
-      await client.release();
+  
+      await client.release()
+  
     }
   }
-};
+}
 
 
 
