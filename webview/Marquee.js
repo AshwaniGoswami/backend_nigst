@@ -9,6 +9,14 @@ exports.CreateMarquee = async (req, res) => {
       const { detail, url, color, textColor } = req.body;
   
       client = await pool.connect();
+
+      const checkCount='SELECT COUNT()* FROM marquee'
+
+      const countResult=await client.query(checkCount)
+
+      if (countResult.rowCount>10) {
+        return res.status(400).send({message:'Cant Create More then 10 Marquee'})
+      }
   
       let mid = 'M-' + generateNumericValue(8);
   
@@ -50,7 +58,12 @@ exports.CreateMarquee = async (req, res) => {
 
         const check='SELECT * FROM marquee ORDER BY date_creation DESC'
 
-        
+        const result=await connection.query(check)
+
+        if (result.rowCount===0) {
+            return res.status(404).send({message:'No Data To Display!.'})
+        }
+
     } catch (error) {
         console.error(error)
         return res.status(500).send({message:'Internal Server Error!.'})
