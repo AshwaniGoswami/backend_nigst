@@ -147,8 +147,8 @@ exports.viewAlbum = async (req, res) => {
 
 
         imageData.push({
-          fileName: url,
-          categories: row.category_name,
+          image: url,
+          category: row.category_name,
           name: row.name,
         })
 
