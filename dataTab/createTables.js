@@ -555,7 +555,7 @@ CREATE TABLE IF NOT EXISTS marquee(
   url varchar(255),
   color varchar(30),
   text_color varchar(30),
-  web_visiblity BOOLEAN DEFAULT FALSE,
+  web_visibility BOOLEAN DEFAULT FALSE,
   date_creation DATE
 
 )
