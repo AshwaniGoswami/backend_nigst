@@ -6,93 +6,53 @@ const { v4: uuidv4 } = require('uuid');
 const generateNumericValue = require("../generator/NumericId");
 
 exports.createAlbum = async (req, res) => {
-
-  let connection
+  let connection;
 
   try {
+    const { Cname } = req.body;
+    const images = req.files.image;
 
-    const { Cname } = req.body
+    connection = await pool.connect();
 
-    const images = req.files.image
-
-
-    const params = []
-
-
-    connection = await pool.connect()
-
-
-    const countQuery = 'SELECT COUNT(*) FROM album WHERE category_name = $1'
-
-    const countResult = await connection.query(countQuery, [Cname])
-
-    const imageCount = countResult.rows[0].count
-
+    const countQuery = 'SELECT COUNT(*) FROM album WHERE category_name = $1';
+    const countResult = await connection.query(countQuery, [Cname]);
+    const imageCount = parseInt(countResult.rows[0].count);
 
     if (imageCount + images.length > 100) {
-
-      return res.status(400).send('Maximum limit of 100 images per album reached.')
-
+      return res.status(400).send('Maximum limit of 100 images per album reached.');
     }
 
     for (let i = 0; i < images.length; i++) {
+      const image = images[i];
+      const randomName = uuidv4();
+      const Aname = `${randomName}.${image.mimetype.split('/')[1]}`;
+      const Apath = image.location;
 
-      const image = images[i]
-
-
-      const randomName = uuidv4()
-
-
-      const Aname = `${randomName}.${image.mimetype.split('/')[1]}`
-
-      const Apath = image.location
-
-
-      const check = 'SELECT * FROM album WHERE a_id = $1'
-
-      let aid = 'A-' + generateNumericValue(8)
-
-
-      let result = await connection.query(check, [aid])
-
+      const check = 'SELECT * FROM album WHERE a_id = $1';
+      let aid = 'A-' + generateNumericValue(8);
+      let result = await connection.query(check, [aid]);
 
       while (result.rowCount > 0) {
-
-        aid = 'A-' + generateNumericValue(8)
-
-        result = await connection.query(check, [aid])
-
+        aid = 'A-' + generateNumericValue(8);
+        result = await connection.query(check, [aid]);
       }
 
-      const query =
-        'INSERT INTO album (category_name, name, path, a_id) VALUES ($1, $2, $3, $4)';
-      const values = [Cname, Aname, Apath, aid]
-
-
-      await connection.query(query, values)
-
-      params.push({ name: Aname, path: Apath, aid: aid })
+      const query = 'INSERT INTO album (category_name, name, path, a_id) VALUES ($1, $2, $3, $4)';
+      const values = [Cname, Aname, Apath, aid];
+      await connection.query(query, values);
     }
 
-    return res.status(201).send({ message: 'Images uploaded successfully' })
-
-  }
-  catch (error) {
-
-    console.error(error)
-
-    return res.status(500).send({ error: 'Error Uploading Imaage!.' })
-
-  }
-  finally {
-
+    return res.status(201).send({ message: 'Images uploaded successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ error: 'Error uploading images.' });
+  } finally {
     if (connection) {
-
-      await connection.release()
-
+      await connection.release();
     }
   }
-}
+};
+
 
 
 // =====================view==========================
