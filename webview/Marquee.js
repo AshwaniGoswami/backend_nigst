@@ -99,7 +99,7 @@ exports.editMarqueeDetails = async (req, res) => {
 
         client = await pool.connect();
 
-        const check = 'SELECT * FROM marquee WHERE marquee_id';
+        const check = 'SELECT * FROM marquee WHERE marquee_id = $1';
 
         const result = await client.query(check, [mid]);
 
