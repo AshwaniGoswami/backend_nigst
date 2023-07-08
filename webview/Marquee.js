@@ -192,3 +192,26 @@ exports.viewMarqueeForWeb = async (req, res) => {
         }
     }
 };
+
+exports.deleteMarque=async(req,res)=>{
+    let connection 
+
+    try {
+        const {mid}=req.body
+
+        connection=await pool.connect()
+
+        const check= 'SELECT * FROM marquee WHERE marquee_id=$1'
+
+        
+    } catch (error) {
+        console.error(error)
+        return res.status(500).send({message:'Internal Server Error!.'})
+    }
+
+    finally{
+        if (connection) {
+           await connection.release() 
+        }
+    }
+}
