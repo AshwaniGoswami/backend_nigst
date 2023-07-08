@@ -203,7 +203,18 @@ exports.deleteMarque=async(req,res)=>{
 
         const check= 'SELECT * FROM marquee WHERE marquee_id=$1'
 
+        const result= await connection.query(check, [mid]);
         
+        if (result.rowCount===0) {
+            return res.status(404).send({message:'Marquee Not Exists!.'})
+        }
+
+        const deleteQuery='DELETE FROM marquee WHERE marquee_id=$1'
+
+        await connection.query(deleteQuery,[mid])
+
+        return res.status(200).send({message:'Deleted successfully'})
+
     } catch (error) {
         console.error(error)
         return res.status(500).send({message:'Internal Server Error!.'})
