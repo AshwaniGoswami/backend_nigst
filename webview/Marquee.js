@@ -159,7 +159,7 @@ exports.editMarqueeVisibility = async (req, res) => {
       return res.status(200).send({ message: 'Updated Successfully' });
     } catch (error) {
       console.error(error);
-      await connection.query('ROLLBACK'); // Rollback transaction if an error occurs
+      await connection.query('ROLLBACK'); 
       return res.status(500).send({ message: 'Internal Server Error' });
     } finally {
       if (connection) {
@@ -168,3 +168,4 @@ exports.editMarqueeVisibility = async (req, res) => {
     }
   };
   
+
