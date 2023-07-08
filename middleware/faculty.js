@@ -169,12 +169,17 @@ const s3Storage = multerS3({
     if (mimetype && extname) {
       // Include destination directory in S3 object key
       const key = `${destination}/${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`;
-      return cb(null, key);
+
+      // Replace %2F with /
+      const correctedKey = key.replace(/%2F/g, '/');
+
+      return cb(null, correctedKey);
     } else {
       return cb('Error: Images, Videos, and PDFs Only!');
     }
   }
 });
+
 
 function createUploadMiddleware(destination) {
   const upload = multer({
