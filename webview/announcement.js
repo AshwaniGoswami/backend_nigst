@@ -13,7 +13,7 @@ exports.viewWebAnnouncement = async (req, res) => {
   let client
   try {
     client = await pool.connect()
-    const check = `SELECT title,description,to_char(posted_at,'YYYY/MM/DD') as posteddate,url,pdf_path as pdf  FROM announcement   WHERE status=$1  ORDER BY posted_at DESC LIMIT 6`
+    const check = `SELECT title,description,to_char(posted_at,'YYYY/MM/DD') as posteddate,url,pdf_path as pdf,a_id as aid  FROM announcement   WHERE status=$1  ORDER BY posted_at DESC LIMIT 6`
     const visible = true
     const result = await client.query(check, [visible])
     if (result.rowCount === 0) {
@@ -350,7 +350,7 @@ exports.viewArchiveToWebsite = async (req, res) => {
 
   try {
 
-    const check =` SELECT title,description,pdf_path,url,to_char(posted_at,'YYYY/MM/DD') as postedat,pdf_path as pdf FROM archive_announcement WHERE status=$1`
+    const check =` SELECT title,description,pdf_path,url,to_char(posted_at,'YYYY/MM/DD') as postedat,pdf_path as pdf,a_id as aid FROM archive_announcement WHERE status=$1`
 
     connection = await pool.connect()
 
