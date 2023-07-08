@@ -9,7 +9,7 @@ const { createAlbumCategory, viewAlbumCategory, updateAlbumCategory, deleteAlbum
 const { createAlbum, viewAlbum } = require('../../controllers/album')
 const { createProject, viewProject, updateSoiProject, deleteProject, viewProjectForWeb } = require('../../controllers/soi_project')
 const { HeaderCreate, viewHeader, updateVisibility, updateHeader } = require('../header')
-const { CreateMarquee, viewMarqueeToAdmin, editMarqueeDetails } = require('../Marquee')
+const { CreateMarquee, viewMarqueeToAdmin, editMarqueeDetails, editMarqueeVisibility } = require('../Marquee')
 
 const router = express.Router()
 
@@ -57,5 +57,6 @@ router.delete('/footer_delete', deleteFooter)
 router.post('/create_marquee',CreateMarquee)
 router.get('/view_amarquee',viewMarqueeToAdmin)
 router.patch('/edit_marquee',editMarqueeDetails)
+router.patch('/edit_mvisiblity',editMarqueeVisibility)
 
 module.exports = router
