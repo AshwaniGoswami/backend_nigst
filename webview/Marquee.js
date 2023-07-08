@@ -16,7 +16,7 @@ exports.CreateMarquee = async (req, res) => {
 
         const countResult = await client.query(checkCount)
 
-        if (countResult.rows[0].count > 10) { 
+        if (countResult.rows[0].count > 10) {
 
             return res.status(400).send({ message: 'Cannot create more than 10 Marquees.' })
 
@@ -51,7 +51,7 @@ exports.CreateMarquee = async (req, res) => {
 
         return res.status(500).send({ message: 'Internal Server Error!' })
 
-    } 
+    }
     finally {
 
         if (client) {
@@ -71,7 +71,7 @@ exports.viewMarqueeToAdmin = async (req, res) => {
 
         connection = await pool.connect()
 
-        const check =` SELECT marquee_id as marqueeid,marquee_status as status,info as text, url, color as backgroundcolor,text_color  as textcolor, web_visiblity as text_visiblity,to_char(date_creation,'YY/MM/DD') as creationdate FROM marquee ORDER BY date_creation DESC`
+        const check = ` SELECT marquee_id as marqueeid,marquee_status as status,info as text, url, color as backgroundcolor,text_color  as textcolor, web_visiblity as text_visiblity,to_char(date_creation,'YY/MM/DD') as creationdate FROM marquee ORDER BY date_creation DESC`
 
         const result = await connection.query(check)
 
@@ -93,34 +93,77 @@ exports.viewMarqueeToAdmin = async (req, res) => {
 
 exports.editMarqueeDetails = async (req, res) => {
     let client;
-  
+
     try {
-      const { mid, detail, url, color, textColor } = req.body;
+        const { mid, detail, url, color, textColor } = req.body;
+
+        client = await pool.connect();
+
+        const check = 'SELECT * FROM marquee WHERE marquee_id';
+
+        const result = await client.query(check, [mid]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).send({ message: 'Record Not Exists' });
+        }
+
+        const updateQuery =
+            'UPDATE marquee SET info=$1,url=$2,color=$3,text_color=$4 WHERE marquee_id=$5';
+
+        const data = [detail, url, color, textColor, mid];
+
+        await client.query(updateQuery, data);
+
+        return res.status(200).send({ message: 'Marquee Updated Successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).status({ message: 'Internal Server Error!.' });
+    } finally {
+        if (client) {
+            await client.release();
+        }
+    }
+};
+
+exports.editMarqueeVisibility = async (req, res) => {
+    let connection;
+    try {
+      const { mid, visibility } = req.body;
+      connection = await pool.connect();
   
-      client = await pool.connect();
+      await connection.query('BEGIN'); 
   
-      const check = 'SELECT * FROM marquee WHERE marquee_id';
-  
-      const result = await client.query(check, [mid]);
+      const checkQuery = 'SELECT * FROM marquee WHERE marquee_id = $1';
+      const result = await connection.query(checkQuery, [mid]);
   
       if (result.rowCount === 0) {
-        return res.status(404).send({ message: 'Record Not Exists' });
+        await connection.query('ROLLBACK'); 
+        return res.status(500).send({ message: 'Record Does Not Exist' });
       }
   
-      const updateQuery =
-        'UPDATE marquee SET info=$1,url=$2,color=$3,text_color=$4 WHERE marquee_id=$5';
+      const resetQuery = 'UPDATE marquee SET web_visibility = false';
+      await connection.query(resetQuery);
   
-      const data = [detail, url, color, textColor, mid];
+      const updateQuery = 'UPDATE marquee SET marquee_status = $1, web_visibility = $2 WHERE marquee_id = $3';
+      const data = [true, visibility, mid];
   
-      await client.query(updateQuery, data);
+      if (visibility === true) {
+        await connection.query(updateQuery, data);
+      } else {
+        const data2 = [false, visibility, mid];
+        await connection.query(updateQuery, data2);
+      }
   
-      return res.status(200).send({ message: 'Marquee Updated Successfully' });
+      await connection.query('COMMIT'); 
+  
+      return res.status(200).send({ message: 'Updated Successfully' });
     } catch (error) {
       console.error(error);
-      return res.status(500).status({ message: 'Internal Server Error!.' });
+      await connection.query('ROLLBACK'); // Rollback transaction if an error occurs
+      return res.status(500).send({ message: 'Internal Server Error' });
     } finally {
-      if (client) {
-        await client.release();
+      if (connection) {
+        connection.release();
       }
     }
   };
