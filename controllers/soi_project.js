@@ -178,7 +178,7 @@ exports.updateSoiProject = async (req, res) => {
 
     const updatedPname = Pname || currentPname;
     const updatedPdescription = Pdescription || currentPdescription;
-    const updatedVisibility = visibility || currentVisibility;
+    const updatedVisibility = (visibility !== undefined) ? visibility : currentVisibility; 
     const updatedUrl = Purl || currentUrl;
 
     await client.query(updateQuery, [updatedPname, updatedPdescription, updatedVisibility, updatedUrl, Pid]);
@@ -193,6 +193,7 @@ exports.updateSoiProject = async (req, res) => {
     }
   }
 };
+
 
 
 

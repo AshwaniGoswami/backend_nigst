@@ -128,67 +128,67 @@ exports.editMarqueeDetails = async (req, res) => {
 exports.editMarqueeVisibility = async (req, res) => {
     let connection;
     try {
-      const { mid, visibility } = req.body;
-      connection = await pool.connect();
-  
-      await connection.query('BEGIN'); 
-  
-      const checkQuery = 'SELECT * FROM marquee WHERE marquee_id = $1';
-      const result = await connection.query(checkQuery, [mid]);
-  
-      if (result.rowCount === 0) {
-        await connection.query('ROLLBACK'); 
-        return res.status(500).send({ message: 'Record Does Not Exist' });
-      }
-  
-      const resetQuery = 'UPDATE marquee SET web_visibility = false';
-      await connection.query(resetQuery);
-  
-      const updateQuery = 'UPDATE marquee SET marquee_status = $1, web_visibility = $2 WHERE marquee_id = $3';
-      const data = [true, visibility, mid];
-  
-      if (visibility === true) {
-        await connection.query(updateQuery, data);
-      } else {
-        const data2 = [false, visibility, mid];
-        await connection.query(updateQuery, data2);
-      }
-  
-      await connection.query('COMMIT'); 
-  
-      return res.status(200).send({ message: 'Updated Successfully' });
+        const { mid, visibility } = req.body;
+        connection = await pool.connect();
+
+        await connection.query('BEGIN');
+
+        const checkQuery = 'SELECT * FROM marquee WHERE marquee_id = $1';
+        const result = await connection.query(checkQuery, [mid]);
+
+        if (result.rowCount === 0) {
+            await connection.query('ROLLBACK');
+            return res.status(500).send({ message: 'Record Does Not Exist' });
+        }
+
+        const resetQuery = 'UPDATE marquee SET web_visibility = false';
+        await connection.query(resetQuery);
+
+        const updateQuery = 'UPDATE marquee SET marquee_status = $1, web_visibility = $2 WHERE marquee_id = $3';
+        const data = [true, visibility, mid];
+
+        if (visibility === true) {
+            await connection.query(updateQuery, data);
+        } else {
+            const data2 = [false, visibility, mid];
+            await connection.query(updateQuery, data2);
+        }
+
+        await connection.query('COMMIT');
+
+        return res.status(200).send({ message: 'Updated Successfully' });
     } catch (error) {
-      console.error(error);
-      await connection.query('ROLLBACK'); 
-      return res.status(500).send({ message: 'Internal Server Error' });
+        console.error(error);
+        await connection.query('ROLLBACK');
+        return res.status(500).send({ message: 'Internal Server Error' });
     } finally {
-      if (connection) {
-        connection.release();
-      }
+        if (connection) {
+            connection.release();
+        }
     }
-  };
-  
+};
 
-exports.viewMarqueeForWeb=async(req,res)=>{
-    let client 
+
+exports.viewMarqueeForWeb = async (req, res) => {
+    let client;
     try {
-        client=await pool.connect()
-         
-        const check=` SELECT marquee_id as marqueeid,marquee_status as status,info as text, url, color as backgroundcolor,text_color  as textcolor FROM marquee WHERE web_visiblity=$1`
+        client = await pool.connect();
 
-        const result=await client.query(check,[true])
+        const check = `SELECT marquee_id as marqueeid, marquee_status as status, info as text, url, color as backgroundcolor, text_color as textcolor FROM marquee WHERE web_visibility=$1`;
 
-        if (result.rowCount===0) {
-            return res.status(404).send({message:'No Marquee Found'})
+        const result = await client.query(check, [true]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).send({ message: 'No Marquee Found' });
         }
-        return res.status(200).send({data:result.rows})
+
+        return res.status(200).send({ data: result.rows });
     } catch (error) {
-        console.error(error)
-        return res.status(500).send({message:'Internal Server Error!.'})
-    }
-    finally{
+        console.error(error);
+        return res.status(500).send({ message: 'Internal Server Error!.' });
+    } finally {
         if (client) {
-            await client.release()
+            await client.release();
         }
     }
-}
+};
