@@ -174,7 +174,7 @@ exports.sendOffice=async(req,res)=>{
     
     client=await pool.connect()
     
-    const check='SELECT office_name as office FROM office'
+    const check='SELECT office_name as office FROM office WHERE visibility=true'
 
     const result=await client.query(check)
 
@@ -201,3 +201,57 @@ exports.sendOffice=async(req,res)=>{
     }
   }
 }
+
+
+exports.editVisibility = async (req, res) => {
+  let connection;
+  try {
+    const { oid, visibility } = req.body;
+    connection = await pool.connect();
+
+    const check = 'SELECT * FROM office WHERE o_id = $1';
+    const result = await connection.query(check, [oid]);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'Record Not Found!' });
+    }
+
+    const updateQuery = 'UPDATE office SET visibility = $1 WHERE o_id = $2';
+    await connection.query(updateQuery, [visibility, oid]);
+    
+    return res.status(200).send({ message: 'Successfully Updated!' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
+  }
+};
+
+exports.editDetails = async (req, res) => {
+  let connection;
+  try {
+    const { oid, subject,email } = req.body;
+    connection = await pool.connect();
+
+    const check = 'SELECT * FROM office WHERE o_id = $1';
+    const result = await connection.query(check, [oid]);
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: 'Record Not Found!' });
+    }
+
+    const updateQuery = 'UPDATE office SET office_name = $1,office_email=$2 WHERE o_id = $3';
+    await connection.query(updateQuery, [subject,email, oid]);
+    
+    return res.status(200).send({ message: 'Successfully Updated!' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({ message: 'Internal Server Error!' });
+  } finally {
+    if (connection) {
+      await connection.release();
+    }
+  }
+};
+

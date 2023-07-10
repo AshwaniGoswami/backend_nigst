@@ -543,6 +543,7 @@ CREATE TABLE IF NOT EXISTS office(
  o_id varchar(255),
  office_name varchar(255) UNIQUE,
  office_email varchar(255) NOT NULL,
+ visibility BOOLEAN DEFAULT FALSE,
  date DATE 
 )`)
 
