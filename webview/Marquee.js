@@ -141,18 +141,14 @@ exports.editMarqueeVisibility = async (req, res) => {
             return res.status(500).send({ message: 'Record Does Not Exist' });
         }
 
-        const resetQuery = 'UPDATE marquee SET web_visibility = false';
+        // Set marquee_status and web_visibility to false for all marquee records
+        const resetQuery = 'UPDATE marquee SET marquee_status = false, web_visibility = false';
         await connection.query(resetQuery);
 
         const updateQuery = 'UPDATE marquee SET marquee_status = $1, web_visibility = $2 WHERE marquee_id = $3';
-        const data = [true, visibility, mid];
+        const data = [visibility ? true : false, visibility, mid];
 
-        if (visibility === true) {
-            await connection.query(updateQuery, data);
-        } else {
-            const data2 = [false, visibility, mid];
-            await connection.query(updateQuery, data2);
-        }
+        await connection.query(updateQuery, data);
 
         await connection.query('COMMIT');
 
@@ -167,6 +163,7 @@ exports.editMarqueeVisibility = async (req, res) => {
         }
     }
 };
+
 
 
 exports.viewMarqueeForWeb = async (req, res) => {
