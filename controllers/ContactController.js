@@ -202,6 +202,41 @@ exports.sendOffice=async(req,res)=>{
   }
 }
 
+exports.sendOfficeToAdmin=async(req,res)=>{
+
+  let client
+
+  try {
+    
+    client=await pool.connect()
+    
+    const check='SELECT office_name as office,office_email as email,visibility,o_id as oid FROM office'
+
+    const result=await client.query(check)
+
+    if (result.rowCount===0) {
+      return res.status(404).json({message:'No Data To Display!.'})
+    }
+
+    return res.status(200).json({office:result.rows})
+
+  } 
+  catch (error) {
+    
+    console.error(error)
+
+    return res.status(500).send({message:'Internal Server Error!.'})
+
+  }
+
+  finally{
+
+    if (client) {
+      
+      await client.release()
+    }
+  }
+}
 
 exports.editVisibility = async (req, res) => {
   let connection;
