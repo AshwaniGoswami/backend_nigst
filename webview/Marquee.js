@@ -128,7 +128,7 @@ exports.editMarqueeDetails = async (req, res) => {
 exports.editMarqueeVisibility = async (req, res) => {
     let connection;
     try {
-        const { mid, visibility } = req.body;
+        const { mid, homeVisibility, otherVisibility } = req.body;
         connection = await pool.connect();
 
         await connection.query('BEGIN');
@@ -141,13 +141,16 @@ exports.editMarqueeVisibility = async (req, res) => {
             return res.status(500).send({ message: 'Record Does Not Exist' });
         }
 
-        // Set marquee_status and web_visibility to false for all marquee records
-        const resetQuery = 'UPDATE marquee SET marquee_status = false, web_visibility = false';
-        await connection.query(resetQuery);
+        if (homeVisibility !== 'true' && homeVisibility !== 'false') {
+            await connection.query('ROLLBACK');
+            return res.status(400).send({ message: 'Invalid homeVisibility value. It must be either "true" or "false".' });
+        }
+
+        const updateAllQuery = 'UPDATE marquee SET marquee_status = false, web_visibility = false';
+        await connection.query(updateAllQuery);
 
         const updateQuery = 'UPDATE marquee SET marquee_status = $1, web_visibility = $2 WHERE marquee_id = $3';
-        const data = [visibility ? true : false, visibility, mid];
-
+        const data = [homeVisibility === 'true', homeVisibility === 'true' ? otherVisibility : false, mid];
         await connection.query(updateQuery, data);
 
         await connection.query('COMMIT');
@@ -163,6 +166,9 @@ exports.editMarqueeVisibility = async (req, res) => {
         }
     }
 };
+
+
+
 
 
 
