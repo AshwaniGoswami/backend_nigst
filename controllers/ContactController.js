@@ -141,7 +141,8 @@ exports.viewContact = async(req,res)=>{
 
      connection = await pool.connect()
 
-    const query = "SELECT * FROM contact_form"
+    const query = `SELECT to_char(received_at,'YYYY/MM/DD') as received_at, name,email ,phone ,subject ,description,id  FROM contact_form ORDER BY received_at DESC`
+
 
     const result = await connection.query(query)
 
