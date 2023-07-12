@@ -173,7 +173,9 @@ exports.editMarqueeVisibility = async (req, res) => {
 
 
 exports.viewMarqueeForWeb = async (req, res) => {
+
     let client;
+    
     try {
         client = await pool.connect();
 

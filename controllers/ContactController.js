@@ -290,3 +290,33 @@ exports.editDetails = async (req, res) => {
   }
 };
 
+exports.deleteOffice=async(req,res)=>{
+  let connection
+  try {
+    const {oid}=req.body 
+    
+    connection=await pool.connect()
+  
+    const check='SELECT * FROM office WHERE o_id=$1'
+
+    const result=await connection.query(check,[oid])
+
+    if (result.rowCount===0) {
+      return res.status(404).send({message:'Not Found!.'})
+    }
+
+    const deleteQuery='DELETE FROM office WHERE o_id=$1'
+
+    await connection.query(deleteQuery,[oid])
+
+    return res.status(200).send({message:'Successfully Deleted.'})
+  } catch (error) {
+    console.error(error)
+    return res.status(500).send({message:'Internal Server Error!.'})
+  }
+  finally{
+    if (connection) {
+      await connection.release()
+    }
+  }
+}
