@@ -561,6 +561,20 @@ CREATE TABLE IF NOT EXISTS marquee(
 
 )
 `)
+await client.query(
+  `
+  
+  CREATE TABLE IF NOT EXISTS home_carousel(
+    id SERIAL PRIMARY KEY,
+    c_id varchar(255),
+    c_status BOOLEAN DEFAULT FALSE,
+    name varchar(255),
+    path varchar(255),
+    upload_date DATE
+  )
+
+  `
+)
 
   console.log('Tables created successfully')
   }

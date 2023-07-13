@@ -230,6 +230,8 @@ const bannerUpload=createUploadMiddleware('banner')
 
 const SOI_PROJECT_UPLOAD=createUploadMiddleware('soi_project')
 const headerUpload=createUploadMiddleware('header_upload')
+const homeCarousel=createUploadMiddleware('home_carousel')
 
 
-module.exports = { uploadFacultyPhoto, uploadStudentPhoto,uploadAnnouncement,galleryUpload,videoUpload,pdfUpload,tenderpdf,corrigendum,reportSubmit,bannerUpload,SOI_PROJECT_UPLOAD,headerUpload };
+
+module.exports = { uploadFacultyPhoto, uploadStudentPhoto,uploadAnnouncement,galleryUpload,videoUpload,pdfUpload,tenderpdf,corrigendum,reportSubmit,bannerUpload,SOI_PROJECT_UPLOAD,headerUpload,homeCarousel };

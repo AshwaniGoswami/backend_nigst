@@ -2,7 +2,7 @@ const express = require('express')
 const { viewAllDetailsFaculty } = require('../../viewList/allview')
 const { viewWebAnnouncement, viewAllWebAnnouncement, viewPDFAnnouncement, viewAllPDFs, viewArchiveToWebsite, viewArchivePDFAnnouncement } = require('../announcement')
 const { createBanner, getBanner } = require('../Banner')
-const { bannerUpload, galleryUpload, SOI_PROJECT_UPLOAD, headerUpload } = require('../../middleware/faculty')
+const { bannerUpload, galleryUpload, SOI_PROJECT_UPLOAD, headerUpload, homeCarousel } = require('../../middleware/faculty')
 
 const { FooterCreate, viewFooter, updateFooter, deleteFooter, updateVisible } = require('../footer')
 const { createAlbumCategory, viewAlbumCategory, updateAlbumCategory, deleteAlbumCategory } = require('../../controllers/GalleryCategory')
@@ -10,6 +10,7 @@ const { createAlbum, viewAlbum } = require('../../controllers/album')
 const { createProject, viewProject, updateSoiProject, deleteProject, viewProjectForWeb } = require('../../controllers/soi_project')
 const { HeaderCreate, viewHeader, updateVisibility, updateHeader } = require('../header')
 const { CreateMarquee, viewMarqueeToAdmin, editMarqueeDetails, editMarqueeVisibility, viewMarqueeForWeb, deleteMarque } = require('../Marquee')
+const { CreateCarousel } = require('../Carousel')
 
 const router = express.Router()
 
@@ -60,5 +61,8 @@ router.patch('/edit_marquee',editMarqueeDetails)
 router.patch('/edit_mvisiblity',editMarqueeVisibility)
 router.get('/marquee_view',viewMarqueeForWeb)
 router.delete('/delete_marquee',deleteMarque)
+
+
+router.post('/upload_carousel',homeCarousel,CreateCarousel)
 
 module.exports = router
