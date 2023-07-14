@@ -53,3 +53,22 @@ exports.CreateCarousel=async(req,res)=>{
         }
     }
 }
+
+//restrict visiblity of images to 5 true max
+
+
+exports.viewCarouselToAdmin=async(req,res)=>{
+    let connection
+    try {
+        connection=await pool.connect()
+        const check='SELECT c_id,'
+    } catch (error)  {
+        console.error(error)
+        return res.status(500).send({message:'Internal Server Error!.'})
+    }
+    finally{
+        if (connection) {
+            await connection.release()
+        }
+    }
+}
