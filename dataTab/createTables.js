@@ -541,17 +541,15 @@ CREATE TABLE IF NOT EXISTS header(
 
 await client.query(`
 CREATE TABLE IF NOT EXISTS social_media(
-  id SERIAL PRIMARY KEY,
-  s_id varchar(255),
-  s_name varchar(255),
-  s_url varchar(255),
-  s_icon varchar(255) UNIQUE NOT NULL,
-  s_icon_color varchar(255),
-  visibility boolean DEFAULT false,
-  date TIMESTAMP DEFAULT NOW()
-)
 
-`)
+id SERIAL PRIMARY KEY,
+sm_id varchar(255),
+icon_name varchar(255) NOT NULL UNIQUE,
+icon_url varchar(255),
+icon_color varchar(255),
+visibility BOOLEAN DEFAULT FALSE,
+date TIMESTAMP DEFAULT NOW()
+)`)
 
   console.log('Tables created successfully')
   }
