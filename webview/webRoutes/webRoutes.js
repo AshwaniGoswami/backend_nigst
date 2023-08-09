@@ -9,7 +9,7 @@ const { createAlbumCategory, viewAlbumCategory, updateAlbumCategory, deleteAlbum
 const { createAlbum, viewAlbum } = require('../../controllers/album')
 const { createProject, viewProject, updateSoiProject, deleteProject, viewProjectForWeb } = require('../../controllers/soi_project')
 const { HeaderCreate, viewHeader, updateVisibility, updateHeader } = require('../header')
-const { createSocialMedia, updateVisiblee, viewSocialMedia, updateSocialMedia, deleteSocialMedia } = require('../../controllers/socialMedia')
+const { createSocialMedia, updateVisiblee, viewSocialMedia, updateSocialMedia, deleteSocialMedia, viewMediaForWeb } = require('../../controllers/socialMedia')
 
 
 const router = express.Router()
@@ -59,5 +59,6 @@ router.patch('/update_visible_media',updateVisiblee)
 router.get('/view_social_media',viewSocialMedia)
 router.patch('/update_social_media',updateSocialMedia)
 router.delete('/delete_social_media',deleteSocialMedia)
+router.get('/web_view_media',viewMediaForWeb)
 
 module.exports = router
